@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase, savePick, getQuinielaPicks, getAllResults, downloadQuinielaBackup } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
-const QUINIELA_HTML_URL = '/quiniela2026.html'
+const QUINIELA_HTML_URL = '/quiniela2026_fixed.html'
 const LOCK_DATE = new Date('2026-06-11T18:00:00Z')
 
 export default function QuinielaPage() {
