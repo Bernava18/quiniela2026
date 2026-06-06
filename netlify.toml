@@ -1,11 +1,7 @@
-toml[build]
+[build]
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
-
-[build.environment]
-  NODE_VERSION = "18"
-  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
 
 [[redirects]]
   from = "/*"
@@ -14,3 +10,6 @@ toml[build]
 
 [functions]
   node_bundler = "esbuild"
+
+[context.production.environment]
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
