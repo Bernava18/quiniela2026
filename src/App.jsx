@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import LoginPage       from './pages/LoginPage'
+import LandingPage     from './pages/LandingPage'
+import { LoginPage }   from './pages/LoginPage'
 import RegisterPage    from './pages/RegisterPage'
 import DashboardPage   from './pages/DashboardPage'
 import QuinielaPage    from './pages/QuinielaPage'
@@ -20,19 +21,32 @@ function AdminRoute({ children }) {
   return profile?.is_admin ? children : <Navigate to="/" replace />
 }
 
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  return !user ? children : <Navigate to="/" replace />
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login"    element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          {/* Landing — solo para no autenticados */}
+          <Route path="/home" element={<LandingPage />} />
+          <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+
+          {/* App autenticada */}
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-            <Route index              element={<DashboardPage />} />
-            <Route path="quiniela/:id" element={<QuinielaPage />} />
-            <Route path="tabla"       element={<LeaderboardPage />} />
-            <Route path="admin"       element={<AdminRoute><AdminPage /></AdminRoute>} />
+            <Route index                element={<DashboardPage />} />
+            <Route path="quiniela/:id"  element={<QuinielaPage />} />
+            <Route path="tabla"         element={<LeaderboardPage />} />
+            <Route path="admin"         element={<AdminRoute><AdminPage /></AdminRoute>} />
           </Route>
+
+          {/* Ruta raíz: si no autenticado → landing, si autenticado → dashboard */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
