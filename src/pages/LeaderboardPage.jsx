@@ -1,180 +1,308 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useAuth } from '../context/AuthContext'
 import { supabase, getQuinielaPicks, getAllResults } from '../lib/supabase'
 
 const MEDALS = ['🥇','🥈','🥉']
+const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
+
+function calcGroupPts(picks, results, group) {
+  let pts = 0
+  for (let i = 1; i <= 6; i++) {
+    const mid = `${group}${i}`
+    const pk = picks[mid], r = results[mid]
+    if (!pk || pk.h == null || !r || r.hs == null) continue
+    const rR = r.hs > r.as ? 'H' : r.hs < r.as ? 'A' : 'D'
+    const pR = pk.h > pk.a ? 'H' : pk.h < pk.a ? 'A' : 'D'
+    const hOk = pk.h === r.hs, aOk = pk.a === r.as, resOk = rR === pR
+    if (hOk) pts++; if (aOk) pts++; if (resOk) pts += 2
+    if (hOk && aOk && resOk) pts++
+  }
+  return pts
+}
 
 export default function LeaderboardPage() {
   const { rows, loading } = useLeaderboard()
   const { profile } = useAuth()
-  const [viewing, setViewing]       = useState(null) // { name, quinielaName }
+  const [results, setResults] = useState({})
+  const [allPicks, setAllPicks] = useState({})
+  const [viewing, setViewing] = useState(null)
   const [iframeReady, setIframeReady] = useState(false)
-  const iframeRef = useState(null)
+  const [enriched, setEnriched] = useState([])
 
-  // Listen for iframe ready
-  useState(() => {
+  useEffect(() => { loadResults() }, [])
+  useEffect(() => { if (rows.length > 0) loadAllPicks() }, [rows])
+  useEffect(() => { if (rows.length >= 0) buildEnriched() }, [rows, allPicks, results])
+
+  useEffect(() => {
     const handler = (e) => {
-      if (e.data?.type === 'IFRAME_READY' && viewing) {
-        loadViewerPicks()
-      }
+      if (e.data?.type === 'IFRAME_READY' && viewing)
+        setTimeout(() => loadViewerPicks(), 400)
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  })
+  }, [viewing])
+
+  async function loadResults() {
+    const { data } = await supabase.from('match_results').select('*')
+    const map = {}
+    data?.forEach(r => { map[r.match_id] = { hs: r.goals_home, as: r.goals_away, win: r.winner } })
+    setResults(map)
+  }
+
+  async function loadAllPicks() {
+    const qids = rows.map(r => r.quiniela_id)
+    const { data } = await supabase.from('picks').select('*').in('quiniela_id', qids)
+    const map = {}
+    data?.forEach(p => {
+      if (!map[p.quiniela_id]) map[p.quiniela_id] = {}
+      map[p.quiniela_id][p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner }
+    })
+    setAllPicks(map)
+  }
+
+  function buildEnriched() {
+    const built = rows.map(r => {
+      const picks = allPicks[r.quiniela_id] || {}
+      const groupPts = {}
+      let grpTotal = 0
+      GROUPS.forEach(g => {
+        const pts = calcGroupPts(picks, results, g)
+        groupPts[g] = pts
+        grpTotal += pts
+      })
+      return {
+        ...r,
+        groupPts,
+        grpTotal,
+        clasifPts: r.clasif_pts || 0,      // posición exacta en grupos
+        elimPts:   r.elim_pts   || 0,      // R32+Oct+QF+SF+3ro+Final
+        finalPts:  r.final_pts  || 0,      // orden final 20/10/5/3
+        total:     r.total_pts  || 0,
+      }
+    }).sort((a, b) => b.total - a.total)
+    .map((r, i) => ({ ...r, rank: i + 1, prevRank: i + 1 }))
+    setEnriched(built)
+  }
 
   async function openViewer(row) {
-    setViewing({
-      quinielaId: row.quiniela_id,
-      name: row.quinielas?.profiles?.username,
-      quinielaName: row.quinielas?.name,
-    })
+    setViewing({ quinielaId: row.quiniela_id, name: row.quinielas?.profiles?.username, quinielaName: row.quinielas?.name })
     setIframeReady(false)
   }
 
   async function loadViewerPicks() {
     if (!viewing) return
-    const [picks, results] = await Promise.all([
-      getQuinielaPicks(viewing.quinielaId),
-      getAllResults(),
-    ])
-    const iframe = document.getElementById('viewer-iframe')
-    iframe?.contentWindow?.postMessage({
+    const [picks, res] = await Promise.all([getQuinielaPicks(viewing.quinielaId), getAllResults()])
+    document.getElementById('viewer-iframe')?.contentWindow?.postMessage({
       type: 'INIT',
-      data: {
-        quinielaId: viewing.quinielaId,
-        isLocked: true, // siempre solo lectura
-        username: viewing.name,
-        picks,
-        results,
-      }
+      data: { quinielaId: viewing.quinielaId, isLocked: true, username: viewing.name, picks, results: res }
     }, '*')
   }
 
-  const myRows = rows.filter(r => r.quinielas?.profiles?.username === profile?.username)
+  const myRow = enriched.find(r => r.quinielas?.profiles?.username === profile?.username)
 
+  const th = (label, color='#fff', minW=44) => (
+    <th style={{ padding:'10px 6px', fontWeight:700, color, textAlign:'center',
+      minWidth:minW, fontSize:11, textTransform:'uppercase', letterSpacing:'.3px',
+      whiteSpace:'nowrap', borderRight:'0.5px solid rgba(255,255,255,.1)' }}>
+      {label}
+    </th>
+  )
+
+  const ptCell = (pts, maxColor='#0055b3', maxBg='rgba(0,113,227,.1)') => {
+    if (!pts && pts !== 0) return <td style={{ padding:'8px 4px', textAlign:'center', color:'#c7c7cc', fontSize:12 }}>–</td>
+    const bg = pts >= 25 ? 'rgba(255,214,10,.15)' : pts >= 15 ? 'rgba(48,209,88,.1)' : pts > 0 ? maxBg : 'transparent'
+    const col = pts >= 25 ? '#7a5900' : pts >= 15 ? '#1a7a38' : pts > 0 ? maxColor : '#c7c7cc'
+    return (
+      <td style={{ padding:'8px 4px', textAlign:'center' }}>
+        <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center',
+          minWidth:32, height:22, borderRadius:5, fontSize:12, fontWeight:700,
+          background: bg, color: col, padding:'0 4px' }}>
+          {pts}
+        </span>
+      </td>
+    )
+  }
+
+  // ── VIEWER ──────────────────────────────────────────────────
   if (viewing) {
     return (
       <div style={{ display:'flex', flexDirection:'column', height:'calc(100vh - 52px)' }}>
-        {/* Header viewer */}
-        <div style={{ background:'#fff', borderBottom:'0.5px solid rgba(0,0,0,.08)', padding:'8px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <button onClick={() => setViewing(null)}
-              style={{ border:'none', background:'none', cursor:'pointer', color:'#6e6e73', fontSize:13, padding:0 }}>
-              ← Tabla
-            </button>
-            <span style={{ color:'#e0e0e0' }}>|</span>
-            <span style={{ fontWeight:700, fontSize:15 }}>{viewing.name}</span>
-            <span style={{ fontSize:12, color:'#6e6e73' }}>{viewing.quinielaName}</span>
-            <span style={{ fontSize:11, background:'rgba(255,159,10,.12)', color:'#b06000', padding:'2px 8px', borderRadius:6, fontWeight:600 }}>
-              👁 Solo lectura
-            </span>
-          </div>
+        <div style={{ background:'#fff', borderBottom:'0.5px solid rgba(0,0,0,.08)', padding:'8px 20px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+          <button onClick={() => setViewing(null)} style={{ border:'none', background:'none', cursor:'pointer', color:'#6e6e73', fontSize:13 }}>← Tabla</button>
+          <span style={{ color:'#e0e0e0' }}>|</span>
+          <span style={{ fontWeight:700, fontSize:15 }}>{viewing.name}</span>
+          <span style={{ fontSize:12, color:'#6e6e73' }}>{viewing.quinielaName}</span>
+          <span style={{ fontSize:11, background:'rgba(255,159,10,.12)', color:'#b06000', padding:'2px 8px', borderRadius:6, fontWeight:600 }}>👁 Solo lectura</span>
         </div>
-        {/* Iframe en modo lectura */}
-        {!iframeReady && (
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#aeaeb2' }}>
-            ⚽ Cargando quiniela de {viewing.name}...
-          </div>
-        )}
-        <iframe
-          id="viewer-iframe"
-          src="/quiniela2026_fixed.html"
+        {!iframeReady && <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#aeaeb2' }}>⚽ Cargando...</div>}
+        <iframe id="viewer-iframe" src="/quiniela2026_fixed.html"
           style={{ flex:1, border:'none', width:'100%', display: iframeReady ? 'block' : 'none' }}
-          title={`Quiniela de ${viewing.name}`}
-          onLoad={() => {
-            setIframeReady(true)
-            setTimeout(() => loadViewerPicks(), 500)
-          }}
-        />
+          onLoad={() => { setIframeReady(true); setTimeout(() => loadViewerPicks(), 400) }} />
       </div>
     )
   }
 
+  // ── TABLA ────────────────────────────────────────────────────
   return (
-    <div style={{ maxWidth:900, margin:'0 auto', padding:'28px 16px' }}>
-      <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:4 }}>
-        <h1 style={{ fontSize:24, fontWeight:700, letterSpacing:'-.4px' }}>Tabla de Posiciones</h1>
-        <span style={{ fontSize:12, color:'#ff453a', fontWeight:600 }}>● En vivo</span>
-      </div>
-      <p style={{ color:'#6e6e73', fontSize:13, marginBottom:20 }}>
-        Click en cualquier jugador para ver su quiniela completa · {rows.length} quinielas registradas
-      </p>
+    <div style={{ padding:'20px 12px', fontFamily:'-apple-system,"DM Sans",sans-serif' }}>
+      <div style={{ maxWidth:1500, margin:'0 auto' }}>
 
-      {/* Mi posición */}
-      {myRows.length > 0 && (
-        <div style={{ background:'rgba(0,113,227,.06)', border:'1px solid rgba(0,113,227,.2)', borderRadius:12, padding:'12px 16px', marginBottom:16 }}>
-          <div style={{ fontSize:12, fontWeight:700, color:'#0071e3', marginBottom:6 }}>TU POSICIÓN</div>
-          {myRows.map(r => {
-            const pos = rows.findIndex(x => x.quiniela_id === r.quiniela_id) + 1
-            return (
-              <div key={r.quiniela_id} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <span style={{ fontWeight:700, fontSize:16, minWidth:32 }}>#{pos}</span>
-                <span style={{ flex:1, fontWeight:600 }}>{r.quinielas?.name}</span>
-                <span style={{ fontSize:12, color:'#6e6e73' }}>
-                  Grp:{r.grp_pts} · Cl:{r.clasif_pts} · El:{r.elim_pts} · Fin:{r.final_pts}
-                </span>
-                <span style={{ fontSize:18, fontWeight:800, color:'#0071e3' }}>{r.total_pts}</span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Tabla principal */}
-      <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, boxShadow:'0 1px 3px rgba(0,0,0,.06)', marginBottom:16, overflow:'hidden' }}>
         {/* Header */}
-        <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 220px 60px', padding:'8px 14px', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:4, background:'#f9f9f9' }}>
-          {['#','Jugador / Quiniela','Desglose','Total'].map((h,i) => (
-            <span key={i} style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#6e6e73', textAlign:i>=2?'right':'left' }}>{h}</span>
-          ))}
+        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:4 }}>
+          <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-.4px' }}>Tabla de Posiciones</h1>
+          <span style={{ fontSize:12, color:'#ff453a', fontWeight:600 }}>● En vivo</span>
+        </div>
+        <p style={{ color:'#6e6e73', fontSize:12, marginBottom:14 }}>
+          {enriched.length} quinielas · click en cualquier fila para ver la quiniela completa
+        </p>
+
+        {/* Mi posición */}
+        {myRow && (
+          <div style={{ background:'rgba(0,113,227,.06)', border:'1px solid rgba(0,113,227,.2)', borderRadius:10, padding:'10px 16px', marginBottom:12, display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+            <span style={{ fontWeight:900, fontSize:20, color:'#0071e3' }}>#{myRow.rank}</span>
+            <div style={{ flex:1 }}>
+              <span style={{ fontWeight:700 }}>{myRow.quinielas?.profiles?.username}</span>
+              <span style={{ fontSize:12, color:'#6e6e73', marginLeft:8 }}>{myRow.quinielas?.name}</span>
+            </div>
+            <div style={{ display:'flex', gap:16, fontSize:12, color:'#6e6e73', flexWrap:'wrap' }}>
+              <span>Grupos: <strong style={{color:'#1d1d1f'}}>{myRow.grpTotal}</strong></span>
+              <span>Clasif: <strong style={{color:'#1d1d1f'}}>{myRow.clasifPts}</strong></span>
+              <span>Elim: <strong style={{color:'#1d1d1f'}}>{myRow.elimPts}</strong></span>
+              <span>Orden Final: <strong style={{color:'#1d1d1f'}}>{myRow.finalPts}</strong></span>
+            </div>
+            <span style={{ fontSize:24, fontWeight:900, color:'#0071e3' }}>{myRow.total} pts</span>
+          </div>
+        )}
+
+        {/* Tabla */}
+        <div style={{ background:'#fff', borderRadius:14, border:'0.5px solid rgba(0,0,0,.08)', boxShadow:'0 2px 12px rgba(0,0,0,.06)', overflow:'hidden' }}>
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
+              <thead>
+                <tr style={{ background:'#0071e3' }}>
+                  <th style={{ padding:'10px 8px', fontWeight:700, color:'#fff', textAlign:'center', minWidth:42, fontSize:11, textTransform:'uppercase', position:'sticky', left:0, background:'#0071e3', borderRight:'0.5px solid rgba(255,255,255,.15)' }}>POS</th>
+                  <th style={{ padding:'10px 6px', fontWeight:700, color:'rgba(255,255,255,.6)', textAlign:'center', minWidth:38, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>ANT</th>
+                  <th style={{ padding:'10px 14px', fontWeight:700, color:'#fff', textAlign:'left', minWidth:170, fontSize:11, textTransform:'uppercase', borderRight:'1px solid rgba(255,255,255,.2)' }}>JUGADOR / QUINIELA</th>
+                  {GROUPS.map(g => (
+                    <th key={g} style={{ padding:'10px 5px', fontWeight:700, color:'rgba(255,255,255,.8)', textAlign:'center', minWidth:40, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>
+                      GR.{g}
+                    </th>
+                  ))}
+                  <th style={{ padding:'10px 6px', fontWeight:700, color:'#a8d8ff', textAlign:'center', minWidth:52, fontSize:11, borderLeft:'1px solid rgba(255,255,255,.2)', borderRight:'0.5px solid rgba(255,255,255,.1)' }}>CLASIF</th>
+                  <th style={{ padding:'10px 6px', fontWeight:700, color:'#a8d8ff', textAlign:'center', minWidth:48, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>ELIM</th>
+                  <th style={{ padding:'10px 6px', fontWeight:700, color:'#ffd60a', textAlign:'center', minWidth:52, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>FINAL</th>
+                  <th style={{ padding:'10px 8px', fontWeight:800, color:'#ffd60a', textAlign:'center', minWidth:60, fontSize:12, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>TOTAL</th>
+                  <th style={{ padding:'10px 6px', fontWeight:700, color:'rgba(255,255,255,.5)', textAlign:'center', minWidth:44, fontSize:11 }}>HOY</th>
+                </tr>
+                {/* Subtitle row */}
+                <tr style={{ background:'#f0f5ff', borderBottom:'1px solid #e5e5ea' }}>
+                  <td colSpan={3} style={{ padding:'4px 14px', fontSize:10, color:'#6e6e73', fontWeight:500 }}>
+                    Máx: Grupos 360 · Clasif 48 · Elim 160 · Orden Final 38 = <strong>606 pts</strong>
+                  </td>
+                  {GROUPS.map(g => (
+                    <td key={g} style={{ padding:'4px 4px', textAlign:'center', fontSize:10, color:'#aeaeb2' }}>30</td>
+                  ))}
+                  <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#aeaeb2', borderLeft:'1px solid #e5e5ea' }}>48</td>
+                  <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#aeaeb2' }}>160</td>
+                  <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#aeaeb2' }}>38</td>
+                  <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#0071e3', fontWeight:700 }}>606</td>
+                  <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#aeaeb2' }}>–</td>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Cargando...</td></tr>
+                ) : enriched.length === 0 ? (
+                  <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Sin datos aún</td></tr>
+                ) : enriched.map((r, i) => {
+                  const isMe = r.quinielas?.profiles?.username === profile?.username
+                  const rankDiff = r.prevRank - r.rank
+                  const bgRow = isMe ? 'rgba(0,113,227,.04)' : i % 2 === 0 ? '#fff' : '#fafafa'
+                  return (
+                    <tr key={r.quiniela_id} onClick={() => openViewer(r)}
+                      style={{ background: bgRow, cursor:'pointer', borderBottom:'0.5px solid rgba(0,0,0,.04)', transition:'background .1s' }}
+                      onMouseOver={e => e.currentTarget.style.background = '#eef3ff'}
+                      onMouseOut={e => e.currentTarget.style.background = bgRow}>
+
+                      <td style={{ padding:'9px 8px', textAlign:'center', fontWeight:800, fontSize:14, position:'sticky', left:0, background: bgRow, borderRight:'0.5px solid #e5e5ea' }}>
+                        {i < 3 ? MEDALS[i] : <span style={{ color:'#6e6e73', fontSize:12 }}>{r.rank}</span>}
+                      </td>
+
+                      <td style={{ padding:'9px 6px', textAlign:'center', borderRight:'0.5px solid #f2f2f7' }}>
+                        {rankDiff === 0
+                          ? <span style={{ color:'#c7c7cc', fontSize:11 }}>–</span>
+                          : rankDiff > 0
+                            ? <span style={{ color:'#30d158', fontSize:11, fontWeight:700 }}>▲{rankDiff}</span>
+                            : <span style={{ color:'#ff453a', fontSize:11, fontWeight:700 }}>▼{Math.abs(rankDiff)}</span>}
+                      </td>
+
+                      <td style={{ padding:'9px 14px', borderRight:'1px solid #e5e5ea' }}>
+                        <div style={{ fontWeight:700, fontSize:13, display:'flex', alignItems:'center', gap:5 }}>
+                          {r.quinielas?.profiles?.username}
+                          {isMe && <span style={{ fontSize:9, background:'rgba(0,113,227,.12)', color:'#0071e3', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>TÚ</span>}
+                        </div>
+                        <div style={{ fontSize:10, color:'#aeaeb2', marginTop:1 }}>{r.quinielas?.name}</div>
+                      </td>
+
+                      {/* Grupos A-L */}
+                      {GROUPS.map(g => {
+                        const pts = r.groupPts?.[g] ?? 0
+                        const bg = pts >= 25 ? 'rgba(255,214,10,.15)' : pts >= 15 ? 'rgba(48,209,88,.1)' : pts > 0 ? 'rgba(0,113,227,.08)' : 'transparent'
+                        const col = pts >= 25 ? '#7a5900' : pts >= 15 ? '#1a7a38' : pts > 0 ? '#0055b3' : '#c7c7cc'
+                        return (
+                          <td key={g} style={{ padding:'9px 3px', textAlign:'center', borderRight:'0.5px solid #f2f2f7' }}>
+                            <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', minWidth:30, height:22, borderRadius:5, fontSize:12, fontWeight:700, background:bg, color:col, padding:'0 3px' }}>
+                              {pts > 0 ? pts : '–'}
+                            </span>
+                          </td>
+                        )
+                      })}
+
+                      {/* CLASIF */}
+                      <td style={{ padding:'9px 4px', textAlign:'center', borderLeft:'1px solid #e5e5ea', borderRight:'0.5px solid #f2f2f7' }}>
+                        <span style={{ fontWeight:700, fontSize:12, color: r.clasifPts > 0 ? '#0055b3' : '#c7c7cc' }}>
+                          {r.clasifPts > 0 ? r.clasifPts : '–'}
+                        </span>
+                      </td>
+
+                      {/* ELIM */}
+                      <td style={{ padding:'9px 4px', textAlign:'center', borderRight:'0.5px solid #f2f2f7' }}>
+                        <span style={{ fontWeight:700, fontSize:12, color: r.elimPts > 0 ? '#0055b3' : '#c7c7cc' }}>
+                          {r.elimPts > 0 ? r.elimPts : '–'}
+                        </span>
+                      </td>
+
+                      {/* FINAL */}
+                      <td style={{ padding:'9px 4px', textAlign:'center', borderRight:'0.5px solid #f2f2f7' }}>
+                        <span style={{ fontWeight:700, fontSize:12, color: r.finalPts > 0 ? '#7a5900' : '#c7c7cc' }}>
+                          {r.finalPts > 0 ? r.finalPts : '–'}
+                        </span>
+                      </td>
+
+                      {/* TOTAL */}
+                      <td style={{ padding:'9px 6px', textAlign:'center', borderRight:'0.5px solid #e5e5ea' }}>
+                        <span style={{ fontWeight:900, fontSize:16, color:'#0071e3' }}>{r.total}</span>
+                      </td>
+
+                      {/* HOY */}
+                      <td style={{ padding:'9px 6px', textAlign:'center' }}>
+                        <span style={{ fontSize:11, color:'#aeaeb2', fontWeight:600 }}>–</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {loading ? (
-          <div style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Cargando...</div>
-        ) : rows.length === 0 ? (
-          <div style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>
-            Aún no hay quinielas con puntos registrados
-          </div>
-        ) : rows.map((r, i) => {
-          const isMe = r.quinielas?.profiles?.username === profile?.username
-          return (
-            <div key={r.quiniela_id}
-              onClick={() => openViewer(r)}
-              style={{ display:'grid', gridTemplateColumns:'36px 1fr 220px 60px', padding:'11px 14px', gap:4, borderBottom:'0.5px solid rgba(0,0,0,.05)', cursor:'pointer', background: isMe ? 'rgba(0,113,227,.04)' : 'transparent', alignItems:'center', transition:'background .15s' }}
-              onMouseOver={e => e.currentTarget.style.background = isMe ? 'rgba(0,113,227,.08)' : '#f9f9f9'}
-              onMouseOut={e => e.currentTarget.style.background = isMe ? 'rgba(0,113,227,.04)' : 'transparent'}>
-
-              <span style={{ fontSize:14, fontWeight:700 }}>{i<3 ? MEDALS[i] : i+1}</span>
-
-              <div>
-                <div style={{ fontWeight:600, fontSize:14, display:'flex', alignItems:'center', gap:6 }}>
-                  {r.quinielas?.profiles?.username}
-                  {isMe && <span style={{ fontSize:10, background:'rgba(0,113,227,.12)', color:'#0071e3', padding:'1px 6px', borderRadius:4, fontWeight:600 }}>Tú</span>}
-                </div>
-                <div style={{ fontSize:11, color:'#aeaeb2', marginTop:1 }}>{r.quinielas?.name}</div>
-              </div>
-
-              <div style={{ textAlign:'right', fontSize:11, color:'#6e6e73' }}>
-                Grp <strong>{r.grp_pts}</strong> · Cl <strong>{r.clasif_pts}</strong> · El <strong>{r.elim_pts}</strong> · Fin <strong>{r.final_pts}</strong>
-              </div>
-
-              <span style={{ fontSize:18, fontWeight:800, color:'#0071e3', textAlign:'right' }}>{r.total_pts}</span>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Sistema de puntos */}
-      <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, padding:'16px', boxShadow:'0 1px 3px rgba(0,0,0,.04)' }}>
-        <div style={{ fontWeight:700, marginBottom:12, fontSize:15 }}>Sistema de puntos</div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'6px 24px', fontSize:13, color:'#1d1d1f' }}>
-          <div>Goles local exactos → <strong>1 pt</strong></div>
-          <div>Goles visitante exactos → <strong>1 pt</strong></div>
-          <div>Resultado G/E/P / Quién avanza → <strong>2 pts</strong></div>
-          <div>🎯 Bonus todo correcto → <strong>+1 pt</strong></div>
-          <div>Posición exacta en grupo → <strong>1 pt c/u</strong></div>
-          <div>🏆 Campeón / 🥈 Sub / 🥉 3ro / 4to → <strong>20/10/5/3</strong></div>
+        {/* Leyenda columnas */}
+        <div style={{ marginTop:10, display:'flex', gap:'6px 20px', flexWrap:'wrap', fontSize:11, color:'#6e6e73' }}>
+          <span><strong style={{color:'#1d1d1f'}}>GR.A–L</strong> → Puntos por partidos de cada grupo (máx 30 c/u)</span>
+          <span><strong style={{color:'#0055b3'}}>CLASIF</strong> → Posición exacta en grupos (máx 48)</span>
+          <span><strong style={{color:'#0055b3'}}>ELIM</strong> → R32+Octavos+Cuartos+Semis+3ro+Final (máx 160)</span>
+          <span><strong style={{color:'#7a5900'}}>FINAL</strong> → Campeón/Sub/3ro/4to (máx 38)</span>
         </div>
       </div>
     </div>
