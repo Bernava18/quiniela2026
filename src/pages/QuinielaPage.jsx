@@ -132,9 +132,9 @@ export default function QuinielaPage() {
               {totalPts} pts
             </span>
           )}
-          <button onClick={() => downloadQuinielaBackup(quinielaId, quiniela?.name)}
+          <button onClick={() => window.open(`/print/${quinielaId}`, '_blank')}
             style={{ padding:'6px 12px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
-            💾 Respaldo
+            🖨️ Imprimir PDF
           </button>
         </div>
       </div>
