@@ -7,6 +7,7 @@ import QuinielaPage    from './pages/QuinielaPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import AdminPage       from './pages/AdminPage'
 import PrintPage       from './pages/PrintPage'
+import GuidePage       from './pages/GuidePage'
 import Layout          from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -34,8 +35,7 @@ export default function App() {
         <Routes>
           <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-
-          {/* Print page — full screen, no layout */}
+          <Route path="/guia"     element={<GuidePage />} />
           <Route path="/print/:id" element={<PrivateRoute><PrintPage /></PrivateRoute>} />
 
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
