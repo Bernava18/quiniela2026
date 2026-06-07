@@ -29,9 +29,9 @@ export default function AdminPage() {
   async function loadUsers() {
     setLoadingUsers(true)
     const { data } = await supabase
-      .from('profiles')
+      .from('profiles_with_email')
       .select(`
-        id, username, full_name, phone, has_paid, paid_at,
+        id, username, full_name, phone, email, has_paid, paid_at,
         quinielas (
           id, name, is_locked,
           picks (match_id, goals_home),
@@ -182,9 +182,21 @@ export default function AdminPage() {
 
                   <div>
                     <div style={{ fontWeight:700, fontSize:14 }}>{u.username}</div>
-                    {u.full_name && <div style={{ fontSize:11, color:'#aeaeb2' }}>{u.full_name}</div>}
+                    {u.full_name && <div style={{ fontSize:12, color:'#3a3a3c', marginTop:1 }}>{u.full_name}</div>}
+                    {u.email && (
+                      <div style={{ fontSize:11, color:'#6e6e73', marginTop:2, display:'flex', alignItems:'center', gap:3 }}>
+                        <span>✉️</span>
+                        <a href={`mailto:${u.email}`} style={{ color:'#0071e3', textDecoration:'none' }}>{u.email}</a>
+                      </div>
+                    )}
+                    {u.phone && (
+                      <div style={{ fontSize:11, color:'#6e6e73', marginTop:1, display:'flex', alignItems:'center', gap:3 }}>
+                        <span>📱</span>
+                        <a href={`tel:${u.phone}`} style={{ color:'#6e6e73', textDecoration:'none' }}>{u.phone}</a>
+                      </div>
+                    )}
                     {u.has_paid && u.paid_at && (
-                      <div style={{ fontSize:10, color:'#30d158', marginTop:2 }}>
+                      <div style={{ fontSize:10, color:'#30d158', marginTop:3 }}>
                         ✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
                       </div>
                     )}
