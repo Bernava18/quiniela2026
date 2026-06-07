@@ -31,29 +31,26 @@ Object.entries(GROUPS).forEach(([g, teams]) => {
   ]
 })
 
-// Calcula tabla de posición de un grupo desde los picks
-function calcStandings(groupLetter, picks) {
-  const teams = GROUPS[groupLetter]
-  const matches = GROUP_MATCHES[groupLetter]
-  const stats = {}
-  teams.forEach(t => { stats[t] = { pts:0, gf:0, ga:0, gd:0, pj:0 } })
+function calcStandings(g, picks) {
+  const teams = GROUPS[g]
+  const matches = GROUP_MATCHES[g]
+  const s = {}
+  teams.forEach(t => { s[t] = { pts:0, gf:0, ga:0, gd:0, pj:0 } })
   matches.forEach(m => {
     const pk = picks[m.id]
     if (pk?.h == null) return
     const h = pk.h, a = pk.a
-    stats[m.h].pj++; stats[m.a].pj++
-    stats[m.h].gf += h; stats[m.h].ga += a; stats[m.h].gd += h-a
-    stats[m.a].gf += a; stats[m.a].ga += h; stats[m.a].gd += a-h
-    if (h > a)      { stats[m.h].pts += 3 }
-    else if (h < a) { stats[m.a].pts += 3 }
-    else            { stats[m.h].pts += 1; stats[m.a].pts += 1 }
+    s[m.h].pj++; s[m.a].pj++
+    s[m.h].gf+=h; s[m.h].ga+=a; s[m.h].gd+=h-a
+    s[m.a].gf+=a; s[m.a].ga+=h; s[m.a].gd+=a-h
+    if (h>a) s[m.h].pts+=3
+    else if (h<a) s[m.a].pts+=3
+    else { s[m.h].pts+=1; s[m.a].pts+=1 }
   })
-  return teams
-    .map(t => ({ team: t, ...stats[t] }))
-    .sort((a,b) => b.pts-a.pts || b.gd-a.gd || b.gf-a.gf)
+  return teams.map(t=>({team:t,...s[t]}))
+    .sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf)
 }
 
-// R32 fallback seedings
 const R32_STATIC = {
   M73:{h:'2º Gr.A',a:'2º Gr.B'}, M74:{h:'Alemania(1E)',a:'3º BCEF'},
   M75:{h:'P.Bajos(1F)',a:'2º Gr.C'}, M76:{h:'Brasil(1C)',a:'2º Gr.F'},
@@ -65,119 +62,97 @@ const R32_STATIC = {
   M87:{h:'Portugal(1K)',a:'3º IJKL'}, M88:{h:'2º Gr.D',a:'2º Gr.G'},
 }
 
-// Bracket completo
-const BRACKET_L = {
-  r32: ['M73','M74','M75','M76','M77','M78','M79','M80'],
-  r16: ['M89','M90','M91','M92'],
-  qf:  ['M97','M98'],
-  sf:  ['M101'],
-}
-const BRACKET_R = {
-  r32: ['M81','M82','M83','M84','M85','M86','M87','M88'],
-  r16: ['M93','M94','M95','M96'],
-  qf:  ['M99','M100'],
-  sf:  ['M102'],
-}
-
-// ── Colores ──────────────────────────────────────────────────────
 const C = {
-  blue:'#0055d4', blueDk:'#003a9e', blueLt:'#e8f0fe',
-  orange:'#e07b00', orangeLt:'#fff3e0',
-  green:'#1a7a38', greenLt:'#e8f5e9',
-  gray:'#6b7280', grayLt:'#f3f4f6', border:'#d1d5db',
-  dark:'#111827', mid:'#374151', white:'#fff',
+  blue:'#0055d4', blueDk:'#003a9e', blueLt:'#dbeafe',
+  orange:'#d97706', orangeLt:'#fef3c7',
+  green:'#15803d', greenLt:'#dcfce7',
+  gray:'#6b7280', grayLt:'#f9fafb', border:'#e5e7eb',
+  dark:'#111827', mid:'#374151',
 }
 
-// ── Estilos base ─────────────────────────────────────────────────
-const thS = { padding:'3px 6px', fontSize:8, fontWeight:700, textTransform:'uppercase',
-  letterSpacing:'.3px', color:'#9ca3af', textAlign:'center', borderBottom:`0.5px solid #e5e7eb` }
-const tdS = { padding:'4px 6px', fontSize:10 }
+const thS = { padding:'2px 5px', fontSize:7.5, fontWeight:700, textTransform:'uppercase',
+  letterSpacing:'.3px', color:'#9ca3af', textAlign:'center', borderBottom:`0.5px solid ${C.border}` }
+const tdS = { padding:'3px 6px', fontSize:10 }
 
-// ── GroupCard con tabla de posiciones + partidos ─────────────────
+// ── GroupCard ─────────────────────────────────────────────────────
 function GroupCard({ g, matches, picks }) {
   const standings = calcStandings(g, picks)
-  const picksCount = matches.filter(m => picks[m.id]?.h != null).length
-  const posColors = [C.blue, C.orange, C.green, '#9333ea']
+  const cnt = matches.filter(m=>picks[m.id]?.h!=null).length
+  const posClr = [C.blue,C.orange,C.green,'#9333ea']
   const medals = ['🥇','🥈','🥉','4']
 
   return (
-    <div style={{ breakInside:'avoid', border:`1px solid ${C.border}`, borderRadius:10, overflow:'hidden', background:'#fff' }}>
-
+    <div style={{ border:`1px solid ${C.border}`, borderRadius:9, overflow:'hidden',
+      background:'#fff', breakInside:'avoid' }}>
       {/* Header */}
       <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDk})`, color:'#fff',
-        padding:'6px 10px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <span style={{ fontWeight:900, fontSize:13, letterSpacing:'.5px' }}>GRUPO {g}</span>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:8, opacity:.75 }}>
-            {GROUPS[g].map(t => t.split(' ')[0]).join(' · ')}
-          </span>
-          <span style={{ fontSize:9, fontWeight:700, background:'rgba(255,255,255,.2)',
-            borderRadius:4, padding:'1px 6px' }}>{picksCount}/6</span>
+        padding:'5px 9px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <span style={{ fontWeight:900, fontSize:12, letterSpacing:'.4px' }}>GRUPO {g}</span>
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <span style={{ fontSize:7.5, opacity:.7 }}>{GROUPS[g].map(t=>t.split(' ')[0]).join(' · ')}</span>
+          <span style={{ fontSize:8, fontWeight:700, background:'rgba(255,255,255,.2)',
+            borderRadius:4, padding:'1px 5px' }}>{cnt}/6</span>
         </div>
       </div>
-
-      {/* Tabla de posiciones */}
+      {/* Standings */}
       <div style={{ background:C.blueLt, borderBottom:`1px solid ${C.border}` }}>
-        <div style={{ padding:'3px 8px 2px', fontSize:7, fontWeight:800, textTransform:'uppercase',
-          letterSpacing:'.5px', color:C.blue, opacity:.8 }}>Clasificación proyectada</div>
+        <div style={{ padding:'2px 8px 1px', fontSize:6.5, fontWeight:800, textTransform:'uppercase',
+          letterSpacing:'.4px', color:C.blue }}>Clasificación proyectada</div>
         <table style={{ width:'100%', borderCollapse:'collapse' }}>
           <thead>
-            <tr style={{ borderBottom:`0.5px solid ${C.border}` }}>
-              {['#','Equipo','PJ','PTS','GF','GA','DG'].map(h => (
-                <th key={h} style={{ ...thS, padding:'2px 5px', color:C.blue, fontSize:7 }}>{h}</th>
+            <tr>
+              {['#','Equipo','PJ','PTS','GF','GA','DG'].map(h=>(
+                <th key={h} style={{ ...thS, padding:'1px 4px', fontSize:7 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {standings.map((s, i) => (
+            {standings.map((s,i)=>(
               <tr key={s.team} style={{ borderTop:`0.5px solid ${C.border}88`,
-                background: i === 0 ? 'rgba(0,85,212,.07)' : i === 1 ? 'rgba(0,85,212,.03)' : 'transparent' }}>
-                <td style={{ ...thS, padding:'3px 5px', color:posColors[i], fontSize:10 }}>{medals[i]}</td>
-                <td style={{ padding:'3px 6px', fontSize:9, fontWeight: i<2?700:500, color:C.dark,
-                  maxWidth:90, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.team}</td>
-                <td style={{ ...thS, padding:'3px 4px', fontSize:9, color:C.gray }}>{s.pj}</td>
-                <td style={{ ...thS, padding:'3px 4px', fontSize:10, fontWeight:800,
-                  color: i<2?C.blue:C.gray }}>{s.pts}</td>
-                <td style={{ ...thS, padding:'3px 4px', fontSize:9, color:C.gray }}>{s.gf}</td>
-                <td style={{ ...thS, padding:'3px 4px', fontSize:9, color:C.gray }}>{s.ga}</td>
-                <td style={{ ...thS, padding:'3px 4px', fontSize:9,
-                  color: s.gd>0?C.green:s.gd<0?'#dc2626':C.gray,
-                  fontWeight: s.gd!==0?700:400 }}>{s.gd>0?'+':''}{s.gd}</td>
+                background:i===0?'rgba(0,85,212,.07)':i===1?'rgba(0,85,212,.03)':'transparent' }}>
+                <td style={{ ...thS, padding:'2px 4px', color:posClr[i], fontSize:9 }}>{medals[i]}</td>
+                <td style={{ padding:'2px 5px', fontSize:8.5, fontWeight:i<2?700:500, color:C.dark,
+                  maxWidth:85, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.team}</td>
+                <td style={{ ...thS, padding:'2px 3px', fontSize:8.5, color:C.gray }}>{s.pj}</td>
+                <td style={{ ...thS, padding:'2px 3px', fontSize:9, fontWeight:800,
+                  color:i<2?C.blue:C.gray }}>{s.pts}</td>
+                <td style={{ ...thS, padding:'2px 3px', fontSize:8.5, color:C.gray }}>{s.gf}</td>
+                <td style={{ ...thS, padding:'2px 3px', fontSize:8.5, color:C.gray }}>{s.ga}</td>
+                <td style={{ ...thS, padding:'2px 3px', fontSize:8.5, fontWeight:s.gd!==0?700:400,
+                  color:s.gd>0?C.green:s.gd<0?'#dc2626':C.gray }}>{s.gd>0?'+':''}{s.gd}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Partidos */}
+      {/* Matches */}
       <table style={{ width:'100%', borderCollapse:'collapse' }}>
         <thead>
           <tr style={{ background:C.grayLt }}>
-            <th style={{ ...thS, textAlign:'left', paddingLeft:8 }}>ID</th>
+            <th style={{ ...thS, textAlign:'left', paddingLeft:7 }}>ID</th>
             <th style={{ ...thS, textAlign:'left' }}>Local</th>
             <th style={{ ...thS, color:C.blue }}>PICK</th>
-            <th style={{ ...thS, textAlign:'right', paddingRight:8 }}>Visitante</th>
+            <th style={{ ...thS, textAlign:'right', paddingRight:7 }}>Visitante</th>
           </tr>
         </thead>
         <tbody>
-          {matches.map((m, i) => {
-            const pk = picks[m.id]
-            const hasPick = pk?.h != null
+          {matches.map((m,i)=>{
+            const pk=picks[m.id]; const hp=pk?.h!=null
             return (
               <tr key={m.id} style={{ background:i%2===0?'#fff':'#fafafa',
                 borderTop:`0.5px solid ${C.border}` }}>
-                <td style={{ ...tdS, color:C.gray, fontWeight:700, fontSize:9, width:26 }}>{m.id}</td>
-                <td style={{ ...tdS, fontSize:10, fontWeight:600, maxWidth:90 }}>
+                <td style={{ ...tdS, color:C.gray, fontWeight:700, fontSize:8.5, width:24 }}>{m.id}</td>
+                <td style={{ ...tdS, fontSize:9.5, fontWeight:600, maxWidth:85 }}>
                   <span style={{ display:'block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.h}</span>
                 </td>
                 <td style={{ ...tdS, textAlign:'center' }}>
-                  {hasPick
-                    ? <span style={{ fontWeight:900, fontSize:12, color:C.blue }}>
+                  {hp
+                    ? <span style={{ fontWeight:900, fontSize:11.5, color:C.blue }}>
                         {pk.h}<span style={{ color:C.gray, margin:'0 2px' }}>–</span>{pk.a}
                       </span>
-                    : <span style={{ color:'#d1d5db', fontSize:8, fontStyle:'italic' }}>–</span>}
+                    : <span style={{ color:'#d1d5db', fontSize:7.5, fontStyle:'italic' }}>–</span>}
                 </td>
-                <td style={{ ...tdS, fontSize:10, fontWeight:600, textAlign:'right', maxWidth:90 }}>
+                <td style={{ ...tdS, fontSize:9.5, fontWeight:600, textAlign:'right', maxWidth:85 }}>
                   <span style={{ display:'block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textAlign:'right' }}>{m.a}</span>
                 </td>
               </tr>
@@ -190,128 +165,232 @@ function GroupCard({ g, matches, picks }) {
 }
 
 // ── Bracket: tarjeta de partido ──────────────────────────────────
-function BracketMatch({ matchId, picks, isCenter=false }) {
-  const pk = picks[matchId] || {}
-  const hasPick = pk.h != null
-  const st = R32_STATIC[matchId] || {}
+function BMatch({ mid, picks }) {
+  const pk = picks[mid] || {}
+  const hp = pk.h != null
+  const st = R32_STATIC[mid] || {}
   const h = pk.hTeam || st.h || null
   const a = pk.aTeam || st.a || null
-
-  const teamRow = (team, score, isWinner) => (
-    <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 7px',
-      minHeight:26, borderTop: isWinner===false ? `0.5px solid ${C.border}` : 'none',
-      background: isWinner && team ? C.greenLt : '#fff' }}>
-      <span style={{ flex:1, fontSize:9, fontWeight: isWinner&&team?700:500,
-        color: isWinner&&team?C.green : team?C.dark:C.gray,
-        overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-        {team || <em style={{ fontStyle:'italic', color:C.gray, fontSize:8 }}>TBD</em>}
-      </span>
-      {team && score != null &&
-        <span style={{ fontSize:10, fontWeight:800, color:C.blue,
-          background:C.blueLt, borderRadius:3, padding:'0 5px', minWidth:16, textAlign:'center' }}>
-          {score}
-        </span>}
-      {isWinner && team && <span style={{ fontSize:7, color:C.green }}>▶</span>}
-    </div>
-  )
+  const hWin = pk.win && pk.win === h
+  const aWin = pk.win && pk.win === a
 
   return (
-    <div style={{ border:`1.5px solid ${hasPick?C.blue:C.border}`,
-      borderRadius:7, overflow:'hidden', background:'#fff', width:'100%',
-      boxShadow: hasPick ? `0 0 0 2px ${C.blue}22` : 'none' }}>
+    <div style={{ border:`1.5px solid ${hp?C.blue:C.border}`, borderRadius:6,
+      overflow:'hidden', background:'#fff', width:'100%',
+      boxShadow:hp?`0 0 0 2px ${C.blue}22`:'none' }}>
       {/* ID bar */}
-      <div style={{ background:hasPick?C.blue:C.grayLt,
-        color:hasPick?'#fff':C.gray, padding:'2px 7px',
-        display:'flex', justifyContent:'space-between', fontSize:8, fontWeight:700 }}>
-        <span>{matchId}</span>
-        {hasPick && <span style={{ fontWeight:900 }}>{pk.h}–{pk.a}</span>}
+      <div style={{ background:hp?C.blue:C.grayLt, color:hp?'#fff':C.gray,
+        padding:'2px 6px', display:'flex', justifyContent:'space-between',
+        fontSize:7.5, fontWeight:700, lineHeight:1.4 }}>
+        <span>{mid}</span>
+        {hp && <span style={{ fontWeight:900 }}>{pk.h}–{pk.a}</span>}
       </div>
-      {teamRow(h, pk.h, pk.win && pk.win===h)}
-      {teamRow(a, pk.a, pk.win && pk.win===a)}
-    </div>
-  )
-}
-
-// ── Columna del bracket ──────────────────────────────────────────
-function BracketCol({ title, matchIds, picks, colWidth=140 }) {
-  return (
-    <div style={{ display:'flex', flexDirection:'column', width:colWidth, flexShrink:0 }}>
-      <div style={{ textAlign:'center', fontSize:8, fontWeight:800, textTransform:'uppercase',
-        letterSpacing:'.7px', color:C.blue, paddingBottom:6, borderBottom:`2px solid ${C.blue}33`,
-        marginBottom:6, whiteSpace:'nowrap' }}>{title}</div>
-      <div style={{ display:'flex', flexDirection:'column', flex:1,
-        justifyContent:'space-around', gap:5 }}>
-        {matchIds.map(mid => <BracketMatch key={mid} matchId={mid} picks={picks} />)}
+      {/* Home */}
+      <div style={{ display:'flex', alignItems:'center', gap:3, padding:'3px 6px',
+        minHeight:22, background:hWin?C.greenLt:'#fff' }}>
+        <span style={{ flex:1, fontSize:8.5, fontWeight:hWin?700:500,
+          color:hWin?C.green:h?C.dark:C.gray,
+          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+          {h || <em style={{ fontStyle:'italic', color:C.gray, fontSize:7.5 }}>TBD</em>}
+        </span>
+        {h && pk.h!=null &&
+          <span style={{ fontSize:9, fontWeight:800, color:C.blue, background:C.blueLt,
+            borderRadius:3, padding:'0 4px', minWidth:14, textAlign:'center' }}>{pk.h}</span>}
+        {hWin && <span style={{ fontSize:7, color:C.green }}>▶</span>}
+      </div>
+      {/* Away */}
+      <div style={{ display:'flex', alignItems:'center', gap:3, padding:'3px 6px',
+        minHeight:22, borderTop:`0.5px solid ${C.border}`, background:aWin?C.greenLt:'#fff' }}>
+        <span style={{ flex:1, fontSize:8.5, fontWeight:aWin?700:500,
+          color:aWin?C.green:a?C.dark:C.gray,
+          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+          {a || <em style={{ fontStyle:'italic', color:C.gray, fontSize:7.5 }}>TBD</em>}
+        </span>
+        {a && pk.a!=null &&
+          <span style={{ fontSize:9, fontWeight:800, color:C.blue, background:C.blueLt,
+            borderRadius:3, padding:'0 4px', minWidth:14, textAlign:'center' }}>{pk.a}</span>}
+        {aWin && <span style={{ fontSize:7, color:C.green }}>▶</span>}
       </div>
     </div>
   )
 }
 
-// Conector visual
-function Conn() {
+// ── Bracket: columna ─────────────────────────────────────────────
+// Renderiza matches distribuidos verticalmente dentro de altura fija
+function BCol({ title, mids, picks, h: colH }) {
+  const n = mids.length
   return (
-    <div style={{ width:14, flexShrink:0, display:'flex', alignItems:'center',
-      justifyContent:'center', alignSelf:'stretch' }}>
-      <div style={{ width:1, height:'55%', background:C.border }} />
+    <div style={{ display:'flex', flexDirection:'column', flex:1 }}>
+      {/* Título */}
+      <div style={{ textAlign:'center', fontSize:7.5, fontWeight:800, textTransform:'uppercase',
+        letterSpacing:'.7px', color:'#fff', background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
+        padding:'4px 2px', marginBottom:0, borderRadius:'5px 5px 0 0' }}>{title}</div>
+      {/* Matches distribuidos uniformemente */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column',
+        justifyContent:'space-around', padding:'6px 4px', gap:0,
+        background:C.grayLt, border:`1px solid ${C.border}`, borderTop:'none',
+        borderRadius:'0 0 5px 5px', height: colH }}>
+        {mids.map(mid => (
+          <div key={mid} style={{ padding:'3px 0' }}>
+            <BMatch mid={mid} picks={picks} />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
-// ── Centro del bracket: Final + 3ro + Orden final ────────────────
-function BracketCenter({ picks }) {
+// Conector SVG entre columnas
+function BConn({ count }) {
+  // count = número de matches de la columna izquierda
+  const h = 72 // altura por match aproximada
+  const totalH = count * h + (count-1)*6
+  return (
+    <div style={{ width:16, flexShrink:0, alignSelf:'stretch',
+      display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ width:1, height:'60%', background:`${C.border}` }} />
+    </div>
+  )
+}
+
+// ── Centro del bracket ───────────────────────────────────────────
+function BCenter({ picks }) {
   const fin = picks['M104'] || {}
   const t3  = picks['M103'] || {}
 
-  const podiumRows = [
-    { emoji:'🏆', label:'Campeón',    pts:20, val: fin.win || fin.hTeam || '–' },
-    { emoji:'🥈', label:'Subcampeón', pts:10, val: !fin.win ? (fin.aTeam||'–') : (fin.win===fin.hTeam?fin.aTeam:fin.hTeam)||'–' },
-    { emoji:'🥉', label:'3er lugar',  pts:5,  val: t3.win || t3.hTeam || '–' },
-    { emoji:'4️⃣', label:'4to lugar',  pts:3,  val: !t3.win ? (t3.aTeam||'–') : (t3.win===t3.hTeam?t3.aTeam:t3.hTeam)||'–' },
+  const champ   = fin.win || null
+  const runner  = champ ? (champ===fin.hTeam?fin.aTeam:fin.hTeam) : null
+  const thirdW  = t3.win || null
+  const thirdL  = thirdW ? (thirdW===t3.hTeam?t3.aTeam:t3.hTeam) : null
+
+  const podium = [
+    { e:'🏆', l:'Campeón',    pts:20, v: champ  || fin.hTeam  || '–' },
+    { e:'🥈', l:'Subcampeón', pts:10, v: runner || fin.aTeam  || '–' },
+    { e:'🥉', l:'3er lugar',  pts:5,  v: thirdW || t3.hTeam   || '–' },
+    { e:'4️⃣', l:'4to lugar',  pts:3,  v: thirdL || t3.aTeam   || '–' },
   ]
 
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
-      justifyContent:'center', gap:10, width:160, flexShrink:0, padding:'0 6px' }}>
+      justifyContent:'center', gap:8, width:170, flexShrink:0, padding:'0 8px' }}>
 
-      {/* Final */}
+      {/* Gran Final */}
       <div style={{ width:'100%' }}>
-        <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
-          color:'#fff', fontSize:8, fontWeight:800, textAlign:'center',
-          padding:'4px 6px', borderRadius:'6px 6px 0 0', letterSpacing:'.4px' }}>
-          🏆 GRAN FINAL · 19 JUL
-        </div>
-        <BracketMatch matchId="M104" picks={picks} isCenter />
+        <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDk})`, color:'#fff',
+          fontSize:8, fontWeight:900, textAlign:'center', padding:'5px 4px',
+          borderRadius:'7px 7px 0 0', letterSpacing:'.3px' }}>🏆 GRAN FINAL · 19 JUL</div>
+        <BMatch mid="M104" picks={picks} />
       </div>
 
-      <div style={{ width:'70%', height:1, background:C.border }} />
+      <div style={{ width:'65%', height:1, background:C.border }} />
 
-      {/* 3er puesto */}
+      {/* 3er Puesto */}
       <div style={{ width:'100%' }}>
         <div style={{ fontSize:8, fontWeight:800, color:C.orange, textAlign:'center',
-          padding:'3px 0 4px', textTransform:'uppercase', letterSpacing:'.4px' }}>
+          padding:'3px 0', textTransform:'uppercase', letterSpacing:'.3px' }}>
           🥉 3er Puesto · 18 Jul
         </div>
-        <BracketMatch matchId="M103" picks={picks} isCenter />
+        <BMatch mid="M103" picks={picks} />
       </div>
 
-      <div style={{ width:'70%', height:1, background:C.border }} />
+      <div style={{ width:'65%', height:1, background:C.border }} />
 
       {/* Orden final */}
       <div style={{ border:`1.5px solid ${C.blue}44`, borderRadius:8,
-        overflow:'hidden', background:'#fff', width:'100%' }}>
+        overflow:'hidden', width:'100%' }}>
         <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
           color:'#fff', fontSize:8, fontWeight:700, padding:'4px 8px',
-          textTransform:'uppercase', letterSpacing:'.5px' }}>🏅 Orden Final</div>
-        {podiumRows.map(r => (
-          <div key={r.label} style={{ display:'flex', alignItems:'center', gap:4,
-            padding:'3px 7px', borderTop:`0.5px solid ${C.border}` }}>
-            <span style={{ fontSize:9 }}>{r.emoji}</span>
-            <span style={{ flex:1, fontSize:8, color:C.mid, fontWeight:600 }}>{r.label}</span>
+          textTransform:'uppercase', letterSpacing:'.4px' }}>🏅 Orden Final</div>
+        {podium.map(r=>(
+          <div key={r.l} style={{ display:'flex', alignItems:'center', gap:4,
+            padding:'3px 7px', borderTop:`0.5px solid ${C.border}`,
+            background:r.e==='🏆'?'rgba(0,85,212,.04)':'#fff' }}>
+            <span style={{ fontSize:9 }}>{r.e}</span>
+            <span style={{ flex:1, fontSize:8, color:C.mid, fontWeight:600 }}>{r.l}</span>
             <span style={{ fontSize:8, fontWeight:800, color:C.blue,
               background:C.blueLt, borderRadius:3, padding:'0 4px' }}>{r.pts}p</span>
             <span style={{ fontSize:8, fontWeight:700, color:C.dark,
-              maxWidth:65, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.val}</span>
+              maxWidth:60, overflow:'hidden', textOverflow:'ellipsis',
+              whiteSpace:'nowrap', textAlign:'right' }}>{r.v}</span>
           </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── BRACKET COMPLETO como tabla HTML pura para garantizar render ──
+// Usamos <table> porque flex con minWidth no siempre respeta el ancho en print
+function FullBracket({ picks }) {
+  const COL_W = 145 // px por columna
+  const CONN_W = 16
+
+  const colsL = [
+    { title:'R32',     mids:['M73','M74','M75','M76','M77','M78','M79','M80'] },
+    { title:'Octavos', mids:['M89','M90','M91','M92'] },
+    { title:'Cuartos', mids:['M97','M98'] },
+    { title:'Semis',   mids:['M101'] },
+  ]
+  const colsR = [
+    { title:'Semis',   mids:['M102'] },
+    { title:'Cuartos', mids:['M99','M100'] },
+    { title:'Octavos', mids:['M93','M94','M95','M96'] },
+    { title:'R32',     mids:['M81','M82','M83','M84','M85','M86','M87','M88'] },
+  ]
+
+  return (
+    <table style={{ width:'100%', borderCollapse:'collapse', tableLayout:'fixed' }}>
+      <colgroup>
+        {colsL.map((_,i) => <col key={'l'+i} style={{ width:COL_W }} />)}
+        <col style={{ width:CONN_W }} />
+        {/* Centro */}
+        <col style={{ width:180 }} />
+        <col style={{ width:CONN_W }} />
+        {colsR.map((_,i) => <col key={'r'+i} style={{ width:COL_W }} />)}
+      </colgroup>
+      <tbody>
+        <tr style={{ verticalAlign:'top' }}>
+          {/* Columnas izquierda */}
+          {colsL.map((col,i) => (
+            <td key={'l'+i} style={{ padding:'0 2px', verticalAlign:'stretch' }}>
+              <ColContent title={col.title} mids={col.mids} picks={picks} />
+            </td>
+          ))}
+          {/* Conector */}
+          <td style={{ width:CONN_W }} />
+          {/* Centro */}
+          <td style={{ padding:'0 4px', verticalAlign:'middle' }}>
+            <BCenter picks={picks} />
+          </td>
+          {/* Conector */}
+          <td style={{ width:CONN_W }} />
+          {/* Columnas derecha */}
+          {colsR.map((col,i) => (
+            <td key={'r'+i} style={{ padding:'0 2px', verticalAlign:'stretch' }}>
+              <ColContent title={col.title} mids={col.mids} picks={picks} />
+            </td>
+          ))}
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
+function ColContent({ title, mids, picks }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+      {/* Título col */}
+      <div style={{ textAlign:'center', fontSize:7.5, fontWeight:800, textTransform:'uppercase',
+        letterSpacing:'.7px', color:'#fff',
+        background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
+        padding:'4px 2px', borderRadius:'5px 5px 0 0' }}>{title}</div>
+      {/* Matches distribuidos */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column',
+        justifyContent:'space-around', padding:'5px 2px',
+        background:C.grayLt, border:`1px solid ${C.border}`,
+        borderTop:'none', borderRadius:'0 0 5px 5px', gap:4 }}>
+        {mids.map(mid => (
+          <BMatch key={mid} mid={mid} picks={picks} />
         ))}
       </div>
     </div>
@@ -321,7 +400,7 @@ function BracketCenter({ picks }) {
 // ── Footer ───────────────────────────────────────────────────────
 function Footer({ profile, quiniela }) {
   return (
-    <div style={{ marginTop:12, paddingTop:8, borderTop:`0.5px solid ${C.border}`,
+    <div style={{ marginTop:10, paddingTop:7, borderTop:`0.5px solid ${C.border}`,
       display:'flex', justifyContent:'space-between', color:C.gray, fontSize:8 }}>
       <span>🏆 Quiniela Mundial FIFA 2026 · {profile?.username} · {quiniela?.name}</span>
       <span>quiniela2026panas.netlify.app · {new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</span>
@@ -332,7 +411,6 @@ function Footer({ profile, quiniela }) {
 // ── Página principal ─────────────────────────────────────────────
 export default function PrintPage() {
   const { id: quinielaId } = useParams()
-  const { user } = useAuth()
   const navigate = useNavigate()
   const [quiniela, setQuiniela] = useState(null)
   const [picks, setPicks]       = useState({})
@@ -350,15 +428,21 @@ export default function PrintPage() {
     setProfile(q?.profiles)
     setPicks(savedPicks)
     setLoading(false)
-    setTimeout(() => window.print(), 900)
   }
 
-  const filledCount = Object.values(picks).filter(p => p?.h != null).length
+  // Nombre del archivo PDF
+  useEffect(() => {
+    if (quiniela?.name) {
+      document.title = `Quiniela Mundial 2026 - ${quiniela.name}`
+    }
+  }, [quiniela])
+
+  const filledCount = Object.values(picks).filter(p=>p?.h!=null).length
 
   if (loading) return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
-      justifyContent:'center', height:'100vh', fontFamily:'system-ui, sans-serif',
-      color:C.gray, gap:12 }}>
+      justifyContent:'center', height:'100vh',
+      fontFamily:'"Helvetica Neue",Arial,sans-serif', color:C.gray, gap:12 }}>
       <div style={{ fontSize:32 }}>🏆</div>
       <div style={{ fontWeight:700, fontSize:14 }}>Preparando quiniela...</div>
     </div>
@@ -367,135 +451,106 @@ export default function PrintPage() {
   const dateStr = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})
 
   return (
-    <div style={{ fontFamily:'"Helvetica Neue", Arial, sans-serif',
-      fontSize:11, color:C.dark, background:'#f0f2f5', minHeight:'100vh' }}>
+    <div style={{ fontFamily:'"Helvetica Neue",Arial,sans-serif',
+      fontSize:11, color:C.dark, background:'#fff' }}>
 
       <style>{`
         @media print {
           .no-print { display:none !important; }
           body { margin:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; background:#fff; }
-          .print-section { page-break-after: always; }
-          @page { margin: 1cm; size: auto; }
+          .bracket-page { page-break-before: always; }
         }
+        @page { margin:1cm; size:A4 portrait; }
+        @page .landscape-page { size:A4 landscape; margin:.8cm; }
       `}</style>
 
-      {/* ── Botones ── */}
-      <div className="no-print" style={{ position:'fixed', bottom:24, right:24, zIndex:100,
-        display:'flex', flexDirection:'column', gap:10, alignItems:'flex-end' }}>
+      {/* Botones */}
+      <div className="no-print" style={{ position:'fixed', bottom:20, right:20, zIndex:100,
+        display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end' }}>
         <div style={{ fontSize:11, color:C.gray, background:'#fff', border:`1px solid ${C.border}`,
-          borderRadius:8, padding:'8px 12px', lineHeight:1.5, maxWidth:260 }}>
-          💡 Al guardar PDF activa <strong>"Gráficos de fondo"</strong> para que se vean los colores.
+          borderRadius:8, padding:'8px 12px', lineHeight:1.5, maxWidth:270 }}>
+          💡 Al guardar PDF selecciona <strong>"Más configuraciones"</strong> y activa
+          <strong> "Gráficos de fondo"</strong>.
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <button onClick={() => navigate(-1)} style={{ padding:'10px 16px', background:C.grayLt,
+          <button onClick={()=>navigate(-1)} style={{ padding:'10px 16px', background:C.grayLt,
             color:C.dark, border:'none', borderRadius:10, fontWeight:600, fontSize:13,
-            cursor:'pointer', fontFamily:'inherit' }}>← Volver</button>
-          <button onClick={() => window.print()} style={{ padding:'10px 22px', background:C.blue,
+            cursor:'pointer' }}>← Volver</button>
+          <button onClick={()=>window.print()} style={{ padding:'10px 22px', background:C.blue,
             color:'#fff', border:'none', borderRadius:10, fontWeight:700, fontSize:13,
-            cursor:'pointer', fontFamily:'inherit', boxShadow:`0 4px 16px ${C.blue}44` }}>
+            cursor:'pointer', boxShadow:`0 4px 14px ${C.blue}44` }}>
             🖨️ Guardar PDF
           </button>
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════
-          SECCIÓN 1: FASE DE GRUPOS
-      ══════════════════════════════════════════════════════════ */}
-      <div className="print-section" style={{ background:'#fff', padding:'24px 24px 20px',
-        maxWidth:1400, margin:'0 auto' }}>
+      {/* ══ PÁGINA 1: GRUPOS ══════════════════════════════════════ */}
+      <div style={{ padding:'20px 22px 16px', maxWidth:1400, margin:'0 auto' }}>
 
         {/* Header */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
-          marginBottom:16, paddingBottom:12, borderBottom:`2px solid ${C.blue}` }}>
+          marginBottom:14, paddingBottom:10, borderBottom:`2.5px solid ${C.blue}` }}>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{ width:42, height:42, borderRadius:10,
+            <div style={{ width:40, height:40, borderRadius:10, flexShrink:0,
               background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
-              display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>🏆</div>
+              display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🏆</div>
             <div>
-              <div style={{ fontSize:18, fontWeight:900, color:C.dark, letterSpacing:'-.5px' }}>
-                Quiniela Mundial FIFA 2026
-              </div>
-              <div style={{ fontSize:11, color:C.gray, marginTop:2 }}>
+              <div style={{ fontSize:17, fontWeight:900, color:C.dark }}>Quiniela Mundial FIFA 2026</div>
+              <div style={{ fontSize:10.5, color:C.gray, marginTop:1 }}>
                 {profile?.username}{profile?.full_name?` · ${profile.full_name}`:''} · <em>{quiniela?.name}</em>
               </div>
             </div>
           </div>
           <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:11, fontWeight:800, color:C.blue,
-              background:C.blueLt, borderRadius:6, padding:'4px 12px',
-              textTransform:'uppercase', letterSpacing:'.5px', display:'inline-block' }}>
-              Fase de Grupos
-            </div>
-            <div style={{ fontSize:9, color:C.gray, marginTop:4 }}>
+            <div style={{ fontSize:10, fontWeight:800, color:C.blue, background:C.blueLt,
+              borderRadius:6, padding:'4px 12px', textTransform:'uppercase',
+              letterSpacing:'.5px', display:'inline-block' }}>Fase de Grupos</div>
+            <div style={{ fontSize:8.5, color:C.gray, marginTop:4 }}>
               {filledCount}/104 picks · {dateStr}
             </div>
           </div>
         </div>
 
-        {/* Grupos A–L en 3 columnas × 4 filas */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
-          {Object.entries(GROUP_MATCHES).map(([g, matches]) => (
-            <GroupCard key={g} g={g} matches={matches} picks={picks} />
+        {/* 12 grupos 3×4 */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+          {Object.entries(GROUP_MATCHES).map(([g,ms]) => (
+            <GroupCard key={g} g={g} matches={ms} picks={picks} />
           ))}
         </div>
 
         <Footer profile={profile} quiniela={quiniela} />
       </div>
 
-      {/* ══════════════════════════════════════════════════════════
-          SECCIÓN 2: LLAVE ELIMINATORIA
-      ══════════════════════════════════════════════════════════ */}
-      <div style={{ background:'#fff', padding:'24px 20px 20px', maxWidth:'100%', margin:'0 auto', overflowX:'auto' }}>
+      {/* ══ PÁGINA 2: LLAVE ═══════════════════════════════════════ */}
+      <div className="bracket-page" style={{ padding:'16px 14px 14px' }}>
 
         {/* Header */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
-          marginBottom:12, paddingBottom:10, borderBottom:`2px solid ${C.orange}` }}>
+          marginBottom:10, paddingBottom:8, borderBottom:`2.5px solid ${C.orange}` }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:22 }}>⚡</span>
+            <span style={{ fontSize:20 }}>⚡</span>
             <div>
-              <div style={{ fontSize:16, fontWeight:900, color:C.dark }}>Fase Eliminatoria</div>
+              <div style={{ fontSize:15, fontWeight:900, color:C.dark }}>Fase Eliminatoria — Llave Completa</div>
               <div style={{ fontSize:10, color:C.gray }}>
                 {profile?.username}{profile?.full_name?` · ${profile.full_name}`:''} · {quiniela?.name}
               </div>
             </div>
           </div>
-          <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
-            {[['R32','28 Jun–3 Jul'],['Octavos','4–7 Jul'],['Cuartos','9–11 Jul'],
-              ['Semis','14–15 Jul'],['Final','19 Jul']].map(([ph,dates]) => (
-              <div key={ph} style={{ fontSize:9, color:C.gray, display:'flex', alignItems:'center', gap:3 }}>
+          {/* Leyenda fases */}
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'flex-end' }}>
+            {[['R32','28Jun–3Jul'],['Octavos','4–7Jul'],['Cuartos','9–11Jul'],
+              ['Semis','14–15Jul'],['Final','19Jul']].map(([ph,d])=>(
+              <div key={ph} style={{ display:'flex', alignItems:'center', gap:3, fontSize:9 }}>
                 <div style={{ width:7, height:7, borderRadius:2, background:C.blue }} />
-                <strong style={{ color:C.dark }}>{ph}</strong> {dates}
+                <strong style={{ color:C.dark }}>{ph}</strong>
+                <span style={{ color:C.gray }}>{d}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Bracket completo — una sola fila sin scroll */}
-        <div style={{ display:'flex', alignItems:'stretch', gap:0, minWidth:1200 }}>
-
-          {/* Lado izquierdo */}
-          <BracketCol title="R32" matchIds={BRACKET_L.r32} picks={picks} colWidth={138} />
-          <Conn />
-          <BracketCol title="Octavos" matchIds={BRACKET_L.r16} picks={picks} colWidth={138} />
-          <Conn />
-          <BracketCol title="Cuartos" matchIds={BRACKET_L.qf} picks={picks} colWidth={138} />
-          <Conn />
-          <BracketCol title="Semis" matchIds={BRACKET_L.sf} picks={picks} colWidth={138} />
-          <Conn />
-
-          {/* Centro */}
-          <BracketCenter picks={picks} />
-
-          {/* Lado derecho */}
-          <Conn />
-          <BracketCol title="Semis" matchIds={BRACKET_R.sf} picks={picks} colWidth={138} />
-          <Conn />
-          <BracketCol title="Cuartos" matchIds={BRACKET_R.qf} picks={picks} colWidth={138} />
-          <Conn />
-          <BracketCol title="Octavos" matchIds={BRACKET_R.r16} picks={picks} colWidth={138} />
-          <Conn />
-          <BracketCol title="R32" matchIds={BRACKET_R.r32} picks={picks} colWidth={138} />
-        </div>
+        {/* Bracket completo como tabla */}
+        <FullBracket picks={picks} />
 
         <Footer profile={profile} quiniela={quiniela} />
       </div>
