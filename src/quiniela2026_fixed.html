@@ -1,0 +1,2993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiniela Mundial 2026 🏆</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f5f7;--surface:#fff;--surface2:#f2f2f4;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#1d1d1f;--text2:#6e6e73;--text3:#aeaeb2;
+  --accent:#0071e3;--success:#30d158;--warning:#ff9f0a;--danger:#ff453a;--gold:#ffd60a;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow:0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:0 12px 40px rgba(0,0,0,0.12);
+  --r:12px;--rl:18px;--rxl:24px;
+}
+html,body{height:100%;font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:15px;-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.86);backdrop-filter:saturate(180%) blur(20px);border-bottom:0.5px solid var(--border);padding:0 22px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:15px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:7px}
+.nav{display:flex;gap:2px}
+.nb{background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;color:var(--text2);padding:5px 11px;border-radius:8px;font-weight:500;transition:all .15s}
+.nb:hover,.nb.active{background:var(--surface2);color:var(--text)}
+.nb.active{font-weight:600}
+.nb.red{color:var(--danger)}
+
+/* MAIN */
+.main{flex:1;padding:26px 18px 80px;max-width:980px;margin:0 auto;width:100%}
+.pg-title{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:3px}
+.pg-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+
+/* TABS */
+.tabs{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:2px}
+.tb{flex:1;padding:6px 10px;border-radius:8px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;background:none;color:var(--text2);white-space:nowrap;transition:all .15s}
+.tb.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:18px}
+.tscroll .tabs{width:max-content;min-width:100%}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--rl);border:0.5px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden}
+.card-hdr{padding:13px 17px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:700}
+.card-body{padding:14px 17px}
+
+/* ═══ GRUPO CARD ═══ */
+.grupo-card{background:var(--surface);border-radius:var(--rl);border:0.5px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:20px}
+.grupo-hdr{padding:11px 16px;display:flex;align-items:center;justify-content:space-between;background:var(--accent);color:#fff}
+.grupo-tag{font-size:16px;font-weight:800;letter-spacing:-.4px}
+.grupo-sub{font-size:11px;opacity:.82;font-weight:500;margin-top:1px}
+
+/* ═══ PARTIDO ROW ═══ */
+.prow{display:grid;grid-template-columns:56px 1fr 110px 1fr 130px 40px 28px;align-items:center;padding:0;border-bottom:0.5px solid var(--border);transition:background .1s;min-height:52px}
+.prow:last-of-type.partido{border-bottom:none}
+.prow:hover{background:#fafafa}
+.pfecha{font-size:10px;color:var(--text2);font-weight:500;line-height:1.3;padding:0 6px}
+.pteam{display:flex;align-items:center;gap:6px;min-width:0;padding:0 4px}
+.pteam.r{flex-direction:row-reverse}
+.flag{width:26px;height:17px;object-fit:cover;border-radius:2px;border:0.5px solid var(--border2);flex-shrink:0}
+.flag-ph{width:26px;height:17px;background:var(--surface2);border-radius:2px;border:0.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--text3);flex-shrink:0}
+.tname{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* score zone */
+.pscore{display:flex;align-items:center;justify-content:center;gap:5px;padding:0 6px}
+.si{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--border2);background:var(--surface2);font-family:inherit;font-size:16px;font-weight:700;text-align:center;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color .15s,box-shadow .15s}
+.si::-webkit-inner-spin-button,.si::-webkit-outer-spin-button{-webkit-appearance:none}
+.si:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.14);background:var(--surface)}
+.si-sep{font-size:14px;font-weight:700;color:var(--text3)}
+
+/* extra selects */
+.pextra{display:flex;align-items:center;gap:5px;padding:0 8px}
+.fsel{padding:4px 7px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);font-family:inherit;font-size:11px;color:var(--text);outline:none;cursor:pointer;width:100%}
+.fsel:focus{border-color:var(--accent)}
+
+/* status */
+.pst{width:28px;text-align:center;font-size:13px;padding:0 4px}
+
+/* pts pill */
+.pp{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:19px;background:var(--gold);color:#7a5900;border-radius:5px;font-size:11px;font-weight:700;padding:0 5px}
+
+/* RESULTADO col — columna separada con fondo tenue */
+.resultado-col{display:flex;align-items:center;justify-content:flex-start;padding:0 8px;background:var(--surface2);align-self:stretch;border-left:0.5px solid var(--border);border-right:0.5px solid var(--border)}
+.res-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;width:100%}
+.res-win{background:var(--accent);color:#fff}
+.res-draw{background:#d1d1d6;color:var(--text)}
+.res-pending{color:var(--text3);font-size:12px;font-style:italic;font-weight:400}
+
+/* PTS col — puntos del pick */
+.ppts-col{display:flex;align-items:center;justify-content:center;padding:0 6px;align-self:stretch}
+.ppts-badge{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:22px;border-radius:6px;font-size:12px;font-weight:700;padding:0 6px}
+.ppts-pos{background:rgba(48,209,88,.15);color:#1a7a38}
+.ppts-zero{background:var(--surface2);color:var(--text3)}
+.ppts-none{color:var(--text3);font-size:18px;font-weight:300}
+
+/* ═══ TABLA CLASIFICACION ═══ */
+.tabla{width:100%;border-collapse:collapse;font-size:12px}
+.tabla th{padding:6px 9px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text2);border-bottom:0.5px solid var(--border);text-align:center;background:var(--surface2)}
+.tabla th:first-child{text-align:left}
+.tabla td{padding:7px 9px;border-bottom:0.5px solid var(--border);text-align:center;font-weight:600;font-size:12px}
+.tabla td.team-cell{text-align:left}
+.tabla tr:last-child td{border-bottom:none}
+.clasif-bar{display:inline-block;width:3px;height:14px;border-radius:2px;margin-right:3px;vertical-align:middle}
+.pts-col{color:var(--accent);font-size:13px;font-weight:700}
+
+/* resultado encuentro mini (W/E/L) */
+.enc-results{display:flex;gap:3px;flex-wrap:wrap}
+.enc-dot{width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0}
+.enc-W{background:rgba(48,209,88,.18);color:#1a7a38}
+.enc-E{background:rgba(110,110,115,.14);color:var(--text2)}
+.enc-L{background:rgba(255,69,58,.12);color:var(--danger)}
+.enc-?{background:var(--surface2);color:var(--text3)}
+
+/* ═══ BRACKET / LLAVE ═══ */
+.bracket-wrap{overflow-x:auto;padding-bottom:20px}
+.bracket{display:flex;gap:0;min-width:1100px;align-items:stretch}
+
+/* Columnas */
+.bracket-col{display:flex;flex-direction:column;min-width:155px;flex:1;position:relative}
+.bracket-col-title{text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);padding:8px 4px;background:var(--surface2);border-bottom:0.5px solid var(--border);border-right:0.5px solid var(--border)}
+.bracket-col-title.center-title{background:linear-gradient(135deg,var(--accent),#005bb5);color:#fff}
+.bracket-matches{display:flex;flex-direction:column;justify-content:space-around;flex:1;padding:6px 0;position:relative}
+
+/* Líneas conectoras entre rondas — ambos lados simétricos */
+.bracket-col:not(.bracket-center)::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:0;
+  border-right:1.5px dashed rgba(0,113,227,0.18);z-index:1;pointer-events:none}
+/* Las columnas de la derecha también necesitan línea a su izquierda */
+.bracket-col:not(.bracket-center)::before{
+  content:'';position:absolute;top:0;left:0;bottom:0;width:0;
+  border-left:0px solid transparent}
+
+/* Match card */
+.bm{background:var(--surface);border:0.5px solid var(--border);border-radius:9px;overflow:hidden;box-shadow:var(--shadow-sm);margin:4px 6px;transition:box-shadow .2s;position:relative}
+.bm:hover{box-shadow:var(--shadow)}
+.bm.tbd{opacity:.55}
+.bm-date{font-size:9px;font-weight:700;color:var(--text2);padding:4px 8px;background:var(--surface2);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;letter-spacing:.2px}
+.bm-team{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:0.5px solid var(--border);min-height:36px}
+.bm-team:last-of-type.no-real{border-bottom:none}
+.bm-team.winner{background:rgba(48,209,88,.06)}
+.bm-team.winner .bm-tname{color:#1a7a38;font-weight:700}
+.bm-tname{font-size:11px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78px}
+.bm-score-wrap{margin-left:auto;flex-shrink:0}
+.bm-si{width:30px;height:28px;border-radius:6px;border:1.5px solid var(--border2);background:var(--surface2);font-family:inherit;font-size:13px;font-weight:700;text-align:center;color:var(--text);outline:none;-moz-appearance:textfield}
+.bm-si::-webkit-inner-spin-button,.bm-si::-webkit-outer-spin-button{-webkit-appearance:none}
+.bm-si:focus{border-color:var(--accent);background:var(--surface)}
+.bm-score-real{font-size:14px;font-weight:800;min-width:22px;text-align:center}
+
+/* Final */
+.bm.final-match .bm-date{background:linear-gradient(135deg,var(--accent),#005bb5);color:#fff}
+.bm.final-match{border:1.5px solid var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.1)}
+/* Center col gets dashed borders on both sides */
+.bracket-center{border-left:1.5px dashed rgba(0,113,227,.18);border-right:1.5px dashed rgba(0,113,227,.18)}
+
+/* Pts badge en bracket */
+.bm-pts{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:18px;border-radius:5px;font-size:11px;font-weight:800;padding:0 5px}
+.bm-pts-5{background:var(--gold);color:#7a5900}
+.bm-pts-3{background:rgba(48,209,88,.18);color:#1a7a38}
+.bm-pts-1{background:rgba(0,113,227,.12);color:var(--accent)}
+.bm-pts-0{background:var(--surface2);color:var(--text3)}
+
+/* Real result row */
+.bm-real{padding:4px 8px;background:var(--surface2);border-top:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.bm-real-score{display:flex;align-items:center;gap:4px}
+.bm-rs{width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.bm-rs.ok{background:rgba(48,209,88,.15);color:#1a7a38}
+.bm-rs.no{background:rgba(255,69,58,.1);color:var(--danger)}
+
+/* ═══ LEADERBOARD ═══ */
+.lb-row{display:flex;align-items:center;padding:10px 16px;gap:11px;border-bottom:0.5px solid var(--border);transition:background .1s}
+.lb-row:last-child{border-bottom:none}
+.lb-row:hover{background:var(--surface2)}
+.lb-row.me{background:rgba(0,113,227,.05)}
+.rn{font-size:13px;font-weight:700;width:22px;text-align:center;color:var(--text2);flex-shrink:0}
+.lb-name{flex:1;font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.you-tag{font-size:10px;color:var(--accent);font-weight:600;background:rgba(0,113,227,.1);padding:2px 6px;border-radius:4px}
+.lb-pts{font-size:17px;font-weight:700;color:var(--accent);letter-spacing:-.5px}
+.lb-sub{font-size:12px;color:var(--text2);min-width:36px;text-align:right;margin-right:4px}
+
+/* ═══ AI ═══ */
+.ai-wrap{background:var(--surface);border-radius:var(--rl);border:0.5px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column}
+.ai-msgs{padding:14px;display:flex;flex-direction:column;gap:10px;min-height:280px}
+.ai-msg{max-width:80%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55}
+.ai-msg.u{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
+.ai-msg.a{background:var(--surface2);color:var(--text);align-self:flex-start;border-bottom-left-radius:3px}
+.ai-row{display:flex;gap:8px;padding:11px 14px;border-top:0.5px solid var(--border)}
+.ai-in{flex:1;padding:9px 12px;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);font-family:inherit;font-size:13px;color:var(--text);outline:none}
+.ai-in:focus{border-color:var(--accent);background:var(--surface)}
+.qb{background:var(--surface);border:0.5px solid var(--border2);border-radius:8px;padding:5px 11px;font-family:inherit;font-size:11px;color:var(--text2);cursor:pointer;font-weight:500;transition:all .15s}
+.qb:hover{background:var(--surface2);color:var(--text);border-color:var(--accent)}
+
+/* ═══ ADMIN ═══ */
+.admin-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.admin-tbl th{text-align:left;padding:8px 11px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text2);border-bottom:0.5px solid var(--border)}
+.admin-tbl td{padding:7px 11px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+.admin-tbl tr:last-child td{border-bottom:none}
+.admin-tbl tr:hover td{background:var(--surface2)}
+.as{width:38px;height:32px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);font-family:inherit;font-size:14px;font-weight:700;text-align:center;color:var(--text);outline:none;-moz-appearance:textfield}
+.as::-webkit-inner-spin-button,.as::-webkit-outer-spin-button{-webkit-appearance:none}
+.as:focus{border-color:var(--accent)}
+
+/* ═══ AUTH ═══ */
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.auth-card{background:var(--surface);border-radius:var(--rxl);border:0.5px solid var(--border);box-shadow:var(--shadow-lg);padding:38px 34px;width:100%;max-width:390px}
+.fm-grp{margin-bottom:14px}
+.fm-lbl{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.fm-in{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);font-family:inherit;font-size:14px;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s}
+.fm-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.14);background:var(--surface)}
+.fm-err{color:var(--danger);font-size:12px;margin-top:6px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 16px;border-radius:9px;border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{opacity:.88;transform:translateY(-1px)}
+.btn-s{background:var(--surface2);color:var(--text);border:0.5px solid var(--border2)}
+.btn-s:hover{background:#e5e5ea}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:7px}
+.btn-xs{padding:3px 8px;font-size:11px;border-radius:6px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-s{background:rgba(48,209,88,.15);color:#1a7a38}
+.badge-i{background:rgba(0,113,227,.12);color:var(--accent)}
+.badge-n{background:var(--surface2);color:var(--text2);border:0.5px solid var(--border2)}
+
+/* spinner / toast */
+.spinner{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast-c{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{background:#1d1d1f;color:#fff;padding:10px 16px;border-radius:11px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);animation:tIn .2s ease;pointer-events:none}
+.toast.success{background:#1c6635}
+.toast.error{background:#a32020}
+@keyframes tIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+
+/* pts legend grid */
+.pts-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 18px}
+.pts-row{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.pts-row span:first-child{font-size:12px;color:var(--text2)}
+
+@media(max-width:600px){
+  .main{padding:16px 12px 70px}
+  .pfecha{display:none}
+  .pextra{display:none}
+}
+
+/* PRINT / PDF */
+@media print {
+  .hdr, .nav, .tabs, .tscroll, #page-leaderboard, #page-ai, #page-admin,
+  .pextra, .pst, .bm-si, select, button, .btn, .bracket-col-title,
+  .toast-c { display:none !important; }
+  body { background:#fff !important; font-size:11px; }
+  .main { padding:8px !important; max-width:100% !important; }
+  .grupo-card, .bm, .card { box-shadow:none !important; border:0.5px solid #ccc !important; }
+  .prow { min-height:32px !important; }
+  .bracket-wrap { overflow:visible !important; }
+  .bracket { min-width:auto !important; }
+  #page-picks { display:block !important; }
+  .bracket-col { min-width:110px !important; }
+  .bm-tname { font-size:10px !important; }
+  @page { size:A4 landscape; margin:10mm; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="auth-page">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:44px;margin-bottom:7px">🏆</div>
+        <h1 style="font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:3px">Quiniela Mundial 2026</h1>
+        <p style="font-size:12px;color:var(--text2)">Ingresa para ver y hacer tus picks</p>
+      </div>
+      <div class="tabs" style="margin-bottom:20px">
+        <button class="tb active" onclick="switchAuth('login')">Iniciar sesión</button>
+        <button class="tb" onclick="switchAuth('register')">Registrarse</button>
+      </div>
+      <div class="fm-grp"><label class="fm-lbl">Usuario</label><input id="l-u" class="fm-in" placeholder="Tu nombre de usuario"></div>
+      <div class="fm-grp"><label class="fm-lbl">Contraseña</label><input id="l-p" class="fm-in" type="password" placeholder="••••••••"></div>
+      <div class="fm-grp" id="code-g" style="display:none"><label class="fm-lbl">Código de invitación</label><input id="l-c" class="fm-in" placeholder="Código"></div>
+      <div id="l-err" class="fm-err" style="display:none"></div>
+      <button class="btn btn-p" style="width:100%;padding:11px;font-size:14px;margin-top:5px" onclick="doLogin()">Entrar</button>
+      <p style="text-align:center;font-size:11px;color:var(--text3);margin-top:12px">Admin: <strong>Admin</strong> / <strong>[tu contraseña]</strong> · Usuarios: regístrate con código de invitación</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;flex-direction:column;min-height:100vh">
+  <header class="hdr">
+    <div class="logo">🏆 Quiniela Mundial 2026</div>
+    <nav class="nav">
+      <button class="nb active" onclick="showPage('picks')">Picks</button>
+      <button class="nb" onclick="showPage('leaderboard')">Tabla</button>
+      <button class="nb" onclick="showPage('ai')">🤖 IA</button>
+      <button class="nb" onclick="showPage('admin')" id="admin-nav">Admin</button>
+      <button class="nb" onclick="printQuiniela()" title="Imprimir / Guardar PDF">🖨️</button>
+      <button class="nb red" onclick="doLogout()">Salir</button>
+    </nav>
+  </header>
+
+  <!-- ══ PICKS ══ -->
+  <div id="page-picks" class="main">
+    <h1 class="pg-title">Mis Picks</h1>
+    <p class="pg-sub" id="picks-ctr">0 de 104 partidos pronosticados</p>
+    <div class="tscroll"><div class="tabs" id="phase-tabs"></div></div>
+    <div id="matches-container"></div>
+  </div>
+
+  <!-- ══ LEADERBOARD ══ -->
+  <div id="page-leaderboard" class="main" style="display:none">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:3px">
+      <h1 class="pg-title">Tabla de Posiciones</h1>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-s btn-sm" onclick="addSimPlayer()" id="sim-btn">+ Simular jugador</button>
+        <span style="font-size:12px;color:var(--danger);font-weight:600">● En vivo</span>
+      </div>
+    </div>
+    <p class="pg-sub" id="lb-sub-text">Puntos calculados en tiempo real desde los picks</p>
+
+    <!-- Tabla principal -->
+    <div class="card" style="margin-bottom:14px" id="lb-card">
+      <div style="display:grid;grid-template-columns:28px 1fr 54px 54px 54px 54px 60px;padding:8px 14px;border-bottom:0.5px solid var(--border);gap:4px">
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2)">#</span>
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2)">Jugador</span>
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2);text-align:right">Grp</span>
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2);text-align:right">Clasif</span>
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2);text-align:right">Elim</span>
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2);text-align:right">Final</span>
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--accent);text-align:right">Total</span>
+      </div>
+      <div id="lb-rows"></div>
+    </div>
+
+    <!-- Detalle jugador seleccionado -->
+    <div id="lb-detail" style="display:none"></div>
+
+    <!-- Sistema de puntos -->
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Sistema de puntos</span></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:0">
+
+          <!-- PARTIDOS -->
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);padding:8px 0 6px;border-bottom:0.5px solid var(--border)">Por partido — Grupos y Eliminatorias (máx 5 pts)</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 16px;padding:10px 0;border-bottom:0.5px solid var(--border)">
+            <span style="font-size:13px;color:var(--text)">Goles equipo local exactos</span>
+            <span class="pp">1 pt</span>
+            <span style="font-size:13px;color:var(--text)">Goles equipo visitante exactos</span>
+            <span class="pp">1 pt</span>
+            <span style="font-size:13px;color:var(--text)">Resultado correcto <span style="color:var(--text2);font-size:12px">(G/E/P en grupos · quién avanza en eliminatorias)</span></span>
+            <span class="pp">2 pts</span>
+            <span style="font-size:13px;color:var(--text)">🎯 Bonus — ambos goles + resultado/avance correctos</span>
+            <span class="pp" style="background:var(--gold);color:#7a5900">+1 pt</span>
+          </div>
+
+          <!-- CLASIFICACIÓN -->
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);padding:8px 0 6px;border-bottom:0.5px solid var(--border)">Clasificación de grupo (máx 4 pts por grupo)</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 16px;padding:10px 0;border-bottom:0.5px solid var(--border)">
+            <span style="font-size:13px;color:var(--text)">Cada posición exacta (1ro, 2do, 3ro, 4to)</span>
+            <span class="pp">1 pt c/u</span>
+            <span style="font-size:12px;color:var(--text2)">Se compara la clasificación estimada (según tus picks de partidos) vs la clasificación real</span>
+            <span></span>
+          </div>
+
+          <!-- ORDEN FINAL -->
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);padding:8px 0 6px;border-bottom:0.5px solid var(--border)">Orden Final 🏆</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 16px;padding:10px 0">
+            <span style="font-size:13px;color:var(--text)">🏆 Campeón exacto</span>
+            <span class="pp" style="background:var(--gold);color:#7a5900">20 pts</span>
+            <span style="font-size:13px;color:var(--text)">🥈 Subcampeón exacto</span>
+            <span class="pp">10 pts</span>
+            <span style="font-size:13px;color:var(--text)">🥉 3er lugar exacto</span>
+            <span class="pp">5 pts</span>
+            <span style="font-size:13px;color:var(--text)">4to lugar exacto</span>
+            <span class="pp">3 pts</span>
+            <span style="font-size:12px;color:var(--text2)">Se detecta automáticamente del pick "¿Quién avanza?" en la Final y el 3er Puesto</span>
+            <span></span>
+          </div>
+
+          <!-- MÁXIMOS -->
+          <div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:6px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">
+            <div><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:2px">Grupos partidos</div><div style="font-size:16px;font-weight:800;color:var(--accent)">360</div><div style="font-size:10px;color:var(--text3)">72 × 5</div></div>
+            <div><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:2px">Clasificación</div><div style="font-size:16px;font-weight:800;color:var(--accent)">48</div><div style="font-size:10px;color:var(--text3)">12 grupos × 4</div></div>
+            <div><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:2px">Eliminatorias</div><div style="font-size:16px;font-weight:800;color:var(--accent)">160</div><div style="font-size:10px;color:var(--text3)">32 × 5</div></div>
+            <div><div style="font-size:10px;font-weight:600;color:var(--warning);margin-bottom:2px">TOTAL MÁX.</div><div style="font-size:16px;font-weight:800;color:var(--warning)">606</div><div style="font-size:10px;color:var(--text3)">+ 38 orden final</div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ══ AI ══ -->
+  <div id="page-ai" class="main" style="display:none">
+    <h1 class="pg-title">Asistente IA</h1>
+    <p class="pg-sub">Powered by Claude · Estrategias, análisis y datos del Mundial</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px">
+      <button class="qb" onclick="sendQ('¿Grupos más difíciles?')">¿Grupos más difíciles?</button>
+      <button class="qb" onclick="sendQ('¿Cómo maximizar puntos en eliminatorias?')">Maximizar puntos</button>
+      <button class="qb" onclick="sendQ('¿Quiénes son los favoritos al título?')">Favoritos al título</button>
+      <button class="qb" onclick="sendQ('Explícame el sistema de puntos')">Sistema de puntos</button>
+    </div>
+    <div class="ai-wrap">
+      <div class="ai-msgs" id="ai-msgs">
+        <div class="ai-msg a">¡Hola! Soy tu asistente para la Quiniela Mundial 2026 🏆<br><br>Puedo ayudarte con análisis de grupos, estrategias de picks y reglas. ¿Qué quieres saber?</div>
+      </div>
+      <div class="ai-row">
+        <input id="ai-in" class="ai-in" placeholder="Pregunta sobre el Mundial…" onkeydown="if(event.key==='Enter')sendAI()">
+        <button class="btn btn-p btn-sm" onclick="sendAI()" id="ai-btn">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ADMIN ══ -->
+  <div id="page-admin" class="main" style="display:none">
+    <h1 class="pg-title">Panel de Admin</h1>
+    <p class="pg-sub">Gestión de resultados, jugadores y códigos</p>
+    <div class="tabs" style="margin-bottom:16px" id="admin-main-tabs">
+      <button class="tb active" onclick="switchAdminTab('results')">⚽ Resultados</button>
+      <button class="tb" onclick="switchAdminTab('users')">👥 Jugadores</button>
+      <button class="tb" onclick="switchAdminTab('codes')">🎟 Códigos</button>
+    </div>
+    <div id="admin-results">
+      <div class="tscroll" style="margin-bottom:12px"><div class="tabs" id="admin-phase-tabs"></div></div>
+      <div class="card"><div style="overflow-x:auto"><table class="admin-tbl">
+        <thead><tr><th>ID</th><th>Fecha</th><th>Local</th><th style="text-align:center">Marcador</th><th>Visitante</th><th>1er Gol</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="admin-tbody"></tbody>
+      </table></div></div>
+    </div>
+    <div id="admin-users" style="display:none">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-hdr"><span class="card-title">Agregar jugador</span></div>
+        <div class="card-body"><div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="nu-n" class="fm-in" style="flex:1;min-width:120px" placeholder="Usuario">
+          <input id="nu-p" class="fm-in" type="password" style="flex:1;min-width:120px" placeholder="Contraseña">
+          <button class="btn btn-p" onclick="addUser()">Crear</button>
+        </div></div>
+      </div>
+      <div class="card"><table class="admin-tbl">
+        <thead><tr><th>#</th><th>Usuario</th><th>Rol</th><th>Picks</th><th>Puntos</th></tr></thead>
+        <tbody id="users-tbody"></tbody>
+      </table></div>
+    </div>
+    <div id="admin-codes" style="display:none">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-hdr"><span class="card-title">Crear código</span></div>
+        <div class="card-body"><div style="display:flex;gap:8px">
+          <input id="nc-in" class="fm-in" style="flex:1" placeholder="ej: MUNDIAL2026" oninput="this.value=this.value.toUpperCase()">
+          <button class="btn btn-p" onclick="addCode()">Crear</button>
+        </div></div>
+      </div>
+      <div class="card"><table class="admin-tbl">
+        <thead><tr><th>Código</th><th>Estado</th><th>Creado</th></tr></thead>
+        <tbody id="codes-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-c" id="toasts"></div>
+
+<script>
+// ══════════════════════════════
+// FLAGS
+// ══════════════════════════════
+const FLAGS={
+  'México':'mx','Sudáfrica':'za','Rep. de Corea':'kr','Rep. Checa':'cz',
+  'Canadá':'ca','Bosnia':'ba','Catar':'qa','Suiza':'ch',
+  'Brasil':'br','Marruecos':'ma','Haití':'ht','Escocia':'gb-sct',
+  'EE. UU.':'us','Paraguay':'py','Australia':'au','Turquía':'tr',
+  'Alemania':'de','Curazao':'cw','Costa de Marfil':'ci','Ecuador':'ec',
+  'Países Bajos':'nl','Japón':'jp','Suecia':'se','Túnez':'tn',
+  'Bélgica':'be','Egipto':'eg','RI de Irán':'ir','Nueva Zelanda':'nz',
+  'España':'es','Islas de Cabo Verde':'cv','Arabia Saudí':'sa','Uruguay':'uy',
+  'Francia':'fr','Senegal':'sn','Irak':'iq','Noruega':'no',
+  'Argentina':'ar','Argelia':'dz','Austria':'at','Jordania':'jo',
+  'Portugal':'pt','RD Congo':'cd','Uzbekistán':'uz','Colombia':'co',
+  'Inglaterra':'gb-eng','Croacia':'hr','Ghana':'gh','Panamá':'pa',
+};
+function fh(name,w=26){
+  const c=FLAGS[name],h=Math.round(w*0.67);
+  if(!c)return`<div class="flag-ph" style="width:${w}px;height:${h}px">${(name||'?').slice(0,2)}</div>`;
+  return`<img src="https://flagcdn.com/w40/${c}.png" class="flag" style="width:${w}px;height:${h}px" alt="${name}" onerror="this.outerHTML='<div class=flag-ph style=width:${w}px;height:${h}px>${(name||'?').slice(0,2)}</div>'">`;
+}
+
+// ══════════════════════════════
+// GRUPOS & FIXTURE
+// ══════════════════════════════
+const GRUPOS={
+  A:['México','Sudáfrica','Rep. de Corea','Rep. Checa'],
+  B:['Canadá','Bosnia','Catar','Suiza'],
+  C:['Brasil','Marruecos','Haití','Escocia'],
+  D:['EE. UU.','Paraguay','Australia','Turquía'],
+  E:['Alemania','Curazao','Costa de Marfil','Ecuador'],
+  F:['Países Bajos','Japón','Suecia','Túnez'],
+  G:['Bélgica','Egipto','RI de Irán','Nueva Zelanda'],
+  H:['España','Islas de Cabo Verde','Arabia Saudí','Uruguay'],
+  I:['Francia','Senegal','Irak','Noruega'],
+  J:['Argentina','Argelia','Austria','Jordania'],
+  K:['Portugal','RD Congo','Uzbekistán','Colombia'],
+  L:['Inglaterra','Croacia','Ghana','Panamá'],
+};
+
+const GM=[
+  {id:'A1',g:'A',n:1,d:'2026-06-11',h:'México',a:'Sudáfrica'},
+  {id:'A2',g:'A',n:2,d:'2026-06-11',h:'Rep. de Corea',a:'Rep. Checa'},
+  {id:'A3',g:'A',n:3,d:'2026-06-18',h:'México',a:'Rep. de Corea'},
+  {id:'A4',g:'A',n:4,d:'2026-06-18',h:'Rep. Checa',a:'Sudáfrica'},
+  {id:'A5',g:'A',n:5,d:'2026-06-24',h:'Rep. Checa',a:'México'},
+  {id:'A6',g:'A',n:6,d:'2026-06-24',h:'Sudáfrica',a:'Rep. de Corea'},
+  {id:'B1',g:'B',n:7,d:'2026-06-12',h:'Canadá',a:'Bosnia'},
+  {id:'B2',g:'B',n:8,d:'2026-06-13',h:'Catar',a:'Suiza'},
+  {id:'B3',g:'B',n:9,d:'2026-06-18',h:'Canadá',a:'Catar'},
+  {id:'B4',g:'B',n:10,d:'2026-06-18',h:'Suiza',a:'Bosnia'},
+  {id:'B5',g:'B',n:11,d:'2026-06-24',h:'Suiza',a:'Canadá'},
+  {id:'B6',g:'B',n:12,d:'2026-06-24',h:'Bosnia',a:'Catar'},
+  {id:'C1',g:'C',n:13,d:'2026-06-13',h:'Brasil',a:'Marruecos'},
+  {id:'C2',g:'C',n:14,d:'2026-06-13',h:'Haití',a:'Escocia'},
+  {id:'C3',g:'C',n:15,d:'2026-06-19',h:'Brasil',a:'Haití'},
+  {id:'C4',g:'C',n:16,d:'2026-06-19',h:'Escocia',a:'Marruecos'},
+  {id:'C5',g:'C',n:17,d:'2026-06-24',h:'Escocia',a:'Brasil'},
+  {id:'C6',g:'C',n:18,d:'2026-06-24',h:'Marruecos',a:'Haití'},
+  {id:'D1',g:'D',n:19,d:'2026-06-12',h:'EE. UU.',a:'Paraguay'},
+  {id:'D2',g:'D',n:20,d:'2026-06-14',h:'Australia',a:'Turquía'},
+  {id:'D3',g:'D',n:21,d:'2026-06-19',h:'EE. UU.',a:'Australia'},
+  {id:'D4',g:'D',n:22,d:'2026-06-19',h:'Turquía',a:'Paraguay'},
+  {id:'D5',g:'D',n:23,d:'2026-06-25',h:'Turquía',a:'EE. UU.'},
+  {id:'D6',g:'D',n:24,d:'2026-06-25',h:'Paraguay',a:'Australia'},
+  {id:'E1',g:'E',n:25,d:'2026-06-14',h:'Alemania',a:'Curazao'},
+  {id:'E2',g:'E',n:26,d:'2026-06-14',h:'Costa de Marfil',a:'Ecuador'},
+  {id:'E3',g:'E',n:27,d:'2026-06-20',h:'Alemania',a:'Costa de Marfil'},
+  {id:'E4',g:'E',n:28,d:'2026-06-20',h:'Ecuador',a:'Curazao'},
+  {id:'E5',g:'E',n:29,d:'2026-06-25',h:'Ecuador',a:'Alemania'},
+  {id:'E6',g:'E',n:30,d:'2026-06-25',h:'Curazao',a:'Costa de Marfil'},
+  {id:'F1',g:'F',n:31,d:'2026-06-14',h:'Países Bajos',a:'Japón'},
+  {id:'F2',g:'F',n:32,d:'2026-06-14',h:'Suecia',a:'Túnez'},
+  {id:'F3',g:'F',n:33,d:'2026-06-20',h:'Países Bajos',a:'Suecia'},
+  {id:'F4',g:'F',n:34,d:'2026-06-21',h:'Túnez',a:'Japón'},
+  {id:'F5',g:'F',n:35,d:'2026-06-25',h:'Túnez',a:'Países Bajos'},
+  {id:'F6',g:'F',n:36,d:'2026-06-25',h:'Japón',a:'Suecia'},
+  {id:'G1',g:'G',n:37,d:'2026-06-15',h:'Bélgica',a:'Egipto'},
+  {id:'G2',g:'G',n:38,d:'2026-06-15',h:'RI de Irán',a:'Nueva Zelanda'},
+  {id:'G3',g:'G',n:39,d:'2026-06-21',h:'Bélgica',a:'RI de Irán'},
+  {id:'G4',g:'G',n:40,d:'2026-06-21',h:'Nueva Zelanda',a:'Egipto'},
+  {id:'G5',g:'G',n:41,d:'2026-06-26',h:'Nueva Zelanda',a:'Bélgica'},
+  {id:'G6',g:'G',n:42,d:'2026-06-26',h:'Egipto',a:'RI de Irán'},
+  {id:'H1',g:'H',n:43,d:'2026-06-15',h:'España',a:'Islas de Cabo Verde'},
+  {id:'H2',g:'H',n:44,d:'2026-06-15',h:'Arabia Saudí',a:'Uruguay'},
+  {id:'H3',g:'H',n:45,d:'2026-06-21',h:'España',a:'Arabia Saudí'},
+  {id:'H4',g:'H',n:46,d:'2026-06-21',h:'Uruguay',a:'Islas de Cabo Verde'},
+  {id:'H5',g:'H',n:47,d:'2026-06-26',h:'Uruguay',a:'España'},
+  {id:'H6',g:'H',n:48,d:'2026-06-26',h:'Islas de Cabo Verde',a:'Arabia Saudí'},
+  {id:'I1',g:'I',n:49,d:'2026-06-16',h:'Francia',a:'Senegal'},
+  {id:'I2',g:'I',n:50,d:'2026-06-16',h:'Irak',a:'Noruega'},
+  {id:'I3',g:'I',n:51,d:'2026-06-22',h:'Francia',a:'Irak'},
+  {id:'I4',g:'I',n:52,d:'2026-06-22',h:'Noruega',a:'Senegal'},
+  {id:'I5',g:'I',n:53,d:'2026-06-26',h:'Noruega',a:'Francia'},
+  {id:'I6',g:'I',n:54,d:'2026-06-26',h:'Senegal',a:'Irak'},
+  {id:'J1',g:'J',n:55,d:'2026-06-16',h:'Argentina',a:'Argelia'},
+  {id:'J2',g:'J',n:56,d:'2026-06-17',h:'Austria',a:'Jordania'},
+  {id:'J3',g:'J',n:57,d:'2026-06-22',h:'Argentina',a:'Austria'},
+  {id:'J4',g:'J',n:58,d:'2026-06-22',h:'Jordania',a:'Argelia'},
+  {id:'J5',g:'J',n:59,d:'2026-06-27',h:'Jordania',a:'Argentina'},
+  {id:'J6',g:'J',n:60,d:'2026-06-27',h:'Argelia',a:'Austria'},
+  {id:'K1',g:'K',n:61,d:'2026-06-17',h:'Portugal',a:'RD Congo'},
+  {id:'K2',g:'K',n:62,d:'2026-06-17',h:'Uzbekistán',a:'Colombia'},
+  {id:'K3',g:'K',n:63,d:'2026-06-23',h:'Portugal',a:'Uzbekistán'},
+  {id:'K4',g:'K',n:64,d:'2026-06-23',h:'Colombia',a:'RD Congo'},
+  {id:'K5',g:'K',n:65,d:'2026-06-27',h:'Colombia',a:'Portugal'},
+  {id:'K6',g:'K',n:66,d:'2026-06-27',h:'RD Congo',a:'Uzbekistán'},
+  {id:'L1',g:'L',n:67,d:'2026-06-17',h:'Inglaterra',a:'Croacia'},
+  {id:'L2',g:'L',n:68,d:'2026-06-17',h:'Ghana',a:'Panamá'},
+  {id:'L3',g:'L',n:69,d:'2026-06-23',h:'Inglaterra',a:'Ghana'},
+  {id:'L4',g:'L',n:70,d:'2026-06-23',h:'Panamá',a:'Croacia'},
+  {id:'L5',g:'L',n:71,d:'2026-06-27',h:'Panamá',a:'Inglaterra'},
+  {id:'L6',g:'L',n:72,d:'2026-06-27',h:'Croacia',a:'Ghana'},
+];
+
+// Llave de eliminatorias con las mismas semillas del Excel
+const BRACKET=[
+  // R32 — izquierda
+  {id:'M73',phase:'r32',side:'L',n:73,d:'2026-06-28',h:'1A',a:'2B'},
+  {id:'M74',phase:'r32',side:'L',n:74,d:'2026-06-28',h:'Alemania (1E)',a:'3 BCEF'},
+  {id:'M75',phase:'r32',side:'L',n:75,d:'2026-06-29',h:'Países Bajos (1F)',a:'2C'},
+  {id:'M76',phase:'r32',side:'L',n:76,d:'2026-06-29',h:'Brasil (1C)',a:'2F'},
+  {id:'M77',phase:'r32',side:'L',n:77,d:'2026-06-30',h:'Francia (1I)',a:'3 GHIJ'},
+  {id:'M78',phase:'r32',side:'L',n:78,d:'2026-06-30',h:'2E',a:'2I'},
+  {id:'M79',phase:'r32',side:'L',n:79,d:'2026-07-01',h:'México (1A)',a:'3 ABCD'},
+  {id:'M80',phase:'r32',side:'L',n:80,d:'2026-07-01',h:'Inglaterra (1L)',a:'3 IJKL'},
+  // R32 — derecha
+  {id:'M81',phase:'r32',side:'R',n:81,d:'2026-07-02',h:'EE. UU. (1D)',a:'3 ABCD'},
+  {id:'M82',phase:'r32',side:'R',n:82,d:'2026-07-02',h:'Bélgica (1G)',a:'3 EFGH'},
+  {id:'M83',phase:'r32',side:'R',n:83,d:'2026-07-03',h:'2K',a:'2L'},
+  {id:'M84',phase:'r32',side:'R',n:84,d:'2026-07-03',h:'España (1H)',a:'2J'},
+  {id:'M85',phase:'r32',side:'R',n:85,d:'2026-07-02',h:'Canadá (1B)'',a:'3 ABCD'},
+  {id:'M86',phase:'r32',side:'R',n:86,d:'2026-07-02',h:'Argentina (1J)'',a:'2H'},
+  {id:'M87',phase:'r32',side:'R',n:87,d:'2026-07-03',h:'Portugal (1K)'',a:'3 IJKL'},
+  {id:'M88',phase:'r32',side:'R',n:88,d:'2026-07-03',h:'2D',a:'2G'},
+  // Octavos
+  {id:'M89',phase:'r16',side:'L',n:89,d:'2026-07-04',h:'W M73',a:'W M74'},
+  {id:'M90',phase:'r16',side:'L',n:90,d:'2026-07-04',h:'W M75',a:'W M76'},
+  {id:'M91',phase:'r16',side:'L',n:91,d:'2026-07-05',h:'W M77',a:'W M78'},
+  {id:'M92',phase:'r16',side:'L',n:92,d:'2026-07-05',h:'W M79',a:'W M80'},
+  {id:'M93',phase:'r16',side:'R',n:93,d:'2026-07-06',h:'W M81',a:'W M82'},
+  {id:'M94',phase:'r16',side:'R',n:94,d:'2026-07-06',h:'W M83',a:'W M84'},
+  {id:'M95',phase:'r16',side:'R',n:95,d:'2026-07-07',h:'W M85',a:'W M86'},
+  {id:'M96',phase:'r16',side:'R',n:96,d:'2026-07-07',h:'W M87',a:'W M88'},
+  // Cuartos
+  {id:'M97',phase:'qf',side:'L',n:97,d:'2026-07-09',h:'W M89',a:'W M90'},
+  {id:'M98',phase:'qf',side:'L',n:98,d:'2026-07-10',h:'W M91',a:'W M92'},
+  {id:'M99',phase:'qf',side:'R',n:99,d:'2026-07-10',h:'W M93',a:'W M94'},
+  {id:'M100',phase:'qf',side:'R',n:100,d:'2026-07-11',h:'W M95',a:'W M96'},
+  // Semis
+  {id:'M101',phase:'sf',side:'L',n:101,d:'2026-07-14',h:'W M97',a:'W M98'},
+  {id:'M102',phase:'sf',side:'R',n:102,d:'2026-07-15',h:'W M99',a:'W M100'},
+  // 3er lugar
+  {id:'M103',phase:'3rd',side:'C',n:103,d:'2026-07-18',h:'L M101',a:'L M102'},
+  // Final
+  {id:'M104',phase:'final',side:'C',n:104,d:'2026-07-19',h:'W M101',a:'W M102'},
+];
+
+// Estado demo: sin ningún partido bloqueado en grupos
+// ══════════════════════════════════════════════════════════
+// RESULTADOS REALES — el Admin los ingresa partido por partido
+const RESULTS = {};
+
+// ══════════════════════════════════════════════════════════
+const DEMO_PICKS_A = {};
+  // vacío — todo editable
+
+const PHASE_LABELS={group:'Grupos',r32:'R32 · Dieciseisavos',r16:'Octavos',qf:'Cuartos',sf:'Semis','3rd':'3er Lugar',final:'Final'};
+const PHASE_ORDER=['group','r32','r16','qf','sf','3rd','final'];
+const ELIM_PHASES=['r32','r16','qf','sf','3rd','final'];
+
+const STATE={user:null,picks:{},activePhase:'group',activeGroup:'A',adminPhase:'group'};
+
+// ══════════════════════════════
+// UTILS
+// ══════════════════════════════
+function fmtD(d){
+  if(!d)return'';
+  const dt=new Date(d+'T12:00:00');
+  return dt.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+}
+function toast(msg,type='default',dur=3000){
+  const el=document.createElement('div');
+  el.className='toast'+(type!=='default'?' '+type:'');el.textContent=msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),dur);
+}
+// ══════════════════════════════════════════════════════════════
+// SISTEMA DE PUNTOS
+//
+// GRUPOS — por partido (máx 5 pts):
+//   1 pt → goles local exactos
+//   1 pt → goles visitante exactos
+//   2 pts → resultado correcto G/E/P
+//   +1 bonus → ambos goles + resultado correctos
+//
+// ELIMINATORIAS — por partido (máx 5 pts):
+//   CONDICIÓN: el equipo debe ser el mismo en la realidad
+//   1 pt → goles del equipo local exactos (si ese equipo está en ese slot real)
+//   1 pt → goles del equipo visitante exactos (mismo criterio)
+//   2 pts → aciertas quién avanza (pick.win === ganador real)
+//   +1 bonus → ambos goles exactos + quién avanza correcto
+//
+// CLASIFICACIÓN DE GRUPO: 1 pt por posición exacta (máx 4)
+//
+// ORDEN FINAL (Campeón/Subcampeón/3ro/4to):
+//   20 pts → Campeón exacto
+//   10 pts → Subcampeón exacto
+//    5 pts → 3er lugar exacto
+//    3 pts → 4to lugar exacto
+// ══════════════════════════════════════════════════════════════
+
+// Picks de orden final: { champion, runnerUp, third, fourth }
+const finalOrderPicks = {};
+
+// Orden final real (lo pone el admin)
+const finalOrderReal = {};
+// e.g. finalOrderReal = { champion:'Brasil', runnerUp:'Francia', third:'Argentina', fourth:'Alemania' }
+
+function calcPts(pick, match) {
+  const r = RESULTS[match.id];
+  if (!r || r.hs == null || !pick || pick.h == null) return null;
+  const isGroup = !match.phase || match.phase === 'group';
+
+  if (isGroup) {
+    // Grupos: siempre mismo equipo en mismo slot
+    const rR = r.hs > r.as ? 'H' : r.hs < r.as ? 'A' : 'D';
+    const pR = pick.h > pick.a ? 'H' : pick.h < pick.a ? 'A' : 'D';
+    const homeExact = pick.h === r.hs;
+    const awayExact = pick.a === r.as;
+    const resultOk  = rR === pR;
+    const bothExact = homeExact && awayExact;
+    let pts = 0;
+    if (homeExact)             pts += 1;
+    if (awayExact)             pts += 1;
+    if (resultOk)              pts += 2;
+    if (bothExact && resultOk) pts += 1;
+    return pts;
+  } else {
+    // ELIMINATORIAS — puntos basados en coincidencia de SLOT (posición)
+    // El equipo predicho DEBE ser el mismo que el real en ese slot para sumar goles
+    // Ejemplo: predijiste Rep.Checa(local) vs Bosnia(visit), real fue Brasil(local) vs Bosnia(visit)
+    //   → Local no coincide (Rep.Checa ≠ Brasil) → goles local NO suman
+    //   → Visitante coincide (Bosnia = Bosnia) → goles visitante SÍ suman si son exactos
+    const T = buildAllTeams();
+    const realTeams = T[match.id] || {};
+    const realH = realTeams.h; // equipo REAL en slot local
+    const realA = realTeams.a; // equipo REAL en slot visitante
+
+    // Equipos que el usuario predijo para este partido
+    // Los guardamos como pick.hTeam/pick.aTeam al hacer el pick
+    // Si no están guardados, inferimos desde la última vez que se calculó buildAllTeams
+    const pickH = pick.hTeam || null; // equipo predicho en slot local
+    const pickA = pick.aTeam || null; // equipo predicho en slot visitante
+
+    // ¿Coincide el equipo en cada slot?
+    const homeSlotMatch = realH && pickH && realH === pickH;
+    const awaySlotMatch = realA && pickA && realA === pickA;
+
+    // Goles: solo suman si el equipo en ese slot es el mismo
+    const homeExact = homeSlotMatch && pick.h === r.hs;
+    const awayExact = awaySlotMatch && pick.a === r.as;
+
+    // Quién avanza: 2pts si el equipo que predijiste que avanza es el que avanzó realmente
+    const realWinner = r.hs > r.as ? realH : r.hs < r.as ? realA : (r.win || null);
+    const pickWinner = pick.win || null;
+    const winOk = pickWinner && realWinner && pickWinner === realWinner;
+
+    // Bonus: ambos goles exactos (con sus slots coincidentes) + quién avanza correcto
+    const bonusOk = homeExact && awayExact && winOk;
+
+    let pts = 0;
+    if (homeExact) pts += 1;
+    if (awayExact) pts += 1;
+    if (winOk)     pts += 2;
+    if (bonusOk)   pts += 1;
+    return pts;
+  }
+}
+
+function calcPtsDetail(pick, match) {
+  const r = RESULTS[match.id];
+  if (!r || r.hs == null || !pick || pick.h == null) return [];
+  const isGroup = !match.phase || match.phase === 'group';
+  const hName = match.hResolved || match.h || 'Local';
+  const aName = match.aResolved || match.a || 'Visitante';
+
+  if (isGroup) {
+    const rR = r.hs > r.as ? 'H' : r.hs < r.as ? 'A' : 'D';
+    const pR = pick.h > pick.a ? 'H' : pick.h < pick.a ? 'A' : 'D';
+    const homeExact = pick.h === r.hs;
+    const awayExact = pick.a === r.as;
+    const resultOk  = rR === pR;
+    const bothExact = homeExact && awayExact;
+    return [
+      homeExact ? {ok:true,  txt:`${hName} exacto +1`}
+                : {ok:false, txt:`${hName}: pick ${pick.h} / real ${r.hs}`},
+      awayExact ? {ok:true,  txt:`${aName} exacto +1`}
+                : {ok:false, txt:`${aName}: pick ${pick.a} / real ${r.as}`},
+      resultOk  ? {ok:true,  txt:'Resultado (G/E/P) +2'}
+                : {ok:false, txt:'Resultado incorrecto'},
+      ...(bothExact && resultOk ? [{ok:true, txt:'🎯 Bonus completo +1'}] : []),
+    ];
+  } else {
+    const T = buildAllTeams();
+    const realTeams = T[match.id] || {};
+    const realH = realTeams.h, realA = realTeams.a;
+    const pickH = pick.hTeam || null;
+    const pickA = pick.aTeam || null;
+    const homeSlotMatch = realH && pickH && realH === pickH;
+    const awaySlotMatch = realA && pickA && realA === pickA;
+    const homeExact = homeSlotMatch && pick.h === r.hs;
+    const awayExact = awaySlotMatch && pick.a === r.as;
+    const realWinner = r.hs > r.as ? realH : r.hs < r.as ? realA : (r.win || null);
+    const pickWinner = pick.win || null;
+    const winOk = pickWinner && realWinner && pickWinner === realWinner;
+    const bonusOk = homeExact && awayExact && winOk;
+    const lines = [];
+    // Slot local
+    if (!pickH) {
+      lines.push({ok:false, txt:`Local: sin pick de equipo`});
+    } else if (!homeSlotMatch) {
+      lines.push({ok:false, txt:`Local: pick=${pickH} / real=${realH} (distinto equipo, no suma)`});
+    } else {
+      lines.push(homeExact
+        ? {ok:true,  txt:`${realH} (local) exacto: ${r.hs} goles +1`}
+        : {ok:false, txt:`${realH} (local): pick ${pick.h} / real ${r.hs}`});
+    }
+    // Slot visitante
+    if (!pickA) {
+      lines.push({ok:false, txt:`Visitante: sin pick de equipo`});
+    } else if (!awaySlotMatch) {
+      lines.push({ok:false, txt:`Visitante: pick=${pickA} / real=${realA} (distinto equipo, no suma)`});
+    } else {
+      lines.push(awayExact
+        ? {ok:true,  txt:`${realA} (visit.) exacto: ${r.as} goles +1`}
+        : {ok:false, txt:`${realA} (visit.): pick ${pick.a} / real ${r.as}`});
+    }
+    lines.push(winOk
+      ? {ok:true,  txt:`Avanza ${pickWinner} ✓ +2`}
+      : {ok:false, txt:`Avanza: pick ${pickWinner||'?'} / real ${realWinner||'?'}`});
+    if (bonusOk) lines.push({ok:true, txt:'🎯 Bonus completo +1'});
+    return lines;
+  }
+}
+
+// Puntos por orden final — detecta automáticamente desde picks de Final y 3er puesto
+function calcFinalOrderPts() {
+  const T = buildAllTeams();
+  const fin = BRACKET.find(m => m.phase === 'final');
+  const tp  = BRACKET.find(m => m.phase === '3rd');
+  if (!fin || !tp) return null;
+
+  const finTeams = T[fin.id] || {};
+  const t3Teams  = T[tp.id]  || {};
+  const finH = finTeams.h, finA = finTeams.a;
+  const t3H  = t3Teams.h,  t3A  = t3Teams.a;
+
+  const finRes = RESULTS[fin.id] || {};
+  const t3Res  = RESULTS[tp.id]  || {};
+  const finPick = STATE.picks[fin.id] || {};
+  const t3Pick  = STATE.picks[tp.id]  || {};
+
+  // ── Resultado real (si ya se jugó) ────────────────────────
+  const realChamp  = finRes.hs != null
+    ? (finRes.hs > finRes.as ? finH : finRes.hs < finRes.as ? finA : finRes.win||null)
+    : null;
+  const realRunner = realChamp ? (realChamp === finH ? finA : finH) : null;
+  const realThird  = t3Res.hs != null
+    ? (t3Res.hs > t3Res.as ? t3H : t3Res.hs < t3Res.as ? t3A : t3Res.win||null)
+    : null;
+  const realFourth = realThird ? (realThird === t3H ? t3A : t3H) : null;
+
+  // ── Pick del usuario: quién predijo que gana Final/3ero ──
+  // El pick.win se ingresa en el selector "¿Quién avanza?"
+  // También intentamos inferir de los scores si pick.win no está
+  const pickChamp = finPick.win ||
+    (finH && finA && finPick.h != null
+      ? (finPick.h > finPick.a ? finH : finPick.h < finPick.a ? finA : null)
+      : null);
+  const pickRunner = (finH && finA && pickChamp)
+    ? (pickChamp === finH ? finA : finH) : null;
+
+  const pickThird = t3Pick.win ||
+    (t3H && t3A && t3Pick.h != null
+      ? (t3Pick.h > t3Pick.a ? t3H : t3Pick.h < t3Pick.a ? t3A : null)
+      : null);
+  const pickFourth = (t3H && t3A && pickThird)
+    ? (pickThird === t3H ? t3A : t3H) : null;
+
+  // Si no hay equipos resueltos en la Final/3ero aún, retornar null parcial
+  // para que el UI muestre TBD
+  const hasAnyData = !!(finH || pickChamp || realChamp);
+  if (!hasAnyData) return null;
+
+  // ── Puntos ────────────────────────────────────────────────
+  let pts = 0;
+  const detail = [];
+  const check = (label, val, pickTeam, realTeam) => {
+    if (!realTeam) return; // aún no hay resultado real
+    const ok = !!(pickTeam && pickTeam === realTeam);
+    if (ok) pts += val;
+    detail.push({ok, txt:`${label}: pick=${pickTeam||'?'} real=${realTeam}${ok?` ✓ +${val}pts`:''}`});
+  };
+  check('🏆 Campeón',    20, pickChamp,  realChamp);
+  check('🥈 Subcampeón', 10, pickRunner, realRunner);
+  check('🥉 3er lugar',   5, pickThird,  realThird);
+  check('4to lugar',       3, pickFourth, realFourth);
+
+  return {
+    pts, detail,
+    // Equipos reales
+    champion: realChamp,  runnerUp: realRunner,
+    third:    realThird,  fourth:   realFourth,
+    // Picks del usuario
+    pickChamp, pickRunner, pickThird, pickFourth,
+    // Equipos que llegan a Final/3ero (para mostrar aunque no haya resultado)
+    finH, finA, t3H, t3A,
+  };
+}
+
+
+// ══════════════════════════════
+// AUTH
+// ══════════════════════════════
+let authMode='login';
+function switchAuth(m){
+  authMode=m;
+  document.querySelectorAll('#login-page .tb').forEach((b,i)=>b.classList.toggle('active',['login','register'][i]===m));
+  document.getElementById('code-g').style.display=m==='register'?'block':'none';
+}
+function doLogin(){
+  const u=document.getElementById('l-u').value.trim(),p=document.getElementById('l-p').value;
+  const err=document.getElementById('l-err');
+  if(!u||!p){err.textContent='Completa todos los campos';err.style.display='block';return;}
+  if(!(u==='Admin'&&p==='admin123')){
+    err.textContent='Credenciales incorrectas. Prueba: Admin / admin123';err.style.display='block';return;
+  }
+  err.style.display='none';
+  STATE.user={username:u,is_admin:u==='Admin'};
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('admin-nav').style.display=STATE.user.is_admin?'':'none';
+  initApp();
+}
+function doLogout(){
+  STATE.user=null;STATE.picks={};
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ══════════════════════════════
+// INIT
+// ══════════════════════════════
+function initApp(){
+  renderPhaseTabs();renderMatches();renderLeaderboard();
+  renderAdminPhaseTabs();renderAdminTable();renderUsersTable();renderCodesTable();
+}
+
+function showPage(name){
+  ['picks','leaderboard','ai','admin'].forEach(p=>{
+    document.getElementById('page-'+p).style.display=p===name?'block':'none';
+  });
+  document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('active',['picks','leaderboard','ai','admin'][i]===name));
+  if(name==='leaderboard') renderLeaderboard();
+}
+
+// ══════════════════════════════
+// PHASE TABS
+// ══════════════════════════════
+function renderPhaseTabs(){
+  const phases=PHASE_ORDER;
+  document.getElementById('phase-tabs').innerHTML=phases.map(p=>
+    `<button class="tb${p===STATE.activePhase?' active':''}" onclick="setPhase('${p}')">${PHASE_LABELS[p]}</button>`
+  ).join('');
+}
+function setPhase(p){STATE.activePhase=p;renderPhaseTabs();renderMatches();}
+
+// ══════════════════════════════
+// RENDER MATCHES
+// ══════════════════════════════
+function renderMatches(){
+  const container=document.getElementById('matches-container');
+  const pickCount=Object.values(STATE.picks).filter(p=>p&&p.h!=null).length;
+  document.getElementById('picks-ctr').textContent=`${pickCount} de 104 partidos pronosticados`;
+
+  if(STATE.activePhase==='group'){
+    const groupKeys=Object.keys(GRUPOS);
+    container.innerHTML=`
+      <div class="tscroll" style="margin-bottom:16px">
+        <div class="tabs" id="group-tabs">
+          ${groupKeys.map(g=>`<button class="tb${g===STATE.activeGroup?' active':''}" onclick="setGroup('${g}')">Grupo ${g}</button>`).join('')}
+        </div>
+      </div>
+      <div id="group-content"></div>`;
+    renderGroupContent();
+  } else {
+    // LLAVE DE ELIMINATORIAS
+    renderBracket(container);
+  }
+}
+
+function setGroup(g){
+  STATE.activeGroup=g;
+  document.querySelectorAll('#group-tabs .tb').forEach((b,i)=>b.classList.toggle('active',Object.keys(GRUPOS)[i]===g));
+  renderGroupContent();
+}
+
+// ══════════════════════════════
+// GRUPO CARD
+// ══════════════════════════════
+function renderGroupContent(){
+  const g=STATE.activeGroup;
+  const teams=GRUPOS[g];
+  const gm=GM.filter(m=>m.g===g);
+  // tabla = mezcla picks+real (para mostrar tabla en vivo mientras no hay resultados reales)
+  // pickTabla = solo picks (para clasificación estimada)
+  const tabla=calcTabla(g,gm);
+  const jugados=gm.filter(m=>RESULTS[m.id]&&RESULTS[m.id].hs!=null).length;
+
+  document.getElementById('group-content').innerHTML=`
+    <div class="grupo-card">
+      <div class="grupo-hdr">
+        <div>
+          <div class="grupo-tag">Grupo ${g}</div>
+          <div class="grupo-sub">${teams.join(' · ')}</div>
+        </div>
+        <span style="font-size:11px;opacity:.8">${jugados} / 6 jugados</span>
+      </div>
+
+      <!-- PARTIDOS: subheader -->
+      <div style="display:grid;grid-template-columns:56px 1fr 110px 1fr 130px 40px 28px;padding:5px 0;border-bottom:0.5px solid var(--border);background:rgba(255,255,255,0.7)">
+          <div></div>
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);padding:0 4px">Local</div>
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);text-align:center">Real / Pick</div>
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);text-align:right;padding:0 4px">Visitante</div>
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);text-align:center;padding:0 8px">Resultado</div>
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--accent);text-align:center">Pts</div>
+          <div></div>
+        </div>
+      ${gm.map(m=>partidoRow(m,teams)).join('')}
+
+      <!-- TABLA -->
+      <div style="border-top:0.5px solid var(--border)">
+        <div style="padding:9px 14px 5px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Clasificación</span>
+          <span style="font-size:10px;color:var(--text3)">Estimada con tus picks · Real aparece al terminar el grupo</span>
+        </div>
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th style="text-align:left">Tu predicción (pick)</th>
+              <th>J</th><th>G</th><th>E</th><th>P</th>
+              <th>GF</th><th>GC</th><th>DIF</th>
+              <th>Enc.</th>
+              <th style="color:var(--accent)" title="Puntos en la tabla del grupo">PTS</th>
+              <th style="color:var(--text2);font-size:10px;border-left:2px solid var(--border2);text-align:left" title="Quién quedó realmente en esa posición">Real (mismo lugar)</th>
+              <th style="color:var(--success);font-size:10px" title="1pt si el equipo real coincide con tu predicción">Q.Clasif.</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-${g}">
+            ${tablaRows(tabla,g,gm)}
+          </tbody>
+        </table>
+        <div style="display:flex;gap:12px;padding:7px 14px 0;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
+            <span style="display:inline-block;width:3px;height:12px;background:var(--success);border-radius:2px"></span> 1ro y 2do clasificados
+          </span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
+            <span style="display:inline-block;width:3px;height:12px;background:var(--warning);border-radius:2px"></span> Posible mejor 3ro
+          </span>
+        </div>
+      </div>
+
+    </div>`;
+}
+
+function tablaRows(tabla, g, gm) {
+  // tabla = orden según calcTabla() que usa picks pero puede mezclar con reales
+  // Para clasificación usamos SIEMPRE dos tablas puras y separadas:
+  //   pickTabla = SOLO picks del usuario
+  //   realTabla = SOLO resultados reales del admin
+
+  const total1 = gm.reduce((sum, m) => {
+    const pk = STATE.picks[m.id];
+    if (!pk || pk.h == null) return sum;
+    return sum + (calcPts(pk, m) || 0);
+  }, 0);
+
+  const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
+
+  // Tabla SOLO de picks (para saber qué orden predijo el usuario)
+  const pickTabla = calcTablaPicksOnly(g, gm);
+  // Tabla SOLO de resultados reales
+  const realTabla = allDone ? calcTablaReal(g) : null;
+
+  // Pts clasificación: comparar posición por posición pick vs real
+  let total2 = null;
+  if (realTabla) {
+    total2 = 0;
+    for (let i = 0; i < 4; i++) {
+      if (pickTabla[i] && realTabla[i] && pickTabla[i].team === realTabla[i].team) total2++;
+    }
+  }
+
+  // Display usando pickTabla (orden puro de picks) para mostrar la predicción del usuario
+  const rows = pickTabla.map((row, i) => {
+    // row = equipo en posición i según SOLO picks del usuario
+    const barColor = i < 2 ? 'var(--success)' : i === 2 ? 'var(--warning)' : 'transparent';
+    const difColor = row.dif > 0 ? 'var(--success)' : row.dif < 0 ? 'var(--danger)' : 'var(--text2)';
+
+    // Mini dots G/E/P — usan picks del usuario
+    const rivals = GRUPOS[g].filter(t => t !== row.team);
+    const encDots = rivals.map(rival => {
+      const match = gm.find(m => (m.h===row.team&&m.a===rival)||(m.a===row.team&&m.h===rival));
+      if (!match) return `<span class="enc-dot enc-?">?</span>`;
+      const r = RESULTS[match.id], pk = STATE.picks[match.id];
+      let hs, as, isHome = match.h === row.team;
+      if (r && r.hs != null) { hs = r.hs; as = r.as; }
+      else if (pk && pk.h != null) { hs = pk.h; as = pk.a; }
+      else return `<span class="enc-dot enc-?" title="${rival}">?</span>`;
+      const my = isHome ? hs : as, their = isHome ? as : hs;
+      let cls = 'enc-E', label = 'E';
+      if (my > their) { cls = 'enc-W'; label = 'G'; }
+      else if (my < their) { cls = 'enc-L'; label = 'P'; }
+      return `<span class="enc-dot ${cls}" title="${label} vs ${rival} ${my}-${their}">${label}</span>`;
+    }).join('');
+
+    // Pos. Real: muestra QUIÉN quedó realmente en la posición i
+    // y compara con quién el usuario predijo para esa posición (row.team)
+    let posRealCell = '<td style="text-align:center;border-left:2px solid var(--border2)"><span style="color:var(--text3);font-size:11px">—</span></td>';
+    let clasifCell  = '<td style="text-align:center"><span style="color:var(--text3);font-size:11px">—</span></td>';
+
+    if (realTabla) {
+      const realTeamInThisPos = realTabla[i].team;  // equipo REAL en posición i
+      const coincide = realTeamInThisPos === row.team; // ¿coincide con el pick del usuario en esa pos?
+
+      posRealCell = `<td style="text-align:left;border-left:2px solid var(--border2);padding:6px 10px">
+        <div style="display:flex;align-items:center;gap:5px">
+          ${fh(realTeamInThisPos, 18)}
+          <span style="font-size:12px;font-weight:700;color:${coincide?'#1a7a38':'var(--text)'}">${realTeamInThisPos}</span>
+          ${coincide ? '<span style="font-size:10px;color:#1a7a38;font-weight:700">← igual ✓</span>' : ''}
+        </div>
+      </td>`;
+
+      clasifCell = coincide
+        ? `<td style="text-align:center"><span style="background:rgba(48,209,88,.15);color:#1a7a38;padding:3px 9px;border-radius:6px;font-size:13px;font-weight:800">+1 ✓</span></td>`
+        : `<td style="text-align:center"><span style="color:var(--text3);font-size:13px;font-weight:700">0</span></td>`;
+    }
+
+    return `<tr>
+      <td class="team-cell">
+        <span class="clasif-bar" style="background:${barColor}"></span>
+        ${fh(row.team,18)}
+        <span style="font-size:12px;margin-left:3px;font-weight:600">${row.team}</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:4px">(${['1ro','2do','3ro','4to'][i]})</span>
+      </td>
+      <td>${row.j}</td><td>${row.g}</td><td>${row.e}</td><td>${row.p}</td>
+      <td>${row.gf}</td><td>${row.gc}</td>
+      <td style="color:${difColor};font-weight:700">${row.dif>0?'+':''}${row.dif}</td>
+      <td><div class="enc-results">${encDots}</div></td>
+      <td class="pts-col">${row.pts}</td>
+      ${posRealCell}
+      ${clasifCell}
+    </tr>`;
+  }).join('');
+
+  const footer = `
+  <tr style="border-top:1px solid var(--border2);background:var(--surface2)">
+    <td colspan="10" style="text-align:right;font-size:11px;font-weight:700;color:var(--text2);padding:6px 9px">TOTAL PICKS (partidos)</td>
+    <td colspan="2" style="color:var(--accent);font-size:14px;font-weight:800;text-align:center;padding:6px 9px">${total1}</td>
+  </tr>
+  <tr style="background:rgba(48,209,88,.06)">
+    <td colspan="10" style="text-align:right;font-size:11px;font-weight:700;color:var(--text2);padding:6px 9px">
+      TOTAL CLASIFICACIÓN
+      <span style="font-weight:400;font-size:10px;color:var(--text3);margin-left:4px">1pt por cada posición exacta</span>
+    </td>
+    <td colspan="2" style="color:${total2!=null&&total2>0?'#1a7a38':'var(--text3)'};font-size:14px;font-weight:800;text-align:center;padding:6px 9px">${total2!=null?total2:'—'}</td>
+  </tr>
+  <tr style="background:rgba(0,113,227,.08);border-top:1.5px solid rgba(0,113,227,.25)">
+    <td colspan="10" style="text-align:right;font-size:13px;font-weight:800;color:var(--text);padding:8px 9px">TOTAL GRUPO</td>
+    <td colspan="2" style="color:var(--accent);font-size:16px;font-weight:800;text-align:center;padding:8px 9px">${total2!=null?total1+total2:total1}</td>
+  </tr>`;
+
+  return rows + footer;
+}
+
+// ══════════════════════════════
+// PARTIDO ROW (GRUPO) — siempre editable
+// ══════════════════════════════
+function getResultadoHtml(m){
+  const res=RESULTS[m.id]||{};
+  const pk=STATE.picks[m.id]||{};
+  let hs,as;
+  if(res.hs!=null){hs=res.hs;as=res.as;}
+  else if(pk.h!=null){hs=pk.h;as=pk.a;}
+  else return`<div class="resultado-col" id="res-col-${m.id}"><span class="res-pending">Sin pick</span></div>`;
+  if(hs>as){
+    return`<div class="resultado-col" id="res-col-${m.id}">
+      <span class="res-chip res-win">${fh(m.h,16)}<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.h}</span></span>
+    </div>`;
+  } else if(hs<as){
+    return`<div class="resultado-col" id="res-col-${m.id}">
+      <span class="res-chip res-win">${fh(m.a,16)}<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.a}</span></span>
+    </div>`;
+  } else {
+    return`<div class="resultado-col" id="res-col-${m.id}">
+      <span class="res-chip res-draw">Empate</span>
+    </div>`;
+  }
+}
+
+// Columna de PUNTOS obtenidos (pick vs resultado real)
+function getPtsColHtml(m){
+  const res=RESULTS[m.id]||{};
+  const pk=STATE.picks[m.id]||{};
+  if(res.hs==null) return`<div class="ppts-col" id="pts-col-${m.id}"><span class="ppts-none">·</span></div>`;
+  const pts=calcPts(pk.h!=null?pk:null,m);
+  if(pts==null) return`<div class="ppts-col" id="pts-col-${m.id}"><span class="ppts-badge ppts-zero" title="Sin pick">0</span></div>`;
+  const detail=calcPtsDetail(pk,m);
+  const tip=detail.map(d=>(d.ok?'✓ ':'✗ ')+d.txt).join('\n');
+  const color=pts>=5?'#7a5900':pts>=3?'#1a7a38':pts>0?'var(--accent)':'var(--text3)';
+  const bg=pts>=5?'var(--gold)':pts>=3?'rgba(48,209,88,.15)':pts>0?'rgba(0,113,227,.12)':'var(--surface2)';
+  return`<div class="ppts-col" id="pts-col-${m.id}">
+    <span class="ppts-badge" style="background:${bg};color:${color};min-width:24px" title="${tip}">${pts}</span>
+  </div>`;
+}
+
+function ptsBreakdown(pk,m){
+  const detail = calcPtsDetail(pk, m);
+  if (!detail.length) return '';
+  return detail.map(d => (d.ok?'✓ ':'✗ ') + d.txt).join(' | ');
+}
+
+function partidoRow(m,teams){
+  const pick=STATE.picks[m.id]||{};
+  const res=RESULTS[m.id]||{};
+  const locked=res.locked||false;
+  const hasResult=res.hs!=null;
+  const pts=calcPts(pick.h!=null?pick:null,m);
+  const detail=hasResult&&pick.h!=null?calcPtsDetail(pick,m):[];
+
+  // Colores de acierto por gol individual
+  const hOk = hasResult && pick.h!=null && pick.h===res.hs;
+  const aOk = hasResult && pick.a!=null && pick.a===res.as;
+
+  // ── ZONA DE SCORE: siempre muestra el PICK del usuario ──
+  // Si hay resultado real, lo muestra encima en pequeño
+  const realRow = hasResult ? `
+    <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:3px">
+      <span style="font-size:13px;font-weight:800;
+        color:${hOk?'var(--success)':'var(--danger)'};
+        background:${hOk?'rgba(48,209,88,.1)':'rgba(255,69,58,.08)'};
+        width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center">
+        ${res.hs}
+      </span>
+      <span style="font-size:11px;color:var(--text3);font-weight:700">–</span>
+      <span style="font-size:13px;font-weight:800;
+        color:${aOk?'var(--success)':'var(--danger)'};
+        background:${aOk?'rgba(48,209,88,.1)':'rgba(255,69,58,.08)'};
+        width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center">
+        ${res.as}
+      </span>
+    </div>
+    <div style="font-size:9px;font-weight:600;color:var(--text3);text-align:center;letter-spacing:.3px;margin-bottom:2px">REAL</div>` : '';
+
+  const pickRow = `
+    <div style="display:flex;align-items:center;gap:4px">
+      <input type="number" min="0" max="20" class="si" id="h-${m.id}"
+        value="${pick.h!=null?pick.h:''}" placeholder="0"
+        style="border-color:${hasResult?(hOk?'var(--success)':'var(--danger)'):'var(--border2)'};
+               background:${hasResult?(hOk?'rgba(48,209,88,.08)':'rgba(255,69,58,.05)'):'var(--surface2)'}"
+        oninput="setPick('${m.id}','h',this.value)" ${locked?'disabled':''}>
+      <span class="si-sep">–</span>
+      <input type="number" min="0" max="20" class="si" id="a-${m.id}"
+        value="${pick.a!=null?pick.a:''}" placeholder="0"
+        style="border-color:${hasResult?(aOk?'var(--success)':'var(--danger)'):'var(--border2)'};
+               background:${hasResult?(aOk?'rgba(48,209,88,.08)':'rgba(255,69,58,.05)'):'var(--surface2)'}"
+        oninput="setPick('${m.id}','a',this.value)" ${locked?'disabled':''}>
+    </div>
+    ${hasResult?`<div style="font-size:9px;font-weight:600;color:var(--text2);text-align:center;letter-spacing:.3px;margin-top:2px">TU PICK</div>`:''}`;
+
+  const scoreCenter=`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      ${realRow}
+      ${pickRow}
+    </div>`;
+
+  const fsHtml = ''; // 1er gol eliminado
+
+  let stHtml='';
+  if(locked)stHtml=`<span title="Cerrado" style="font-size:13px">🔒</span>`;
+  else if(pick.saved)stHtml=`<span style="color:var(--success);font-size:14px;font-weight:700">✓</span>`;
+  else if(pick.h!=null)stHtml=`<span id="st-${m.id}" style="color:var(--warning);font-size:11px">·</span>`;
+
+  return`
+    <div class="prow partido" style="min-height:${hasResult?'72px':'52px'}">
+      <div class="pfecha">${fmtD(m.d).replace(',','<br>')}</div>
+      <div class="pteam">${fh(m.h)}<span class="tname">${m.h}</span></div>
+      <div class="pscore">${scoreCenter}</div>
+      <div class="pteam r"><span class="tname">${m.a}</span>${fh(m.a)}</div>
+      ${getResultadoHtml(m)}
+      <div class="pextra"></div>
+      ${getPtsColHtml(m)}
+      <div class="pst">${stHtml}</div>
+    </div>`;
+}
+
+// ══════════════════════════════
+// PICKS
+// ══════════════════════════════
+// ══════════════════════════════════════════════════
+// PUNTOS DE CLASIFICACIÓN
+// Compara el orden que el usuario "predijo" implícitamente
+// a través de sus picks de partidos, vs el orden real.
+// 1 pt por cada equipo en la misma posición exacta.
+// ══════════════════════════════════════════════════
+function calcClasifPts(g, realTabla) {
+  // Orden "predicho" por el usuario (basado en sus picks de partidos)
+  const gm = GM.filter(m => m.g === g);
+  const pickTabla = calcTabla(g, gm); // usa picks del usuario
+  // Orden "real" (basado en resultados reales del admin)
+  const realOrder = realTabla.map(r => r.team);
+  const pickOrder = pickTabla.map(r => r.team);
+  let pts = 0;
+  realOrder.forEach((team, i) => {
+    if (pickOrder[i] === team) pts += 1;
+  });
+  return pts;
+}
+
+
+
+const saveTimers={};
+function setPick(id,field,val){
+  if(!STATE.picks[id])STATE.picks[id]={saved:false};
+  STATE.picks[id][field]=field==='h'||field==='a'?(val===''?null:+val):val;
+  STATE.picks[id].saved=false;
+  const st=document.getElementById('st-'+id);
+  if(st){st.textContent='·';st.style.color='var(--warning)';}
+  clearTimeout(saveTimers[id]);
+  saveTimers[id]=setTimeout(()=>autoSavePick(id),1100);
+}
+function autoSavePick(id){
+  const pk=STATE.picks[id];
+  if(!pk||pk.h==null||pk.a==null)return;
+  pk.saved=true;
+  syncPickToPlayer(id, pk);
+  const st=document.getElementById('st-'+id);
+  if(st){st.textContent='✓';st.style.color='var(--success)';}
+  // Refrescar columnas resultado y pts
+  refreshPartidoCols(id);
+  // Re-render tabla clasificación
+  const g=STATE.activeGroup;
+  const gm=GM.filter(m=>m.g===g);
+  const tabla=calcTabla(g,gm); // para la tabla visual
+  const tbody=document.getElementById('tbody-'+g);
+  if(tbody)tbody.innerHTML=tablaRows(tabla,g,gm);
+  // Update counter
+  const c=Object.values(STATE.picks).filter(p=>p&&p.h!=null).length;
+  if(document.getElementById('picks-ctr'))
+    document.getElementById('picks-ctr').textContent=`${c} de 104 partidos pronosticados`;
+  // Refresh leaderboard if visible
+  if(document.getElementById('page-leaderboard').style.display!=='none') renderLeaderboard();
+}
+
+function refreshPartidoCols(id){
+  const m=GM.find(x=>x.id===id);
+  if(!m)return;
+  // Resultado col
+  const resCol=document.getElementById('res-col-'+id);
+  if(resCol)resCol.outerHTML=getResultadoHtml(m);
+  // Pts col
+  const ptsCol=document.getElementById('pts-col-'+id);
+  if(ptsCol)ptsCol.outerHTML=getPtsColHtml(m);
+}
+
+// Llamar esto cuando el Admin guarda un resultado real
+// para que todos los pts se actualicen en tiempo real
+function refreshAllPickCols(){
+  const g=STATE.activeGroup;
+  GM.filter(m=>m.g===g).forEach(m=>{
+    const resCol=document.getElementById('res-col-'+m.id);
+    if(resCol)resCol.outerHTML=getResultadoHtml(m);
+    const ptsCol=document.getElementById('pts-col-'+m.id);
+    if(ptsCol)ptsCol.outerHTML=getPtsColHtml(m);
+  });
+  // Re-render tabla también
+  const gm=GM.filter(m=>m.g===g);
+  const tabla=calcTabla(g,gm);
+  const tbody=document.getElementById('tbody-'+g);
+  if(tbody)tbody.innerHTML=tablaRows(tabla,g,gm); // tablaRows internally uses calcTablaPicksOnly
+
+}
+
+// ══════════════════════════════
+// TABLA CLASIFICACIÓN
+// ══════════════════════════════
+// calcTabla: usa picks primero, luego resultados reales (para mostrar tabla estimada en tiempo real)
+function calcTabla(g,gm){
+  return _buildTabla(g, gm, false); // false = picks primero
+}
+
+// calcTablaReal: SOLO usa resultados reales del admin
+function calcTablaReal(g){
+  const gm=GM.filter(m=>m.g===g);
+  return _buildTabla(g, gm, true); // true = solo resultados reales
+}
+
+// calcTablaPicksOnly: SOLO usa picks del usuario — usa _buildTabla con realOnly=false
+// pero forzando solo picks (sin fallback a resultados reales)
+function calcTablaPicksOnly(g, gm) {
+  // Temporalmente enmascarar RESULTS para que _buildTabla use solo picks
+  const teams = GRUPOS[g];
+  const s = {};
+  const matchData = [];
+  teams.forEach(t => { s[t] = {j:0,g:0,e:0,p:0,gf:0,gc:0,pts:0}; });
+  gm.forEach(m => {
+    const pk = STATE.picks[m.id];
+    if (!pk || pk.h == null) return;
+    const ho = m.h, aw = m.a, hs = pk.h, as = pk.a;
+    if (!s[ho] || !s[aw]) return;
+    s[ho].j++; s[aw].j++;
+    s[ho].gf += hs; s[ho].gc += as;
+    s[aw].gf += as; s[aw].gc += hs;
+    if (hs > as)      { s[ho].g++; s[ho].pts += 3; s[aw].p++; }
+    else if (hs < as) { s[aw].g++; s[aw].pts += 3; s[ho].p++; }
+    else              { s[ho].e++; s[ho].pts++;     s[aw].e++; s[aw].pts++; }
+    matchData.push({h: ho, a: aw, hs, as});
+  });
+
+  const rows = teams.map(t => ({team:t, ...s[t], dif: s[t].gf - s[t].gc}));
+
+  // Reutilizar la misma lógica FIFA de desempate
+  function h2hStats(group) {
+    const h2h = {};
+    group.forEach(t => { h2h[t] = {pts:0, gf:0, gc:0}; });
+    matchData.forEach(m => {
+      if (!group.includes(m.h) || !group.includes(m.a)) return;
+      h2h[m.h].gf += m.hs; h2h[m.h].gc += m.as;
+      h2h[m.a].gf += m.as; h2h[m.a].gc += m.hs;
+      if (m.hs > m.as)      h2h[m.h].pts += 3;
+      else if (m.hs < m.as) h2h[m.a].pts += 3;
+      else                  { h2h[m.h].pts++; h2h[m.a].pts++; }
+    });
+    return h2h;
+  }
+
+  return rows.slice().sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.dif !== a.dif) return b.dif - a.dif;
+    if (b.gf !== a.gf) return b.gf - a.gf;
+    const tiedGroup = rows.filter(r => r.pts===a.pts && r.dif===a.dif && r.gf===a.gf).map(r=>r.team);
+    if (tiedGroup.length > 1 && tiedGroup.length < rows.length) {
+      const h2h = h2hStats(tiedGroup);
+      const ha = h2h[a.team], hb = h2h[b.team];
+      if (hb.pts !== ha.pts) return hb.pts - ha.pts;
+      if ((hb.gf-hb.gc) !== (ha.gf-ha.gc)) return (hb.gf-hb.gc) - (ha.gf-ha.gc);
+      if (hb.gf !== ha.gf) return hb.gf - ha.gf;
+    }
+    return a.team.localeCompare(b.team);
+  });
+}
+
+function _buildTabla(g, gm, realOnly) {
+  const teams = GRUPOS[g];
+  const s = {};
+  teams.forEach(t => { s[t] = {j:0,g:0,e:0,p:0,gf:0,gc:0,pts:0}; });
+
+  // Guardar cada partido con sus goles para head-to-head
+  const matchData = []; // {h, a, hs, as}
+
+  gm.forEach(m => {
+    const r = RESULTS[m.id], pk = STATE.picks[m.id];
+    let hs, as;
+    if (realOnly) {
+      if (r && r.hs != null) { hs = r.hs; as = r.as; } else return;
+    } else {
+      if (pk && pk.h != null) { hs = pk.h; as = pk.a; }
+      else if (r && r.hs != null) { hs = r.hs; as = r.as; }
+      else return;
+    }
+    const ho = m.h, aw = m.a;
+    if (!s[ho] || !s[aw]) return;
+    s[ho].j++; s[aw].j++;
+    s[ho].gf += hs; s[ho].gc += as;
+    s[aw].gf += as; s[aw].gc += hs;
+    if (hs > as)      { s[ho].g++; s[ho].pts += 3; s[aw].p++; }
+    else if (hs < as) { s[aw].g++; s[aw].pts += 3; s[ho].p++; }
+    else              { s[ho].e++; s[ho].pts++;     s[aw].e++; s[aw].pts++; }
+    matchData.push({h: ho, a: aw, hs, as});
+  });
+
+  const rows = teams.map(t => ({team:t, ...s[t], dif: s[t].gf - s[t].gc}));
+
+  // ── Criterios de desempate FIFA ──────────────────────────
+  // 1. Puntos  2. DIF global  3. GF global
+  // 4. Head-to-head puntos  5. H2H DIF  6. H2H GF  7. Sorteo (aleatorio estable)
+  function h2hStats(group) {
+    // Calcular stats solo entre los equipos del grupo igualado
+    const h2h = {};
+    group.forEach(t => { h2h[t] = {pts:0, gf:0, gc:0}; });
+    matchData.forEach(m => {
+      if (!group.includes(m.h) || !group.includes(m.a)) return;
+      h2h[m.h].gf += m.hs; h2h[m.h].gc += m.as;
+      h2h[m.a].gf += m.as; h2h[m.a].gc += m.hs;
+      if (m.hs > m.as)      { h2h[m.h].pts += 3; }
+      else if (m.hs < m.as) { h2h[m.a].pts += 3; }
+      else                  { h2h[m.h].pts++; h2h[m.a].pts++; }
+    });
+    return h2h;
+  }
+
+  function fifaSort(arr) {
+    // Sort with full FIFA tiebreaker cascade
+    return arr.slice().sort((a, b) => {
+      // 1. Puntos
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      // 2. DIF global
+      if (b.dif !== a.dif) return b.dif - a.dif;
+      // 3. GF global
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      // Criterios 4-6: head-to-head solo entre equipos igualados en 1-3
+      // Encontrar el grupo de equipos igualados con a y b
+      const tiedGroup = arr
+        .filter(r => r.pts === a.pts && r.dif === a.dif && r.gf === a.gf)
+        .map(r => r.team);
+      if (tiedGroup.length > 1 && tiedGroup.length < arr.length) {
+        const h2h = h2hStats(tiedGroup);
+        const ha = h2h[a.team], hb = h2h[b.team];
+        // 4. H2H puntos
+        if (hb.pts !== ha.pts) return hb.pts - ha.pts;
+        // 5. H2H DIF
+        if ((hb.gf-hb.gc) !== (ha.gf-ha.gc)) return (hb.gf-hb.gc) - (ha.gf-ha.gc);
+        // 6. H2H GF
+        if (hb.gf !== ha.gf) return hb.gf - ha.gf;
+      }
+      // 7. Sorteo — usar nombre para orden estable/reproducible
+      return a.team.localeCompare(b.team);
+    });
+  }
+
+  return fifaSort(rows);
+}
+
+// ══════════════════════════════
+// BRACKET / LLAVE
+// ══════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// BRACKET ENGINE — 495 combinaciones ANNEXC oficiales FIFA 2026
+// ═══════════════════════════════════════════════════════════════
+const ANNEXC={
+'EFGHIJKL':{'M74':'3F','M77':'3G','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'DFGHIJKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3I','M82':'3J','M85':'3G','M87':'3L'},
+'DEGHIJKL':{'M74':'3D','M77':'3G','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'DEFHIJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'DEFGIJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3J','M85':'3G','M87':'3L'},
+'DEFGHJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'DEFGHIKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3G','M87':'3L'},
+'DEFGHIJL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3I','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'DEFGHIJK':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3I'},
+'CFGHIJKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3I','M82':'3J','M85':'3G','M87':'3L'},
+'CEGHIJKL':{'M74':'3C','M77':'3G','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'CEFHIJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'CEFGIJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3J','M85':'3G','M87':'3L'},
+'CEFGHJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'CEFGHIKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3G','M87':'3L'},
+'CEFGHIJL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3I','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'CEFGHIJK':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3I'},
+'CDGHIJKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3I','M82':'3J','M85':'3G','M87':'3L'},
+'CDFHIJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'CDFGIJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3I','M82':'3J','M85':'3G','M87':'3L'},
+'CDFGHJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'CDFGHIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3I','M82':'3H','M85':'3G','M87':'3L'},
+'CDFGHIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'CDFGHIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3I'},
+'CDEHIJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'CDEGIJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3I','M82':'3J','M85':'3G','M87':'3L'},
+'CDEGHJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'CDEGHIKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3G','M87':'3L'},
+'CDEGHIJL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3I','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'CDEGHIJK':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3I'},
+'CDEFIJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3I','M85':'3J','M87':'3L'},
+'CDEFHJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3H','M85':'3J','M87':'3L'},
+'CDEFHIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3I','M82':'3H','M85':'3E','M87':'3L'},
+'CDEFHIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3E','M82':'3H','M85':'3J','M87':'3L'},
+'CDEFHIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3H','M85':'3J','M87':'3I'},
+'CDEFGJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3J','M85':'3G','M87':'3L'},
+'CDEFGIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3I','M85':'3G','M87':'3L'},
+'CDEFGIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3E','M82':'3J','M85':'3G','M87':'3L'},
+'CDEFGIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3J','M85':'3G','M87':'3I'},
+'CDEFGHKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3H','M85':'3G','M87':'3L'},
+'CDEFGHJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3E','M81':'3J','M82':'3H','M85':'3G','M87':'3L'},
+'CDEFGHJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3J','M82':'3H','M85':'3G','M87':'3E'},
+'CDEFGHIL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3E','M82':'3H','M85':'3G','M87':'3L'},
+'CDEFGHIK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3H','M85':'3G','M87':'3I'},
+'CDEFGHIJ':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3J','M82':'3H','M85':'3G','M87':'3E'},
+'BFGHIJKL':{'M74':'3F','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BEGHIJKL':{'M74':'3B','M77':'3G','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'BEFHIJKL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BEFGIJKL':{'M74':'3F','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BEFGHJKL':{'M74':'3F','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BEFGHIKL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BEFGHIJL':{'M74':'3F','M77':'3G','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BEFGHIJK':{'M74':'3F','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3I'},
+'BDGHIJKL':{'M74':'3D','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BDFHIJKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BDFGIJKL':{'M74':'3D','M77':'3F','M79':'3I','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BDFGHJKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BDFGHIKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BDFGHIJL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BDFGHIJK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3I'},
+'BDEHIJKL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BDEGIJKL':{'M74':'3D','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BDEGHJKL':{'M74':'3D','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BDEGHIKL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BDEGHIJL':{'M74':'3D','M77':'3G','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BDEGHIJK':{'M74':'3D','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3I'},
+'BDEFIJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BDEFHJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BDEFHIKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3I','M87':'3L'},
+'BDEFHIJL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BDEFHIJK':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3I'},
+'BDEFGJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BDEFGIKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BDEFGIJL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BDEFGIJK':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3I'},
+'BDEFGHKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BDEFGHJL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BDEFGHJK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3E'},
+'BDEFGHIL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BDEFGHIK':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3I'},
+'BDEFGHIJ':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3E'},
+'BCGHIJKL':{'M74':'3C','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BCFHIJKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BCFGIJKL':{'M74':'3C','M77':'3F','M79':'3I','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCFGHJKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCFGHIKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BCFGHIJL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCFGHIJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3I'},
+'BCEHIJKL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BCEGIJKL':{'M74':'3C','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BCEGHJKL':{'M74':'3C','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCEGHIKL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BCEGHIJL':{'M74':'3C','M77':'3G','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCEGHIJK':{'M74':'3C','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3I'},
+'BCEFIJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BCEFHJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCEFHIKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3I','M87':'3L'},
+'BCEFHIJL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCEFHIJK':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3I'},
+'BCEFGJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCEFGIKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BCEFGIJL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCEFGIJK':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3I'},
+'BCEFGHKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BCEFGHJL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCEFGHJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3E'},
+'BCEFGHIL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BCEFGHIK':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3I'},
+'BCEFGHIJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3E'},
+'BCDHIJKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BCDGIJKL':{'M74':'3C','M77':'3D','M79':'3I','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDGHJKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDGHIKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BCDGHIJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDGHIJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3I'},
+'BCDFIJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BCDFHJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCDFHIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3I','M87':'3L'},
+'BCDFHIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCDFHIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3I'},
+'BCDFGJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDFGIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BCDFGIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDFGIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3I'},
+'BCDFGHKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BCDFGHJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3J','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BCDFGHJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3D'},
+'BCDFGHIL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BCDFGHIK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3I'},
+'BCDFGHIJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3D'},
+'BCDEIJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'BCDEHJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCDEHIKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3I','M87':'3L'},
+'BCDEHIJL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCDEHIJK':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3I'},
+'BCDEGJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDEGIKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'BCDEGIJL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDEGIJK':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3I'},
+'BCDEGHKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BCDEGHJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3E','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDEGHJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3E'},
+'BCDEGHIL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BCDEGHIK':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3I'},
+'BCDEGHIJ':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3E'},
+'BCDEFJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3E','M85':'3J','M87':'3L'},
+'BCDEFIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3I','M85':'3E','M87':'3L'},
+'BCDEFIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3E','M85':'3J','M87':'3L'},
+'BCDEFIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3E','M85':'3J','M87':'3I'},
+'BCDEFHKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3E','M87':'3L'},
+'BCDEFHJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3E','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'BCDEFHJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3E'},
+'BCDEFHIL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3H','M85':'3E','M87':'3L'},
+'BCDEFHIK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3E','M87':'3I'},
+'BCDEFHIJ':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3E'},
+'BCDEFGKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3E','M85':'3G','M87':'3L'},
+'BCDEFGJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3E','M81':'3B','M82':'3J','M85':'3G','M87':'3L'},
+'BCDEFGJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3J','M85':'3G','M87':'3E'},
+'BCDEFGIL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3E','M85':'3G','M87':'3L'},
+'BCDEFGIK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3E','M85':'3G','M87':'3I'},
+'BCDEFGIJ':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3J','M85':'3G','M87':'3E'},
+'BCDEFGHL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3E','M81':'3B','M82':'3H','M85':'3G','M87':'3L'},
+'BCDEFGHK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3H','M85':'3G','M87':'3E'},
+'BCDEFGHJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3J','M85':'3G','M87':'3D'},
+'BCDEFGHI':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3H','M85':'3G','M87':'3E'},
+'AFGHIJKL':{'M74':'3F','M77':'3G','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'AEGHIJKL':{'M74':'3A','M77':'3G','M79':'3E','M80':'3K','M81':'3I','M82':'3H','M85':'3J','M87':'3L'},
+'AEFHIJKL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'AEFGIJKL':{'M74':'3F','M77':'3G','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'AEFGHJKL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'AEFGHIKL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'AEFGHIJL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'AEFGHIJK':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ADGHIJKL':{'M74':'3D','M77':'3G','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ADFHIJKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ADFGIJKL':{'M74':'3D','M77':'3F','M79':'3I','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ADFGHJKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ADFGHIKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ADFGHIJL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ADFGHIJK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ADEHIJKL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ADEGIJKL':{'M74':'3D','M77':'3G','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ADEGHJKL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ADEGHIKL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ADEGHIJL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ADEGHIJK':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ADEFIJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ADEFHJKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3L'},
+'ADEFHIKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3E','M87':'3L'},
+'ADEFHIJL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3E','M82':'3A','M85':'3J','M87':'3L'},
+'ADEFHIJK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3I'},
+'ADEFGJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ADEFGIKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ADEFGIJL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ADEFGIJK':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ADEFGHKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3L'},
+'ADEFGHJL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3E','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ADEFGHJK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3E'},
+'ADEFGHIL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3E','M82':'3A','M85':'3G','M87':'3L'},
+'ADEFGHIK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3I'},
+'ADEFGHIJ':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3E'},
+'ACGHIJKL':{'M74':'3C','M77':'3G','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ACFHIJKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ACFGIJKL':{'M74':'3C','M77':'3F','M79':'3I','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACFGHJKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACFGHIKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ACFGHIJL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACFGHIJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ACEHIJKL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ACEGIJKL':{'M74':'3C','M77':'3G','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ACEGHJKL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACEGHIKL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ACEGHIJL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACEGHIJK':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ACEFIJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ACEFHJKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3L'},
+'ACEFHIKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3E','M87':'3L'},
+'ACEFHIJL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3E','M82':'3A','M85':'3J','M87':'3L'},
+'ACEFHIJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3I'},
+'ACEFGJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACEFGIKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ACEFGIJL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACEFGIJK':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ACEFGHKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3L'},
+'ACEFGHJL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3E','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACEFGHJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3E'},
+'ACEFGHIL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3E','M82':'3A','M85':'3G','M87':'3L'},
+'ACEFGHIK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3I'},
+'ACEFGHIJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3E'},
+'ACDHIJKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ACDGIJKL':{'M74':'3C','M77':'3D','M79':'3I','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDGHJKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDGHIKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ACDGHIJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDGHIJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ACDFIJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ACDFHJKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3F','M82':'3A','M85':'3J','M87':'3L'},
+'ACDFHIKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3F','M87':'3L'},
+'ACDFHIJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3F','M82':'3A','M85':'3J','M87':'3L'},
+'ACDFHIJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3F','M82':'3A','M85':'3J','M87':'3I'},
+'ACDFGJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDFGIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ACDFGIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDFGIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ACDFGHKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3F','M82':'3A','M85':'3G','M87':'3L'},
+'ACDFGHJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3H','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDFGHJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3D'},
+'ACDFGHIL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3F','M82':'3A','M85':'3G','M87':'3L'},
+'ACDFGHIK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3F','M82':'3A','M85':'3G','M87':'3I'},
+'ACDFGHIJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3D'},
+'ACDEIJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3J','M87':'3L'},
+'ACDEHJKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3L'},
+'ACDEHIKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3I','M82':'3A','M85':'3E','M87':'3L'},
+'ACDEHIJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3E','M82':'3A','M85':'3J','M87':'3L'},
+'ACDEHIJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3I'},
+'ACDEGJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEGIKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3I','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEGIJL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEGIJK':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3I'},
+'ACDEGHKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEGHJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3E','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEGHJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3E'},
+'ACDEGHIL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3E','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEGHIK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3I'},
+'ACDEGHIJ':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3E'},
+'ACDEFJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3L'},
+'ACDEFIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3I','M82':'3A','M85':'3E','M87':'3L'},
+'ACDEFIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3E','M82':'3A','M85':'3J','M87':'3L'},
+'ACDEFIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3I'},
+'ACDEFHKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3F','M82':'3A','M85':'3E','M87':'3L'},
+'ACDEFHJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3E','M81':'3F','M82':'3A','M85':'3J','M87':'3L'},
+'ACDEFHJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3J','M87':'3D'},
+'ACDEFHIL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3F','M82':'3A','M85':'3E','M87':'3L'},
+'ACDEFHIK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3F','M82':'3A','M85':'3E','M87':'3I'},
+'ACDEFHIJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3E','M82':'3A','M85':'3J','M87':'3D'},
+'ACDEFGKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEFGJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3E','M81':'3J','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEFGJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3J','M82':'3A','M85':'3G','M87':'3E'},
+'ACDEFGIL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3E','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEFGIK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3I'},
+'ACDEFGIJ':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3J','M82':'3A','M85':'3G','M87':'3E'},
+'ACDEFGHL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3E','M81':'3F','M82':'3A','M85':'3G','M87':'3L'},
+'ACDEFGHK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3E','M82':'3A','M85':'3G','M87':'3D'},
+'ACDEFGHJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3E','M81':'3J','M82':'3A','M85':'3G','M87':'3D'},
+'ACDEFGHI':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3E','M82':'3A','M85':'3G','M87':'3D'},
+'ABGHIJKL':{'M74':'3A','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'ABFHIJKL':{'M74':'3A','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'ABFGIJKL':{'M74':'3F','M77':'3G','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABFGHJKL':{'M74':'3F','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABFGHIKL':{'M74':'3A','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'ABFGHIJL':{'M74':'3F','M77':'3G','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABFGHIJK':{'M74':'3F','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABEHIJKL':{'M74':'3A','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'ABEGIJKL':{'M74':'3A','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'ABEGHJKL':{'M74':'3A','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'ABEGHIKL':{'M74':'3A','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'ABEGHIJL':{'M74':'3A','M77':'3G','M79':'3E','M80':'3I','M81':'3B','M82':'3H','M85':'3J','M87':'3L'},
+'ABEGHIJK':{'M74':'3A','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3H','M85':'3J','M87':'3I'},
+'ABEFIJKL':{'M74':'3A','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'ABEFHJKL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABEFHIKL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABEFHIJL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABEFHIJK':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABEFGJKL':{'M74':'3F','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABEFGIKL':{'M74':'3A','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'ABEFGIJL':{'M74':'3F','M77':'3G','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABEFGIJK':{'M74':'3F','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABEFGHKL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABEFGHJL':{'M74':'3F','M77':'3G','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABEFGHJK':{'M74':'3F','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABEFGHIL':{'M74':'3F','M77':'3H','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABEFGHIK':{'M74':'3F','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABEFGHIJ':{'M74':'3F','M77':'3G','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABDHIJKL':{'M74':'3D','M77':'3H','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDGIJKL':{'M74':'3D','M77':'3G','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDGHJKL':{'M74':'3D','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDGHIKL':{'M74':'3D','M77':'3H','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDGHIJL':{'M74':'3D','M77':'3G','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDGHIJK':{'M74':'3D','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABDFIJKL':{'M74':'3D','M77':'3F','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDFHJKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDFHIKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABDFHIJL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDFHIJK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABDFGJKL':{'M74':'3D','M77':'3G','M79':'3F','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDFGIKL':{'M74':'3D','M77':'3F','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDFGIJL':{'M74':'3D','M77':'3G','M79':'3F','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDFGIJK':{'M74':'3D','M77':'3G','M79':'3F','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABDFGHKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDFGHJL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDFGHJK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3J'},
+'ABDFGHIL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDFGHIK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABDFGHIJ':{'M74':'3D','M77':'3F','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABDEIJKL':{'M74':'3A','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'ABDEHJKL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDEHIKL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABDEHIJL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDEHIJK':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABDEGJKL':{'M74':'3D','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDEGIKL':{'M74':'3A','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'ABDEGIJL':{'M74':'3D','M77':'3G','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDEGIJK':{'M74':'3D','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABDEGHKL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDEGHJL':{'M74':'3D','M77':'3G','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDEGHJK':{'M74':'3D','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABDEGHIL':{'M74':'3D','M77':'3H','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDEGHIK':{'M74':'3D','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABDEGHIJ':{'M74':'3D','M77':'3G','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABDEFJKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDEFIKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABDEFIJL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDEFIJK':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABDEFHKL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3L'},
+'ABDEFHJL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABDEFHJK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABDEFHIL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3E','M87':'3L'},
+'ABDEFHIK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3I'},
+'ABDEFHIJ':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABDEFGKL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDEFGJL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDEFGJK':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3J'},
+'ABDEFGIL':{'M74':'3D','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDEFGIK':{'M74':'3D','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABDEFGIJ':{'M74':'3D','M77':'3F','M79':'3E','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABDEFGHL':{'M74':'3D','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABDEFGHK':{'M74':'3D','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABDEFGHJ':{'M74':'3D','M77':'3F','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABDEFGHI':{'M74':'3D','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCHIJKL':{'M74':'3C','M77':'3H','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCGIJKL':{'M74':'3C','M77':'3G','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCGHJKL':{'M74':'3C','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCGHIKL':{'M74':'3C','M77':'3H','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCGHIJL':{'M74':'3C','M77':'3G','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCGHIJK':{'M74':'3C','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCFIJKL':{'M74':'3C','M77':'3F','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCFHJKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCFHIKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABCFHIJL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCFHIJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCFGJKL':{'M74':'3F','M77':'3G','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCFGIKL':{'M74':'3C','M77':'3F','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCFGIJL':{'M74':'3F','M77':'3G','M79':'3C','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCFGIJK':{'M74':'3F','M77':'3G','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCFGHKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCFGHJL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCFGHJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3J'},
+'ABCFGHIL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCFGHIK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCFGHIJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCEIJKL':{'M74':'3A','M77':'3C','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3J','M87':'3L'},
+'ABCEHJKL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCEHIKL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABCEHIJL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCEHIJK':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCEGJKL':{'M74':'3C','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCEGIKL':{'M74':'3A','M77':'3C','M79':'3E','M80':'3K','M81':'3B','M82':'3I','M85':'3G','M87':'3L'},
+'ABCEGIJL':{'M74':'3C','M77':'3G','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCEGIJK':{'M74':'3C','M77':'3G','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCEGHKL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCEGHJL':{'M74':'3C','M77':'3G','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCEGHJK':{'M74':'3C','M77':'3G','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABCEGHIL':{'M74':'3C','M77':'3H','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCEGHIK':{'M74':'3C','M77':'3H','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCEGHIJ':{'M74':'3C','M77':'3G','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABCEFJKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCEFIKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABCEFIJL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCEFIJK':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCEFHKL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3L'},
+'ABCEFHJL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCEFHJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABCEFHIL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3E','M87':'3L'},
+'ABCEFHIK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3I'},
+'ABCEFHIJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABCEFGKL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCEFGJL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCEFGJK':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3J'},
+'ABCEFGIL':{'M74':'3C','M77':'3F','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCEFGIK':{'M74':'3C','M77':'3F','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCEFGIJ':{'M74':'3C','M77':'3F','M79':'3E','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCEFGHL':{'M74':'3C','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCEFGHK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCEFGHJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCEFGHI':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCDIJKL':{'M74':'3C','M77':'3D','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDHJKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDHIKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABCDHIJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDHIJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCDGJKL':{'M74':'3D','M77':'3G','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDGIKL':{'M74':'3C','M77':'3D','M79':'3I','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDGIJL':{'M74':'3D','M77':'3G','M79':'3C','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDGIJK':{'M74':'3D','M77':'3G','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCDGHKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDGHJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDGHJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3J'},
+'ABCDGHIL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDGHIK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCDGHIJ':{'M74':'3C','M77':'3D','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCDFJKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDFIKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABCDFIJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDFIJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCDFHKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3F','M87':'3L'},
+'ABCDFHJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3H','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDFHJK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3D'},
+'ABCDFHIL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3F','M87':'3L'},
+'ABCDFHIK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3F','M87':'3I'},
+'ABCDFHIJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3D'},
+'ABCDFGKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDFGJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDFGJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3J'},
+'ABCDFGIL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDFGIK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCDFGIJ':{'M74':'3D','M77':'3F','M79':'3C','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCDFGHL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3H','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDFGHK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3D'},
+'ABCDFGHJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3D'},
+'ABCDFGHI':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3D'},
+'ABCDEJKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDEIKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3I','M87':'3L'},
+'ABCDEIJL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDEIJK':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3I'},
+'ABCDEHKL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3L'},
+'ABCDEHJL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDEHJK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABCDEHIL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3E','M87':'3L'},
+'ABCDEHIK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3I'},
+'ABCDEHIJ':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABCDEGKL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDEGJL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDEGJK':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3J'},
+'ABCDEGIL':{'M74':'3C','M77':'3D','M79':'3E','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDEGIK':{'M74':'3C','M77':'3D','M79':'3E','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCDEGIJ':{'M74':'3C','M77':'3D','M79':'3E','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3I'},
+'ABCDEGHL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDEGHK':{'M74':'3C','M77':'3D','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCDEGHJ':{'M74':'3C','M77':'3D','M79':'3H','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCDEGHI':{'M74':'3C','M77':'3D','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCDEFKL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3L'},
+'ABCDEFJL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3E','M81':'3B','M82':'3A','M85':'3J','M87':'3L'},
+'ABCDEFJK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABCDEFIL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3A','M85':'3E','M87':'3L'},
+'ABCDEFIK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3I'},
+'ABCDEFIJ':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3A','M85':'3J','M87':'3E'},
+'ABCDEFHL':{'M74':'3C','M77':'3D','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3F','M87':'3L'},
+'ABCDEFHK':{'M74':'3C','M77':'3F','M79':'3H','M80':'3K','M81':'3B','M82':'3A','M85':'3E','M87':'3D'},
+'ABCDEFHJ':{'M74':'3C','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3J','M87':'3D'},
+'ABCDEFHI':{'M74':'3C','M77':'3F','M79':'3H','M80':'3I','M81':'3B','M82':'3A','M85':'3E','M87':'3D'},
+'ABCDEFGL':{'M74':'3D','M77':'3F','M79':'3C','M80':'3E','M81':'3B','M82':'3A','M85':'3G','M87':'3L'},
+'ABCDEFGK':{'M74':'3D','M77':'3F','M79':'3C','M80':'3K','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCDEFGJ':{'M74':'3D','M77':'3F','M79':'3C','M80':'3J','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCDEFGI':{'M74':'3D','M77':'3F','M79':'3C','M80':'3I','M81':'3B','M82':'3A','M85':'3G','M87':'3E'},
+'ABCDEFGH':{'M74':'3C','M77':'3F','M79':'3H','M80':'3E','M81':'3B','M82':'3A','M85':'3G','M87':'3D'},
+};
+
+// ── Devuelve [1ro,2do,3ro,4to] de un grupo (picks o resultados reales) ──
+function getGroupOrder(g) {
+  const gm = GM.filter(m => m.g === g);
+  const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
+  return (allDone ? calcTablaReal(g) : calcTablaPicksOnly(g, gm)).map(r => r.team);
+}
+
+// ── Top 12 terceros ordenados FIFA: PTS → DIF → GF ──
+function getAll3rds() {
+  const thirds = [];
+  for (const g of Object.keys(GRUPOS)) {
+    const gm = GM.filter(m => m.g === g);
+    const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
+    const tabla = allDone ? calcTablaReal(g) : calcTablaPicksOnly(g, gm);
+    const t = tabla[2];
+    if (t) thirds.push({ group: g, team: t.team, pts: t.pts, dif: t.dif, gf: t.gf });
+  }
+  return thirds.sort((a,b) => b.pts-a.pts || b.dif-a.dif || b.gf-a.gf);
+}
+
+// ── ANNEXC: dado combo de 8 grupos, retorna { M74:'3D', M77:'3H', ... } ──
+function getAnnexCSlots(top8groups) {
+  const key = top8groups.slice().sort().join('');
+  return ANNEXC[key] || {};
+}
+
+// ── Resuelve "3D" → equipo 3ero del grupo D ──
+function resolve3rd(slot3, all3rds) {
+  const g = slot3.replace('3','');
+  const t = all3rds.find(x => x.group === g);
+  return t ? t.team : null;
+}
+
+// ── Construcción completa del bracket ──────────────────────────
+// R32 slots fijos del Excel (slot1 es local, slot2 es visitante)
+const R32_SLOTS = {
+  M73:['2A','2B'], M74:['1E','3D'], M75:['1F','2C'], M76:['1C','2F'],
+  M77:['1I','3H'], M78:['2E','2I'], M79:['1A','3I'], M80:['1L','3K'],
+  M81:['1D','3B'], M82:['1G','3A'], M83:['2K','2L'], M84:['1H','2J'],
+  M85:['1B','3G'], M86:['1J','2H'], M87:['1K','3L'], M88:['2D','2G'],
+};
+
+// Rondas posteriores: quién enfrenta a quién
+const KNOCKOUT_SLOTS = {
+  M89:['WM73','WM74'], M90:['WM75','WM76'],
+  M91:['WM77','WM78'], M92:['WM79','WM80'],
+  M93:['WM81','WM82'], M94:['WM83','WM84'],
+  M95:['WM85','WM86'], M96:['WM87','WM88'],
+  M97:['WM89','WM90'], M98:['WM91','WM92'],
+  M99:['WM93','WM94'], M100:['WM95','WM96'],
+  M101:['WM97','WM98'], M102:['WM99','WM100'],
+  M103:['LM101','LM102'],
+  M104:['WM101','WM102'],
+};
+
+function buildAllTeams() {
+  const all3rds = getAll3rds();
+  const top8 = all3rds.slice(0,8).map(t => t.group);
+  const annexSlots = getAnnexCSlots(top8); // { M74:'3D', M77:'3H', ... }
+
+  // teams[matchId] = { h: name|null, a: name|null }
+  const T = {};
+
+  // ── PASO 1: Resolver R32 ──────────────────────────────────────
+  for (const [mid, [sl1, sl2]] of Object.entries(R32_SLOTS)) {
+    T[mid] = {
+      h: resolveR32Slot(sl1, mid, 'h', annexSlots, all3rds),
+      a: resolveR32Slot(sl2, mid, 'a', annexSlots, all3rds),
+    };
+  }
+
+  // ── PASO 2: Resolver Octavos → Final en cadena ────────────────
+  for (const [mid, [sl1, sl2]] of Object.entries(KNOCKOUT_SLOTS)) {
+    T[mid] = {
+      h: resolveKnockoutSlot(sl1, T),
+      a: resolveKnockoutSlot(sl2, T),
+    };
+  }
+
+  return T;
+}
+
+function resolveR32Slot(slot, matchId, side, annexSlots, all3rds) {
+  // 1ro de grupo: "1A"
+  const m1 = slot.match(/^1([A-L])$/);
+  if (m1) return getGroupOrder(m1[1])[0] || null;
+  // 2do de grupo: "2B"
+  const m2 = slot.match(/^2([A-L])$/);
+  if (m2) return getGroupOrder(m2[1])[1] || null;
+  // 3ero: "3X" — ANNEXC dice qué grupo va en este matchId+side
+  if (slot.startsWith('3')) {
+    // annexSlots tiene { M74:'3D', ... } → "3D" = 3ero del grupo D
+    const annexSlot = annexSlots[matchId]; // "3D"
+    if (annexSlot) return resolve3rd(annexSlot, all3rds);
+    return null;
+  }
+  return null;
+}
+
+function resolveKnockoutSlot(slot, T) {
+  const mW = slot.match(/^W(M\d+)$/);
+  if (mW) return getWinner(mW[1], T);
+  const mL = slot.match(/^L(M\d+)$/);
+  if (mL) return getLoser(mL[1], T);
+  return null;
+}
+
+function getWinner(mid, T) {
+  const t = T[mid]; if (!t || !t.h || !t.a) return null;
+  const res = RESULTS[mid]||{}, pk = STATE.picks[mid]||{};
+  let hs, as, useReal = false;
+  if (res.hs != null) { hs=res.hs; as=res.as; useReal=true; }
+  else if (pk.h != null) { hs=pk.h; as=pk.a; }
+  else return null;
+  if (hs > as) return t.h;
+  if (hs < as) return t.a;
+  // Empate → quién avanza (penales)
+  // Real primero, luego pick del usuario
+  if (useReal && res.win) return res.win;
+  if (pk.win) return pk.win;
+  return null; // no se sabe aún
+}
+
+function getLoser(mid, T) {
+  const w = getWinner(mid, T);
+  const t = T[mid];
+  if (!w || !t) return null;
+  return w === t.h ? t.a : t.h;
+}
+
+function renderBracket(container) {
+  // Construir mapa completo de equipos en cada partido
+  const T = buildAllTeams();
+  const all3rds = getAll3rds();
+  const top8 = all3rds.slice(0,8);
+
+  // Enriquecer BRACKET con equipos resueltos
+  const enriched = BRACKET.map(m => ({
+    ...m,
+    hResolved: (T[m.id]||{}).h || null,
+    aResolved: (T[m.id]||{}).a || null,
+  }));
+
+  const r32L = enriched.filter(m=>m.phase==='r32'&&m.side==='L');
+  const r32R = enriched.filter(m=>m.phase==='r32'&&m.side==='R');
+  const r16L = enriched.filter(m=>m.phase==='r16'&&m.side==='L');
+  const r16R = enriched.filter(m=>m.phase==='r16'&&m.side==='R');
+  const qfL  = enriched.filter(m=>m.phase==='qf' &&m.side==='L');
+  const qfR  = enriched.filter(m=>m.phase==='qf' &&m.side==='R');
+  const sfL  = enriched.filter(m=>m.phase==='sf' &&m.side==='L');
+  const sfR  = enriched.filter(m=>m.phase==='sf' &&m.side==='R');
+  const fin  = enriched.filter(m=>m.phase==='final');
+  const t3   = enriched.filter(m=>m.phase==='3rd');
+
+  container.innerHTML=`
+    <div style="margin-bottom:10px">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">
+        🏆 <strong>Fase Final</strong> — los equipos se asignan automáticamente según resultados de grupos
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${top8.map((t,i)=>`
+          <span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px">
+            <strong>${i+1}.</strong> ${fh(t.team,14)} <span style="font-weight:600">${t.team}</span>
+            <span style="color:var(--text3)">(3ro Gr.${t.group} · ${t.pts}pts)</span>
+          </span>`).join('')}
+      </div>
+    </div>
+    <div class="bracket-wrap">
+      <div class="bracket">
+        ${bracketCol('R32',r32L)}
+        ${bracketCol('Octavos',r16L)}
+        ${bracketCol('Cuartos',qfL)}
+        ${bracketCol('Semis',sfL)}
+        ${centerCol(fin,t3)}
+        ${bracketCol('Semis',sfR)}
+        ${bracketCol('Cuartos',qfR)}
+        ${bracketCol('Octavos',r16R)}
+        ${bracketCol('R32',r32R)}
+      </div>
+    </div>`;
+}
+
+function bracketCol(title, matches) {
+  // Espaciado vertical: cada ronda tiene el doble de espacio entre partidos
+  // R32=8 matches, R16=4, QF=2, SF=1 — usa flex justify-content:space-evenly
+  return `<div class="bracket-col">
+    <div class="bracket-col-title">${title}</div>
+    <div class="bracket-matches">
+      ${matches.map(m => bracketMatch(m)).join('')}
+    </div>
+  </div>`;
+}
+
+function centerCol(finals, t3) {
+  const fin = finals[0], tp = t3[0];
+
+  // Equipos reales de final y 3er puesto (para los selectores)
+  const T = buildAllTeams();
+  const finTeams = fin ? (T[fin.id] || {}) : {};
+  const t3Teams  = tp  ? (T[tp.id]  || {}) : {};
+  const finH = finTeams.h, finA = finTeams.a;
+  const t3H  = t3Teams.h,  t3A  = t3Teams.a;
+
+  // Calcular campeón/subcampeón/3ro/4to según resultados reales
+  const finRes = fin ? (RESULTS[fin.id] || {}) : {};
+  const t3Res  = tp  ? (RESULTS[tp.id]  || {}) : {};
+  const finHasReal = finRes.hs != null;
+  const t3HasReal  = t3Res.hs  != null;
+
+  let champion='', runnerUp='', third='', fourth='';
+  if (finHasReal && finH && finA) {
+    const finWinner = finRes.hs > finRes.as ? finH : finRes.hs < finRes.as ? finA : (finRes.win||finH);
+    const finLoser  = finWinner === finH ? finA : finH;
+    champion  = finWinner; runnerUp = finLoser;
+    finalOrderReal.champion = champion; finalOrderReal.runnerUp = runnerUp;
+  }
+  if (t3HasReal && t3H && t3A) {
+    const t3Winner = t3Res.hs > t3Res.as ? t3H : t3Res.hs < t3Res.as ? t3A : (t3Res.win||t3H);
+    const t3Loser  = t3Winner === t3H ? t3A : t3H;
+    third = t3Winner; fourth = t3Loser;
+    finalOrderReal.third = third; finalOrderReal.fourth = fourth;
+  }
+
+  // Puntos de orden final — auto-detectado desde picks de Final y 3er puesto
+  const foResult = calcFinalOrderPts();
+  // Usar valores de foResult si están disponibles
+  if (foResult) {
+    champion = foResult.champion||''; runnerUp = foResult.runnerUp||'';
+    third    = foResult.third||'';    fourth   = foResult.fourth||'';
+    finalOrderReal.champion = champion; finalOrderReal.runnerUp = runnerUp;
+    finalOrderReal.third    = third;    finalOrderReal.fourth   = fourth;
+  }
+
+  // Orden final: se llena automáticamente con los resultados de Final y 3er puesto
+  // El usuario NO selecciona — el sistema lo detecta de los picks de cada partido
+  // Solo mostramos sus picks de quién ganó/perdió cada partido
+  const pickFinalWinner = fin ? (STATE.picks[fin.id]||{}).win || null : null;
+  const pickFinalLoser  = fin && finH && finA && pickFinalWinner
+    ? (pickFinalWinner === finH ? finA : finH) : null;
+  const pickT3Winner = tp ? (STATE.picks[tp.id]||{}).win || null : null;
+  const pickT3Loser  = tp && t3H && t3A && pickT3Winner
+    ? (pickT3Winner === t3H ? t3A : t3H) : null;
+
+  const podiumRow = (rankLabel, ptsVal, userPickTeam, realTeam, emoji) => {
+    const hasReal = !!realTeam;
+    const correct = hasReal && userPickTeam && userPickTeam === realTeam;
+    const wrong   = hasReal && userPickTeam && userPickTeam !== realTeam;
+    const hasPick = !!userPickTeam;
+    return `<div style="display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:8px;
+        background:${correct?'rgba(48,209,88,.1)':wrong?'rgba(255,69,58,.05)':'var(--surface2)'};
+        border:0.5px solid ${correct?'var(--success)':wrong?'rgba(255,69,58,.3)':'var(--border)'}">
+      <span style="font-size:14px;flex-shrink:0">${emoji}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">${rankLabel}</div>
+        <!-- Tu pick -->
+        <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
+          <span style="font-size:9px;color:var(--text3);font-weight:600;flex-shrink:0">PICK:</span>
+          ${hasPick
+            ? `<div style="display:flex;align-items:center;gap:4px">${fh(userPickTeam,15)}<span style="font-size:12px;font-weight:700;color:${correct?'#1a7a38':wrong?'var(--danger)':'var(--text)'}">${userPickTeam}</span></div>`
+            : `<span style="font-size:11px;color:var(--text3);font-style:italic">Pendiente...</span>`
+          }
+        </div>
+        <!-- Resultado real -->
+        ${hasReal ? `
+        <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+          <span style="font-size:9px;color:var(--text3);font-weight:600;flex-shrink:0">REAL:</span>
+          <div style="display:flex;align-items:center;gap:4px">${fh(realTeam,15)}<span style="font-size:12px;font-weight:700;color:${correct?'var(--success)':'var(--text2)'}">${realTeam}</span>
+          <span style="font-size:13px">${correct?'✅':'❌'}</span></div>
+        </div>` : `<div style="font-size:9px;color:var(--text3);margin-top:2px;font-style:italic">Sin resultado aún</div>`}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        ${correct
+          ? `<span style="background:var(--gold);color:#7a5900;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:800">+${ptsVal}p</span>`
+          : `<span style="color:var(--text3);font-size:11px;font-weight:600">+${ptsVal}p</span>`}
+      </div>
+    </div>`;
+  };
+
+  return `<div class="bracket-col bracket-center" style="min-width:200px">
+    <div class="bracket-col-title center-title" style="font-size:12px;letter-spacing:.3px">
+      🏆 Gran Final 2026
+    </div>
+    <div class="bracket-matches" style="justify-content:center;gap:10px;padding:8px 0">
+      ${fin ? bracketMatch(fin, true) : ''}
+
+      <div style="margin:0 6px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text2);
+          letter-spacing:.4px;text-align:center;padding:5px 0 4px;border-top:0.5px solid var(--border)">
+          🥉 3er Puesto
+        </div>
+        ${tp ? bracketMatch(tp, false) : ''}
+      </div>
+
+      <!-- Línea segmentada que conecta con Orden Final -->
+      <div style="margin:0 auto;width:2px;height:20px;border-left:2px dashed var(--border2)"></div>
+
+      <!-- ORDEN FINAL -->
+      <div style="margin:0 6px;background:var(--surface);border-radius:10px;border:0.5px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm)">
+        <div style="padding:7px 10px;background:linear-gradient(135deg,var(--accent),#005bb5);
+          display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:700;color:#fff">🏅 Orden Final</span>
+          ${foResult && foResult.pts > 0 ? `<span style="background:rgba(255,255,255,.25);color:#fff;padding:2px 8px;
+            border-radius:5px;font-size:12px;font-weight:800">${foResult.pts} pts ✓</span>` : ''}
+        </div>
+        <div style="padding:7px 8px;display:flex;flex-direction:column;gap:5px">
+          ${podiumRow('🏆 Campeón',    20, foResult?foResult.pickChamp  : pickFinalWinner, champion,  '🏆')}
+          ${podiumRow('🥈 Subcampeón', 10, foResult?foResult.pickRunner : pickFinalLoser,  runnerUp,  '🥈')}
+          ${podiumRow('🥉 3er lugar',   5, foResult?foResult.pickThird  : pickT3Winner,    third,     '🥉')}
+          ${podiumRow('4to lugar',       3, foResult?foResult.pickFourth : pickT3Loser,    fourth,    '4️⃣')}
+        </div>
+        <div style="padding:5px 10px 7px;display:flex;gap:8px;flex-wrap:wrap;border-top:0.5px solid var(--border);background:var(--surface2)">
+          <span style="font-size:10px;color:var(--text3)">🏆 Campeón <strong>20p</strong></span>
+          <span style="font-size:10px;color:var(--text3)">🥈 Sub <strong>10p</strong></span>
+          <span style="font-size:10px;color:var(--text3)">🥉 3ro <strong>5p</strong></span>
+          <span style="font-size:10px;color:var(--text3)">4to <strong>3p</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// setFinalOrder removed — order auto-detected from picks
+
+function bracketMatch(m, isFinal=false) {
+  const pk  = STATE.picks[m.id] || {};
+  const res = RESULTS[m.id] || {};
+  const locked  = res.locked || false;
+  const hasReal = res.hs != null;
+  const hasPick = pk.h  != null;
+  const hTeam = m.hResolved || null;
+  const aTeam = m.aResolved || null;
+  const both  = !!(hTeam && aTeam);
+  const tbd   = !both;
+
+  // Ganador real
+  let hWin = false, aWin = false;
+  if (hasReal) { hWin = res.hs > res.as; aWin = res.hs < res.as; }
+
+  // Puntos y comparación
+  const pts    = calcPts(hasPick ? pk : null, m);
+  const hOk    = hasReal && hasPick && pk.h === res.hs;
+  const aOk    = hasReal && hasPick && pk.a === res.as;
+  const detail = (hasReal && hasPick) ? calcPtsDetail(pk, m) : [];
+  const tipText = detail.map(d=>(d.ok?"✓ ":"✗ ")+d.txt).join(" | ");
+
+  const ptsBadge = pts == null ? "" : `<span class="bm-pts ${
+    pts>=5?"bm-pts-5":pts>=3?"bm-pts-3":pts>0?"bm-pts-1":"bm-pts-0"
+  }" title="${tipText}">${pts}p</span>`;
+
+  // ── Fila de cada equipo ──────────────────────────────────────
+  // Siempre muestra: bandera + nombre + input de pick
+  // Si hay resultado real: input coloreado (verde/rojo)
+  const teamRow = (team, isHome) => {
+    const pending  = !team;
+    const pkScore  = isHome ? pk.h : pk.a;
+    const isWin    = isHome ? hWin : aWin;
+    const thisOk   = isHome ? hOk  : aOk;
+    const inputBorder = hasReal
+      ? `border-color:${thisOk?"var(--success)":"var(--danger)"};background:${thisOk?"rgba(48,209,88,.08)":"rgba(255,69,58,.05)"}`
+      : "";
+    return `<div class="bm-team${isWin?" winner":""}">
+      ${pending
+        ? `<div style="width:20px;height:14px;background:var(--surface2);border-radius:2px;border:0.5px solid var(--border);flex-shrink:0"></div>`
+        : fh(team, 20)}
+      <span class="bm-tname" style="${pending?"color:var(--text3)":isWin?"color:#1a7a38;font-weight:700":""}">
+        ${pending ? "<em style='font-size:9px'>TBD</em>" : team}
+      </span>
+      <div class="bm-score-wrap">
+        ${pending ? "" :
+          both ? `<input type="number" min="0" max="20" class="bm-si"
+            value="${pkScore!=null?pkScore:""}" placeholder="–"
+            style="${inputBorder}"
+            oninput="setBracketPick('${m.id}','${isHome?"h":"a"}',this.value)"
+            ${locked?"disabled":""}>` : ""}
+      </div>
+    </div>`;
+  };
+
+  // ── Fila de resultado real ───────────────────────────────────
+  // Siempre visible cuando hay resultado: muestra REAL con cajitas + pts
+  const realRow = hasReal ? `
+    <div class="bm-real">
+      <div class="bm-real-score">
+        <span style="font-size:9px;font-weight:700;color:var(--text3);margin-right:4px">REAL</span>
+        <span class="bm-rs ${hOk?"ok":"no"}">${res.hs}</span>
+        <span style="color:var(--text3);font-weight:700;font-size:11px">–</span>
+        <span class="bm-rs ${aOk?"ok":"no"}">${res.as}</span>
+      </div>
+      ${ptsBadge}
+    </div>` : "";
+
+  // ── Selector "¿Quién avanza?" ────────────────────────────────
+  // Visible cuando ambos equipos están definidos y no está bloqueado
+  // Siempre disponible: para empates reales (penales) y para el pick del usuario
+  const pickIsDraw = hasPick && pk.h === pk.a;
+  const realIsDraw = hasReal && res.hs === res.as;
+  const showAdvance = both && !locked && (pickIsDraw || realIsDraw || !hasReal || pk.win);
+  const advanceRow = showAdvance ? `
+    <div style="padding:4px 6px;border-top:0.5px solid var(--border)">
+      <select class="fsel" style="width:100%;font-size:10px;font-weight:600"
+        onchange="setBracketPick('${m.id}','win',this.value)">
+        <option value="">🏆 ¿Quién avanza?</option>
+        ${[hTeam,aTeam].map(t=>`<option value="${t}"${pk.win===t?" selected":""}>${t}</option>`).join("")}
+      </select>
+    </div>` : "";
+
+  return `<div class="bm${isFinal?" final-match":""}${tbd?" tbd":""}">
+    <div class="bm-date">
+      <span>${fmtD(m.d)}</span>
+      <div style="display:flex;align-items:center;gap:4px">
+        <span style="color:var(--text3);font-size:9px">${m.id}</span>
+        ${locked?"<span>🔒</span>":""}
+      </div>
+    </div>
+    ${teamRow(hTeam, true)}
+    ${teamRow(aTeam, false)}
+    ${realRow}
+    ${advanceRow}
+  </div>`;
+}
+
+
+function setBracketPick(id, field, val) {
+  if (!STATE.picks[id]) STATE.picks[id] = {};
+  STATE.picks[id][field] = (field==='h'||field==='a') ? (val===''?null:+val) : val;
+  // Guardar qué equipos estaban en cada slot al momento del pick
+  // Esto es clave para el sistema de puntos por coincidencia de slot
+  const T = buildAllTeams();
+  const teams = T[id] || {};
+  if (teams.h) STATE.picks[id].hTeam = teams.h;
+  if (teams.a) STATE.picks[id].aTeam = teams.a;
+  clearTimeout(saveTimers[id]);
+  saveTimers[id] = setTimeout(() => {
+    const pk = STATE.picks[id];
+    if (pk && (pk.h != null || pk.win != null)) {
+      syncPickToPlayer(id, pk);
+      toast('Pick guardado ✓', 'success');
+      refreshBracket();
+    }
+  }, 600);
+}
+
+// Re-render bracket preservando posición de scroll
+function refreshBracket() {
+  const wrap = document.querySelector('.bracket-wrap');
+  const scrollX = wrap ? wrap.scrollLeft : 0;
+  const container = document.getElementById('matches-container');
+  if (container && STATE.activePhase !== 'group') {
+    renderBracket(container);
+    // Restaurar scroll después del render
+    requestAnimationFrame(() => {
+      const newWrap = document.querySelector('.bracket-wrap');
+      if (newWrap) newWrap.scrollLeft = scrollX;
+    });
+  }
+}
+
+// ══════════════════════════════
+// LEADERBOARD
+// ══════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// SISTEMA MULTI-JUGADOR (simulado en HTML sin Supabase)
+// Cada jugador tiene sus propios picks almacenados aquí
+// En la app real con Supabase, esto viene de la BD
+// ══════════════════════════════════════════════════════════════
+const PLAYERS = {
+  'Admin':    { name:'Admin',     picks:{} },
+  'Carlos M.':{ name:'Carlos M.', picks:{} },
+  'Diana F.': { name:'Diana F.',  picks:{} },
+  'Marcos T.':{ name:'Marcos T.', picks:{} },
+  'Sofía G.': { name:'Sofía G.',  picks:{} },
+};
+
+// Al guardar un pick, lo almacenamos también en PLAYERS para el jugador actual
+function syncPickToPlayer(id, pickData) {
+  const user = STATE.user?.username;
+  if (user && PLAYERS[user]) {
+    PLAYERS[user].picks[id] = {...pickData};
+  }
+}
+
+// ── Calcular puntos totales de un jugador ─────────────────────
+function calcPlayerPts(playerPicks) {
+  let grpPts=0, clasifPts=0, elimPts=0, finalPts=0;
+
+  // Grupos: partidos
+  GM.forEach(m => {
+    const pk = playerPicks[m.id];
+    if (!pk || pk.h == null) return;
+    const pts = calcPts(pk, m);
+    if (pts != null) grpPts += pts;
+  });
+
+  // Clasificación de grupos
+  Object.keys(GRUPOS).forEach(g => {
+    const gm = GM.filter(m => m.g === g);
+    const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
+    if (!allDone) return;
+    const realTabla = calcTablaReal(g);
+    // Tabla según picks de este jugador
+    const teams = GRUPOS[g];
+    const s = {};
+    teams.forEach(t => { s[t]={pts:0,gf:0,gc:0,dif:0}; });
+    gm.forEach(m => {
+      const pk = playerPicks[m.id];
+      if (!pk || pk.h == null) return;
+      const h=m.h,a=m.a,hs=pk.h,as=pk.a;
+      s[h].gf+=hs;s[h].gc+=as;s[a].gf+=as;s[a].gc+=hs;
+      if(hs>as)s[h].pts+=3; else if(hs<as)s[a].pts+=3; else{s[h].pts+=1;s[a].pts+=1;}
+    });
+    const pickOrder = teams.map(t=>({team:t,...s[t],dif:s[t].gf-s[t].gc}))
+      .sort((a,b)=>b.pts-a.pts||b.dif-a.dif||b.gf-a.gf)
+      .map(r=>r.team);
+    const realOrder = realTabla.map(r=>r.team);
+    for(let i=0;i<4;i++) if(pickOrder[i]===realOrder[i]) clasifPts++;
+  });
+
+  // Eliminatorias
+  const T = buildAllTeams();
+  BRACKET.forEach(m => {
+    if (m.phase==='group') return;
+    const pk = playerPicks[m.id];
+    if (!pk || pk.h == null) return;
+    // Enrich match with resolved teams
+    const enriched = {...m, hResolved:(T[m.id]||{}).h, aResolved:(T[m.id]||{}).a};
+    const pts = calcPts(pk, enriched);
+    if (pts != null) elimPts += pts;
+  });
+
+  // Orden final
+  const fin = BRACKET.find(m=>m.phase==='final');
+  const tp  = BRACKET.find(m=>m.phase==='3rd');
+  if (fin && tp) {
+    const finTeams = T[fin.id]||{};
+    const t3Teams  = T[tp.id]||{};
+    const finRes = RESULTS[fin.id]||{};
+    const t3Res  = RESULTS[tp.id]||{};
+    const finPk = playerPicks[fin.id]||{};
+    const t3Pk  = playerPicks[tp.id]||{};
+    const champion = finRes.hs!=null?(finRes.hs>finRes.as?finTeams.h:finRes.hs<finRes.as?finTeams.a:finRes.win):null;
+    const runner   = champion?(champion===finTeams.h?finTeams.a:finTeams.h):null;
+    const third    = t3Res.hs!=null?(t3Res.hs>t3Res.as?t3Teams.h:t3Res.hs<t3Res.as?t3Teams.a:t3Res.win):null;
+    const fourth   = third?(third===t3Teams.h?t3Teams.a:t3Teams.h):null;
+    const pickChamp = finPk.win||(finTeams.h&&finTeams.a&&finPk.h!=null?(finPk.h>finPk.a?finTeams.h:finPk.h<finPk.a?finTeams.a:null):null);
+    const pickRunner= (finTeams.h&&finTeams.a&&pickChamp)?(pickChamp===finTeams.h?finTeams.a:finTeams.h):null;
+    const pickThird = t3Pk.win||(t3Teams.h&&t3Teams.a&&t3Pk.h!=null?(t3Pk.h>t3Pk.a?t3Teams.h:t3Pk.h<t3Pk.a?t3Teams.a:null):null);
+    const pickFourth= (t3Teams.h&&t3Teams.a&&pickThird)?(pickThird===t3Teams.h?t3Teams.a:t3Teams.h):null;
+    if(champion&&pickChamp===champion) finalPts+=20;
+    if(runner&&pickRunner===runner)    finalPts+=10;
+    if(third&&pickThird===third)       finalPts+=5;
+    if(fourth&&pickFourth===fourth)    finalPts+=3;
+  }
+
+  return {grpPts, clasifPts, elimPts, finalPts,
+          total: grpPts+clasifPts+elimPts+finalPts};
+}
+function renderLeaderboard() {
+  const me = STATE.user?.username || '';
+
+  // Asegurar que el jugador actual tiene sus picks en PLAYERS
+  if (me && PLAYERS[me]) {
+    PLAYERS[me].picks = {...STATE.picks};
+  }
+
+  // Calcular puntos de todos los jugadores
+  const rows = Object.values(PLAYERS).map(player => {
+    const pts = calcPlayerPts(player.picks);
+    return { name: player.name, ...pts, isMe: player.name === me };
+  }).sort((a,b) => b.total - a.total);
+
+  const medals = ['🥇','🥈','🥉'];
+
+  document.getElementById('lb-rows').innerHTML = rows.map((r, i) => `
+    <div class="lb-row${r.isMe?' me':''}" onclick="showPlayerDetail('${r.name}')"
+      style="cursor:pointer;display:grid;grid-template-columns:28px 1fr 54px 54px 54px 54px 60px;padding:10px 14px;gap:4px;border-bottom:0.5px solid var(--border);align-items:center;transition:background .1s"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <span style="font-size:13px;font-weight:700;color:var(--text2)">${i<3?medals[i]:i+1}</span>
+      <span style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px">
+        ${r.name}
+        ${r.isMe?'<span style="font-size:10px;color:var(--accent);font-weight:600;background:rgba(0,113,227,.1);padding:2px 6px;border-radius:4px">Tú</span>':''}
+      </span>
+      <span style="text-align:right;font-size:12px;color:var(--text2)">${r.grpPts}</span>
+      <span style="text-align:right;font-size:12px;color:var(--text2)">${r.clasifPts}</span>
+      <span style="text-align:right;font-size:12px;color:var(--text2)">${r.elimPts}</span>
+      <span style="text-align:right;font-size:12px;color:var(--text2)">${r.finalPts}</span>
+      <span style="text-align:right;font-size:17px;font-weight:700;color:var(--accent)">${r.total}</span>
+    </div>`).join('');
+
+  // Update subtitle
+  const totalResults = Object.keys(RESULTS).length;
+  document.getElementById('lb-sub-text').textContent =
+    `${totalResults} partidos con resultado real · ${rows.length} jugadores`;
+}
+
+// Mostrar detalle de picks de un jugador al hacer clic
+function showPlayerDetail(name) {
+  const player = PLAYERS[name];
+  if (!player) return;
+  const me = STATE.user?.username || '';
+  const pts = calcPlayerPts(player.picks);
+  const detail = document.getElementById('lb-detail');
+
+  // Grupos desglose
+  const groupRows = Object.keys(GRUPOS).map(g => {
+    const gm = GM.filter(m => m.g === g);
+    let grpPts = 0;
+    gm.forEach(m => {
+      const pk = player.picks[m.id];
+      if (!pk || pk.h == null) return;
+      const p = calcPts(pk, m);
+      if (p != null) grpPts += p;
+    });
+    // Clasif pts for this group
+    let clasifPts = 0;
+    const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
+    if (allDone) {
+      const realTabla = calcTablaReal(g);
+      const teams = GRUPOS[g];
+      const s = {};
+      teams.forEach(t=>{s[t]={pts:0,gf:0,gc:0};});
+      gm.forEach(m => {
+        const pk = player.picks[m.id];
+        if (!pk||pk.h==null) return;
+        const h=m.h,a=m.a,hs=pk.h,as=pk.a;
+        s[h].gf+=hs;s[h].gc+=as;s[a].gf+=as;s[a].gc+=hs;
+        if(hs>as)s[h].pts+=3;else if(hs<as)s[a].pts+=3;else{s[h].pts+=1;s[a].pts+=1;}
+      });
+      const pickOrder=teams.map(t=>({team:t,...s[t],dif:s[t].gf-s[t].gc})).sort((a,b)=>b.pts-a.pts||b.dif-a.dif||b.gf-a.gf).map(r=>r.team);
+      const realOrder=realTabla.map(r=>r.team);
+      for(let i=0;i<4;i++) if(pickOrder[i]===realOrder[i]) clasifPts++;
+    }
+    return {g, grpPts, clasifPts, total: grpPts+clasifPts};
+  });
+
+  // Compare with me
+  const mePlayer = PLAYERS[me];
+  const mePts = mePlayer && name !== me ? calcPlayerPts(mePlayer.picks) : null;
+
+  detail.style.display = 'block';
+  detail.innerHTML = `
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <span class="card-title">${name}</span>
+          ${name===me?'<span style="font-size:11px;color:var(--accent);margin-left:8px">Tú</span>':''}
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${mePts?`<span style="font-size:12px;color:var(--text2)">vs tú: <strong style="color:${pts.total>mePts.total?'var(--success)':pts.total<mePts.total?'var(--danger)':'var(--text2)'}">${pts.total>mePts.total?'+':''}${pts.total-mePts.total} pts</strong></span>`:''}
+          <button class="btn btn-s btn-xs" onclick="document.getElementById('lb-detail').style.display='none'">✕ Cerrar</button>
+        </div>
+      </div>
+      <div style="padding:12px 16px">
+        <!-- Resumen por fase -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px">
+          ${[
+            ['Partidos Grupos',pts.grpPts,'var(--accent)'],
+            ['Clasificación',pts.clasifPts,'var(--warning)'],
+            ['Eliminatorias',pts.elimPts,'var(--success)'],
+            ['Orden Final',pts.finalPts,'var(--gold)'],
+            ['TOTAL',pts.total,'var(--accent)'],
+          ].map(([label,val,color])=>`
+            <div style="text-align:center;padding:10px 6px;background:var(--surface2);border-radius:10px">
+              <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">${label}</div>
+              <div style="font-size:20px;font-weight:800;color:${color}">${val}</div>
+            </div>`).join('')}
+        </div>
+
+        <!-- Desglose por grupo -->
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);margin-bottom:8px">Desglose por grupo</div>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
+          ${groupRows.map(row=>`
+            <div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center">
+              <div style="font-size:12px;font-weight:700;margin-bottom:3px">Gr. ${row.g}</div>
+              <div style="font-size:10px;color:var(--text2)">Partidos: <strong>${row.grpPts}</strong></div>
+              <div style="font-size:10px;color:var(--text2)">Clasif: <strong>${row.clasifPts}</strong></div>
+              <div style="font-size:11px;font-weight:700;color:var(--accent);margin-top:2px">${row.total} pts</div>
+            </div>`).join('')}
+        </div>
+
+        ${name!==me?`
+        <!-- Botón para ver picks de este jugador como comparación -->
+        <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;color:var(--text2)">Ver picks de ${name} en la vista de partidos</span>
+          <button class="btn btn-p btn-sm" onclick="viewPlayerPicks('${name}')">👁 Ver picks</button>
+          <button class="btn btn-s btn-sm" onclick="restoreMyPicks()">↩ Volver a mis picks</button>
+        </div>`:''}
+      </div>
+    </div>`;
+}
+
+// Vista temporal de picks de otro jugador
+let savedMyPicks = null;
+function viewPlayerPicks(name) {
+  const player = PLAYERS[name];
+  if (!player) return;
+  if (!savedMyPicks) savedMyPicks = {...STATE.picks};
+  STATE.picks = {...player.picks};
+  showPage('picks');
+  toast(`Viendo picks de ${name} (solo lectura)`, 'default', 4000);
+  // Show banner
+  document.getElementById('picks-ctr').innerHTML =
+    `<span style="background:rgba(255,159,10,.15);color:#b06000;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600">👁 Viendo picks de ${name}</span>`;
+}
+
+function restoreMyPicks() {
+  if (savedMyPicks) { STATE.picks = savedMyPicks; savedMyPicks = null; }
+  showPage('leaderboard');
+  renderLeaderboard();
+}
+
+// Agregar jugador simulado con picks aleatorios
+let simCount = 0;
+function addSimPlayer() {
+  simCount++;
+  const name = `Jugador ${simCount}`;
+  // Generar picks aleatorios para grupos
+  const picks = {};
+  GM.forEach(m => {
+    const h = Math.floor(Math.random()*4);
+    const a = Math.floor(Math.random()*4);
+    picks[m.id] = {h, a, saved:true};
+  });
+  PLAYERS[name] = {name, picks};
+  renderLeaderboard();
+  toast(`${name} agregado con picks aleatorios`, 'success');
+}
+
+// ══════════════════════════════
+// AI
+// ══════════════════════════════
+const AI_R={
+  d:'Para maximizar puntos: el marcador exacto en grupos (+5) y el primer goleador (+3) son los grandes diferenciadores. En eliminatorias un marcador exacto vale 10 pts.',
+  g:'Grupos más competidos: J (Argentina vs Austria), I (Francia vs Noruega), E (Alemania vs Ecuador). Favoritos claros de 1er lugar: Brasil (C), España (H), Argentina (J), Portugal (K).',
+  f:'🏆 Candidatos:\n🇦🇷 Argentina — campeones\n🇫🇷 Francia — siempre peligrosos\n🇧🇷 Brasil — constantes\n🇩🇪 Alemania — recuperados\n🇵🇹 Portugal',
+  p:'Sistema unificado: 1pt goles local exactos · 1pt goles visitante exactos · 2pts resultado G/E/P · +1pt bonus si todo correcto = 5pts máximo por partido. Clasificación de grupo: 1pt por posición exacta (máx 4).',
+};
+const aiMsgs=[{r:'a',t:'¡Hola! Soy tu asistente para la Quiniela Mundial 2026 🏆\n\nPuedo ayudarte con análisis de grupos, estrategias de picks y reglas. ¿Qué quieres saber?'}];
+function renderAI(){
+  document.getElementById('ai-msgs').innerHTML=aiMsgs.map(m=>`<div class="ai-msg ${m.r}">${m.t.replace(/\n/g,'<br>')}</div>`).join('');
+  document.getElementById('ai-msgs').scrollTop=9999;
+}
+function sendQ(t){document.getElementById('ai-in').value=t;sendAI();}
+function sendAI(){
+  const inp=document.getElementById('ai-in');
+  const t=inp.value.trim();if(!t)return;
+  inp.value='';aiMsgs.push({r:'u',t});renderAI();
+  const btn=document.getElementById('ai-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  setTimeout(()=>{
+    const tl=t.toLowerCase();
+    let resp=AI_R.d;
+    if(tl.includes('grupo'))resp=AI_R.g;
+    if(tl.includes('favorit')||tl.includes('ganar'))resp=AI_R.f;
+    if(tl.includes('punt')||tl.includes('sistem'))resp=AI_R.p;
+    aiMsgs.push({r:'a',t:resp});renderAI();
+    btn.disabled=false;btn.textContent='Enviar';
+  },800);
+}
+
+// ══════════════════════════════
+// ADMIN
+// ══════════════════════════════
+function renderAdminPhaseTabs(){
+  document.getElementById('admin-phase-tabs').innerHTML=PHASE_ORDER.map(p=>
+    `<button class="tb${p===STATE.adminPhase?' active':''}" onclick="setAdminPhase('${p}')">${PHASE_LABELS[p]}</button>`
+  ).join('');
+}
+function setAdminPhase(p){STATE.adminPhase=p;renderAdminPhaseTabs();renderAdminTable();}
+function renderAdminTable(){
+  const all=[...GM,...BRACKET];
+  const filtered=all.filter(m=>(m.g?'group':m.phase)===STATE.adminPhase||m.phase===STATE.adminPhase);
+  document.getElementById('admin-tbody').innerHTML=filtered.map(m=>{
+    const res=RESULTS[m.id]||{};
+    const teams=[m.h,m.a].filter(t=>t&&!t.startsWith('W')&&!t.startsWith('L')&&!t.startsWith('1')&&!t.startsWith('2')&&!t.startsWith('3')&&t.length<20);
+    return`<tr>
+      <td><strong style="font-size:11px">${m.id}</strong></td>
+      <td style="color:var(--text2);font-size:10px;white-space:nowrap">${m.d||m.date||''}</td>
+      <td style="font-size:11px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.h}</td>
+      <td><div style="display:flex;align-items:center;gap:3px;justify-content:center">
+        <input type="number" min="0" max="20" class="as" id="adh-${m.id}" value="${res.hs!=null?res.hs:''}" placeholder="–">
+        <span style="font-weight:700;color:var(--text3)">–</span>
+        <input type="number" min="0" max="20" class="as" id="ada-${m.id}" value="${res.as!=null?res.as:''}" placeholder="–">
+      </div></td>
+      <td style="font-size:11px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.a}</td>
+      <td><select class="fsel" style="font-size:10px" id="adfs-${m.id}">
+        <option value="">--</option>
+        ${teams.map(t=>`<option${res.fs===t?' selected':''}>${t}</option>`).join('')}
+        <option value="Ninguno"${res.fs==='Ninguno'?' selected':''}>Ninguno</option>
+      </select></td>
+      <td><button class="btn btn-s btn-xs" onclick="toggleLock('${m.id}',this)">${(res.locked)?'🔒':'🔓'}</button></td>
+      <td><button class="btn btn-p btn-xs" onclick="saveAdmin('${m.id}')">Guardar</button></td>
+    </tr>`;
+  }).join('') + `
+  <tr style="border-top:1px solid var(--border2);background:var(--surface2)">
+    <td colspan="8" style="text-align:right;font-size:11px;font-weight:700;color:var(--text2);padding:6px 9px">TOTAL PICKS (partidos)</td>
+    <td></td>
+    <td style="color:var(--accent);font-size:13px;font-weight:800">${total1}</td>
+  </tr>
+  <tr style="background:rgba(0,113,227,.05)">
+    <td colspan="8" style="text-align:right;font-size:11px;font-weight:700;color:var(--text2);padding:6px 9px">TOTAL CLASIFICACIÓN</td>
+    <td></td>
+    <td style="color:${total2!=null&&total2>0?'var(--success)':'var(--text3)'};font-size:13px;font-weight:800">${total2!=null?total2:'—'}</td>
+  </tr>
+  <tr style="background:rgba(0,113,227,.08);border-top:1px solid rgba(0,113,227,.2)">
+    <td colspan="8" style="text-align:right;font-size:12px;font-weight:800;color:var(--text);padding:7px 9px">TOTAL GRUPO</td>
+    <td></td>
+    <td style="color:var(--accent);font-size:14px;font-weight:800">${total2!=null?total1+total2:total1}</td>
+  </tr>`;
+}
+function toggleLock(id,btn){
+  if(!RESULTS[id])RESULTS[id]={};
+  RESULTS[id].locked=!RESULTS[id].locked;
+  btn.textContent=RESULTS[id].locked?'🔒':'🔓';
+  toast(RESULTS[id].locked?`${id} cerrado 🔒`:`${id} abierto 🔓`);
+}
+function saveAdmin(id){
+  const hs=document.getElementById('adh-'+id)?.value;
+  const as=document.getElementById('ada-'+id)?.value;
+  const fs=document.getElementById('adfs-'+id)?.value;
+  if(!RESULTS[id])RESULTS[id]={};
+  RESULTS[id].hs=hs!==''?+hs:null;
+  RESULTS[id].as=as!==''?+as:null;
+  RESULTS[id].fs=fs||null;
+  toast(`${id} guardado ✓ — puntos actualizados`,'success');
+  // Refrescar vista según fase activa
+  if(STATE.activePhase==='group'){
+    refreshAllPickCols();
+  } else {
+    // Re-render bracket preservando scroll
+    refreshBracket();
+  }
+}
+function switchAdminTab(tab){
+  ['results','users','codes'].forEach(t=>{document.getElementById('admin-'+t).style.display=t===tab?'block':'none';});
+  document.querySelectorAll('#admin-main-tabs .tb').forEach((b,i)=>b.classList.toggle('active',['results','users','codes'][i]===tab));
+}
+
+// USERS & CODES demo
+const DU=[{u:'Admin',r:'Admin',p:0,pts:0},{u:'Demo User',r:'Jugador',p:8,pts:48},{u:'Carlos M.',r:'Jugador',p:72,pts:54}];
+const DC=[{c:'MUNDIAL2026',s:'Disponible',d:'10 Jun'},{c:'FUTBOL123',s:'Usado',d:'9 Jun'}];
+function renderUsersTable(){
+  document.getElementById('users-tbody').innerHTML=DU.map((u,i)=>`
+    <tr><td>${i+1}</td><td><strong>${u.u}</strong></td>
+    <td><span class="badge ${u.r==='Admin'?'badge-n':'badge-i'}">${u.r}</span></td>
+    <td>${u.p}</td><td><strong>${u.pts}</strong></td></tr>`).join('');
+}
+function addUser(){
+  const n=document.getElementById('nu-n').value.trim();
+  if(!n){toast('Ingresa un nombre','error');return;}
+  DU.push({u:n,r:'Jugador',p:0,pts:0});
+  document.getElementById('nu-n').value='';document.getElementById('nu-p').value='';
+  renderUsersTable();toast(`"${n}" creado ✓`,'success');
+}
+function renderCodesTable(){
+  document.getElementById('codes-tbody').innerHTML=DC.map(c=>`
+    <tr><td style="font-family:monospace;font-weight:700;font-size:13px">${c.c}</td>
+    <td><span class="badge ${c.s==='Disponible'?'badge-i':'badge-n'}">${c.s}</span></td>
+    <td style="font-size:11px;color:var(--text2)">${c.d}</td></tr>`).join('');
+}
+function addCode(){
+  const v=document.getElementById('nc-in').value.trim().toUpperCase();
+  if(!v){toast('Ingresa un código','error');return;}
+  DC.unshift({c:v,s:'Disponible',d:'Hoy'});
+  document.getElementById('nc-in').value='';
+  renderCodesTable();toast(`"${v}" creado ✓`,'success');
+}
+
+// ══════════════════════════════
+// PRINT / PDF
+// ══════════════════════════════
+function printQuiniela() {
+  // Show picks page before printing
+  showPage('picks');
+  // Give time to render then print
+  setTimeout(() => window.print(), 150);
+}
+
+// BOOT
+document.getElementById('l-p').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+// En modo iframe: mostrar app directamente, el parent maneja auth
+const isIframe = window.self !== window.top;
+if (isIframe) {
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('app').style.display='block';
+  // Ocultar nav del HTML (el parent tiene su propio nav)
+  const hdr = document.querySelector('.hdr');
+  const nav = document.querySelector('.nav');
+  if (hdr) hdr.style.display='none';
+} else {
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUPABASE BRIDGE — comunicación con la app React via postMessage
+// ═══════════════════════════════════════════════════════════════
+const SB = {
+  quinielaId: null,
+  isLocked: false,
+
+  // Inicializar desde el parent (React app)
+  init(data) {
+    this.quinielaId = data.quinielaId;
+    this.isLocked   = data.isLocked || false;
+    STATE.user = { username: data.username || 'Usuario' };
+    // Siempre empezar en Grupos → Grupo A
+    STATE.activePhase = 'group';
+    STATE.activeGroup = 'A';
+    // Cargar picks guardados desde Supabase
+    if (data.picks) {
+      Object.assign(STATE.picks, data.picks);
+    }
+    // Cargar resultados reales
+    if (data.results) {
+      Object.assign(RESULTS, data.results);
+    }
+    // Bloquear picks si la quiniela está cerrada
+    if (this.isLocked) {
+      document.body.setAttribute('data-locked', 'true');
+    }
+    // Re-render siempre en Grupos
+    renderPhaseTabs();
+    renderMatches();
+  },
+
+  // Enviar pick al parent para guardar en Supabase
+  savePick(matchId, pickData) {
+    if (this.isLocked) return;
+    window.parent.postMessage({
+      type: 'SAVE_PICK',
+      quinielaId: this.quinielaId,
+      matchId,
+      pick: pickData,
+    }, '*');
+  },
+
+  // Notificar puntos actualizados
+  notifyPts(total) {
+    window.parent.postMessage({ type: 'PTS_UPDATE', total }, '*');
+  }
+};
+
+// Escuchar mensajes del parent React
+window.addEventListener('message', (e) => {
+  const { type, data } = e.data || {};
+  if (type === 'INIT')        SB.init(data);
+  if (type === 'UPDATE_RESULTS') { Object.assign(RESULTS, data); renderMatches(); }
+});
+
+// Interceptar autoSavePick para enviar al parent
+const _origAutoSave = autoSavePick;
+autoSavePick = function(id) {
+  _origAutoSave(id);
+  const pk = STATE.picks[id];
+  if (pk && SB.quinielaId) SB.savePick(id, pk);
+  // Notificar total de puntos
+  let total = 0;
+  GM.forEach(m => { const p = calcPts(STATE.picks[m.id], m); if(p) total+=p; });
+  SB.notifyPts(total);
+};
+
+// Interceptar setBracketPick también
+const _origSetBracket = setBracketPick;
+setBracketPick = function(id, field, val) {
+  _origSetBracket(id, field, val);
+  const pk = STATE.picks[id];
+  if (pk && SB.quinielaId) {
+    setTimeout(() => SB.savePick(id, STATE.picks[id]), 700);
+  }
+};
+
+// Listo — notificar al parent que el iframe está cargado
+window.parent.postMessage({ type: 'IFRAME_READY' }, '*');
+</script>
+</body>
+</html>
