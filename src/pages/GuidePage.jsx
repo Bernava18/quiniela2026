@@ -81,7 +81,7 @@ const STEPS = [
       { text: 'Click en cualquier jugador para ver su quiniela completa', detail: 'En modo solo lectura — no puedes modificar la suya' },
       { text: 'Los resultados y puntos se actualizan solos', detail: 'No necesitas recargar la página — Supabase Realtime actualiza en tiempo real' },
     ],
-    tip: '💰 Para ver la tabla necesitas que el organizador confirme tu pago ($15 USD). Sin pago puedes llenar tu quiniela pero no ver la tabla.',
+    tip: '🔒 TRANSPARENCIA: Las quinielas de otros participantes están OCULTAS hasta el inicio del Mundial (11 Jun). Esto evita que alguien copie los picks de otro. Al inicio del torneo se envía un PDF oficial con todas las quinielas a todos los participantes como auditoría. 💰 Para ver la tabla necesitas pago confirmado ($15 USD).',
     visual: { type: 'leaderboard' }
   },
   {
