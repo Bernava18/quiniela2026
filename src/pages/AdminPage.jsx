@@ -34,9 +34,9 @@ export default function AdminPage() {
         id, username, full_name, has_paid, paid_at,
         quinielas (
           id, name, is_locked,
-          picks (match_id, goals_home)
-        ),
-        scores (total_pts)
+          picks (match_id, goals_home),
+          scores (total_pts)
+        )
       `)
       .order('username')
     setUsers(data || [])
@@ -175,7 +175,7 @@ export default function AdminPage() {
             ) : users.map(u => {
               const totalPicks = u.quinielas?.reduce((s,q) => s + (q.picks?.filter(p=>p.goals_home!=null).length||0), 0) || 0
               const totalPicksMax = (u.quinielas?.length || 0) * 104
-              const pts = u.scores?.[0]?.total_pts ?? u.quinielas?.reduce((s,q) => s, 0) ?? 0
+              const pts = u.quinielas?.reduce((s,q) => s + (q.scores?.[0]?.total_pts || 0), 0) ?? 0
 
               return (
                 <div key={u.id} style={{ display:'grid', gridTemplateColumns:'1fr 80px 80px 100px 120px', padding:'11px 16px', borderBottom:'0.5px solid rgba(0,0,0,.04)', alignItems:'center', gap:8, background: u.has_paid ? 'rgba(48,209,88,.02)' : 'rgba(255,69,58,.02)' }}>
