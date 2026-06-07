@@ -265,9 +265,9 @@ export function LoginPage() {
 
       <div style={{ position:'relative', zIndex:1 }}>
         {/* HERO */}
-        <div style={{ minHeight:'100vh', display:'grid', gridTemplateColumns:'1fr 1fr', gap:0, alignItems:'center' }}>
+        <div style={{ minHeight:'100vh', display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))', gap:0, alignItems:'center' }}>
           {/* Left */}
-          <div style={{ padding:'60px 48px 60px 60px' }}>
+          <div style={{ padding:'clamp(24px,5vw,60px) clamp(20px,5vw,60px)' }}>
             <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,214,10,.1)', border:'0.5px solid rgba(255,214,10,.3)', borderRadius:20, padding:'6px 14px', fontSize:12, fontWeight:700, color:C.gold, marginBottom:24 }}>
               ⚽ FIFA WORLD CUP 2026
             </div>
@@ -314,7 +314,7 @@ export function LoginPage() {
             </div>
 
             {stats.topPlayer && (
-              <div style={{ display:'inline-flex', alignItems:'center', gap:10, background:'rgba(255,214,10,.06)', border:'0.5px solid rgba(255,214,10,.2)', borderRadius:12, padding:'10px 16px' }}>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:10, background:'rgba(255,214,10,.06)', border:'0.5px solid rgba(255,214,10,.2)', borderRadius:12, padding:'10px 16px', marginBottom:16 }}>
                 <span style={{ fontSize:20 }}>👑</span>
                 <div>
                   <div style={{ fontSize:11, color:C.sub, fontWeight:600, textTransform:'uppercase', letterSpacing:'.4px' }}>Líder actual</div>
@@ -322,10 +322,33 @@ export function LoginPage() {
                 </div>
               </div>
             )}
+
+            {/* Prize info */}
+            <div style={{ background:'rgba(255,214,10,.08)', border:'0.5px solid rgba(255,214,10,.25)', borderRadius:12, padding:'14px 16px' }}>
+              <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', color:C.gold, marginBottom:10 }}>💰 Inscripción y premios</div>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
+                <div>
+                  <div style={{ fontSize:22, fontWeight:900, color:'#fff' }}>$15 USD</div>
+                  <div style={{ fontSize:11, color:C.sub }}>por quiniela</div>
+                </div>
+                <div style={{ display:'flex', gap:12 }}>
+                  {[['🥇','1er','60%'],['🥈','2do','20%'],['🥉','3er','10%']].map(([m,p,pct])=>(
+                    <div key={p} style={{ textAlign:'center' }}>
+                      <div style={{ fontSize:16 }}>{m}</div>
+                      <div style={{ fontSize:12, fontWeight:800, color:'#fff' }}>{pct}</div>
+                      <div style={{ fontSize:10, color:C.sub }}>{p} lugar</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ fontSize:11, color:C.sub, marginTop:8 }}>
+                Pago manual al organizador · El Admin confirma tu inscripción
+              </div>
+            </div>
           </div>
 
           {/* Right — form */}
-          <div style={{ padding:'60px 60px 60px 48px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ padding:'clamp(24px,5vw,60px) clamp(20px,5vw,60px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
             <div style={{ width:'100%', maxWidth:380 }}>
               <div style={{ textAlign:'center', marginBottom:20 }}>
                 <div style={{ fontSize:46 }}>🏆</div>
@@ -338,7 +361,7 @@ export function LoginPage() {
         </div>
 
         {/* COMO FUNCIONA */}
-        <div style={{ padding:'60px 48px', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
+        <div style={{ padding:'clamp(32px,6vw,60px) clamp(16px,4vw,48px)', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
           <h2 style={{ fontSize:30, fontWeight:800, textAlign:'center', letterSpacing:'-1px', marginBottom:8 }}>¿Cómo funciona?</h2>
           <p style={{ textAlign:'center', color:C.sub, marginBottom:36, fontSize:15 }}>4 pasos simples</p>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:14, maxWidth:1000, margin:'0 auto' }}>
@@ -358,7 +381,7 @@ export function LoginPage() {
         </div>
 
         {/* PUNTOS */}
-        <div style={{ padding:'60px 48px', background:'rgba(255,255,255,.02)', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
+        <div style={{ padding:'clamp(32px,6vw,60px) clamp(16px,4vw,48px)', background:'rgba(255,255,255,.02)', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
           <h2 style={{ fontSize:30, fontWeight:800, textAlign:'center', letterSpacing:'-1px', marginBottom:8 }}>Sistema de puntos</h2>
           <p style={{ textAlign:'center', color:C.sub, marginBottom:36, fontSize:15 }}>Máximo <strong style={{color:C.gold}}>606 puntos</strong></p>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:12, maxWidth:1000, margin:'0 auto' }}>
@@ -381,7 +404,7 @@ export function LoginPage() {
         </div>
 
         {/* GRUPOS */}
-        <div style={{ padding:'60px 48px', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
+        <div style={{ padding:'clamp(32px,6vw,60px) clamp(16px,4vw,48px)', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
           <h2 style={{ fontSize:30, fontWeight:800, textAlign:'center', letterSpacing:'-1px', marginBottom:8 }}>Los 48 equipos</h2>
           <p style={{ textAlign:'center', color:C.sub, marginBottom:28, fontSize:15 }}>12 grupos · 4 equipos cada uno</p>
           <div style={{ display:'flex', flexWrap:'wrap', gap:6, justifyContent:'center', marginBottom:18 }}>
@@ -406,7 +429,7 @@ export function LoginPage() {
 
         {/* RESULTADOS EN VIVO */}
         {liveResults.length > 0 && (
-          <div style={{ padding:'40px 48px', background:'rgba(255,255,255,.02)', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
+          <div style={{ padding:'clamp(24px,4vw,40px) clamp(16px,4vw,48px)', background:'rgba(255,255,255,.02)', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
             <h2 style={{ fontSize:26, fontWeight:800, textAlign:'center', letterSpacing:'-1px', marginBottom:24 }}>🔴 Últimos resultados</h2>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:10, maxWidth:1000, margin:'0 auto' }}>
               {liveResults.map(r => (
@@ -419,8 +442,15 @@ export function LoginPage() {
           </div>
         )}
 
+        {/* GUIDE LINK */}
+        <div style={{ padding:'32px 48px', textAlign:'center', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
+          <a href="/guia" style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,.06)', border:'0.5px solid rgba(255,255,255,.15)', borderRadius:12, padding:'12px 24px', color:'#fff', textDecoration:'none', fontSize:14, fontWeight:600 }}>
+            📖 Ver guía completa de uso →
+          </a>
+        </div>
+
         {/* FOOTER */}
-        <div style={{ padding:'16px 48px', textAlign:'center', color:'#2a2a2c', fontSize:12, borderTop:'0.5px solid rgba(255,255,255,.04)', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
+        <div style={{ padding:'16px clamp(16px,4vw,48px)', textAlign:'center', color:'#2a2a2c', fontSize:12, borderTop:'0.5px solid rgba(255,255,255,.04)', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
           <span>🏆 Quiniela Mundial 2026</span>
           <span>Resultados via football-data.org · Powered by Supabase + Netlify</span>
         </div>
@@ -428,3 +458,5 @@ export function LoginPage() {
     </div>
   )
 }
+
+export default LoginPage
