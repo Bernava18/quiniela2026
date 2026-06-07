@@ -216,10 +216,10 @@ export default function DashboardPage() {
                     style={{ padding:'5px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:7, background:'none', cursor:'pointer', fontSize:13 }}>
                     {isExpanded?'▲':'▼'}
                   </button>
-                  <button onClick={()=>downloadQuinielaBackup(q.id, q.name)}
-                    title="Descargar respaldo"
+                  <button onClick={()=>window.open(`/print/${q.id}`, '_blank')}
+                    title="Imprimir quiniela en PDF"
                     style={{ padding:'5px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:7, background:'none', cursor:'pointer', fontSize:13 }}>
-                    💾
+                    🖨️
                   </button>
                   {!q.is_locked && !isLocked && (
                     <button onClick={()=>handleDelete(q.id, q.name)}
