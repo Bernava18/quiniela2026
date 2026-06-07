@@ -597,31 +597,31 @@ const BRACKET=[
   {id:'M82',phase:'r32',side:'R',n:82,d:'2026-07-02',h:'Bélgica (1G)',a:'3 EFGH'},
   {id:'M83',phase:'r32',side:'R',n:83,d:'2026-07-03',h:'2K',a:'2L'},
   {id:'M84',phase:'r32',side:'R',n:84,d:'2026-07-03',h:'España (1H)',a:'2J'},
-  {id:'M85',phase:'r32',side:'R',n:85,d:'2026-07-04',h:'Canadá (1B)',a:'3 ABCD'},
-  {id:'M86',phase:'r32',side:'R',n:86,d:'2026-07-04',h:'Argentina (1J)',a:'2H'},
-  {id:'M87',phase:'r32',side:'R',n:87,d:'2026-07-05',h:'Portugal (1K)',a:'3 IJKL'},
-  {id:'M88',phase:'r32',side:'R',n:88,d:'2026-07-05',h:'2D',a:'2G'},
+  {id:'M85',phase:'r32',side:'R',n:85,d:'2026-07-02',h:'Canadá (1B)'',a:'3 ABCD'},
+  {id:'M86',phase:'r32',side:'R',n:86,d:'2026-07-02',h:'Argentina (1J)'',a:'2H'},
+  {id:'M87',phase:'r32',side:'R',n:87,d:'2026-07-03',h:'Portugal (1K)'',a:'3 IJKL'},
+  {id:'M88',phase:'r32',side:'R',n:88,d:'2026-07-03',h:'2D',a:'2G'},
   // Octavos
-  {id:'M89',phase:'r16',side:'L',n:89,d:'2026-07-07',h:'W M73',a:'W M74'},
-  {id:'M90',phase:'r16',side:'L',n:90,d:'2026-07-07',h:'W M75',a:'W M76'},
-  {id:'M91',phase:'r16',side:'L',n:91,d:'2026-07-08',h:'W M77',a:'W M78'},
-  {id:'M92',phase:'r16',side:'L',n:92,d:'2026-07-08',h:'W M79',a:'W M80'},
-  {id:'M93',phase:'r16',side:'R',n:93,d:'2026-07-09',h:'W M81',a:'W M82'},
-  {id:'M94',phase:'r16',side:'R',n:94,d:'2026-07-09',h:'W M83',a:'W M84'},
-  {id:'M95',phase:'r16',side:'R',n:95,d:'2026-07-10',h:'W M85',a:'W M86'},
-  {id:'M96',phase:'r16',side:'R',n:96,d:'2026-07-10',h:'W M87',a:'W M88'},
+  {id:'M89',phase:'r16',side:'L',n:89,d:'2026-07-04',h:'W M73',a:'W M74'},
+  {id:'M90',phase:'r16',side:'L',n:90,d:'2026-07-04',h:'W M75',a:'W M76'},
+  {id:'M91',phase:'r16',side:'L',n:91,d:'2026-07-05',h:'W M77',a:'W M78'},
+  {id:'M92',phase:'r16',side:'L',n:92,d:'2026-07-05',h:'W M79',a:'W M80'},
+  {id:'M93',phase:'r16',side:'R',n:93,d:'2026-07-06',h:'W M81',a:'W M82'},
+  {id:'M94',phase:'r16',side:'R',n:94,d:'2026-07-06',h:'W M83',a:'W M84'},
+  {id:'M95',phase:'r16',side:'R',n:95,d:'2026-07-07',h:'W M85',a:'W M86'},
+  {id:'M96',phase:'r16',side:'R',n:96,d:'2026-07-07',h:'W M87',a:'W M88'},
   // Cuartos
-  {id:'M97',phase:'qf',side:'L',n:97,d:'2026-07-14',h:'W M89',a:'W M90'},
-  {id:'M98',phase:'qf',side:'L',n:98,d:'2026-07-14',h:'W M91',a:'W M92'},
-  {id:'M99',phase:'qf',side:'R',n:99,d:'2026-07-15',h:'W M93',a:'W M94'},
-  {id:'M100',phase:'qf',side:'R',n:100,d:'2026-07-15',h:'W M95',a:'W M96'},
+  {id:'M97',phase:'qf',side:'L',n:97,d:'2026-07-09',h:'W M89',a:'W M90'},
+  {id:'M98',phase:'qf',side:'L',n:98,d:'2026-07-10',h:'W M91',a:'W M92'},
+  {id:'M99',phase:'qf',side:'R',n:99,d:'2026-07-10',h:'W M93',a:'W M94'},
+  {id:'M100',phase:'qf',side:'R',n:100,d:'2026-07-11',h:'W M95',a:'W M96'},
   // Semis
-  {id:'M101',phase:'sf',side:'L',n:101,d:'2026-07-18',h:'W M97',a:'W M98'},
-  {id:'M102',phase:'sf',side:'R',n:102,d:'2026-07-19',h:'W M99',a:'W M100'},
+  {id:'M101',phase:'sf',side:'L',n:101,d:'2026-07-14',h:'W M97',a:'W M98'},
+  {id:'M102',phase:'sf',side:'R',n:102,d:'2026-07-15',h:'W M99',a:'W M100'},
   // 3er lugar
-  {id:'M103',phase:'3rd',side:'C',n:103,d:'2026-07-22',h:'L M101',a:'L M102'},
+  {id:'M103',phase:'3rd',side:'C',n:103,d:'2026-07-18',h:'L M101',a:'L M102'},
   // Final
-  {id:'M104',phase:'final',side:'C',n:104,d:'2026-07-23',h:'W M101',a:'W M102'},
+  {id:'M104',phase:'final',side:'C',n:104,d:'2026-07-19',h:'W M101',a:'W M102'},
 ];
 
 // Estado demo: sin ningún partido bloqueado en grupos
@@ -2934,19 +2934,6 @@ const SB = {
     // Bloquear picks si la quiniela está cerrada
     if (this.isLocked) {
       document.body.setAttribute('data-locked', 'true');
-      const style = document.createElement('style');
-      style.textContent = `
-        input[type="number"], select.fsel, select.gsel {
-          pointer-events: none !important;
-          opacity: 0.75 !important;
-          cursor: not-allowed !important;
-          background: #f2f2f7 !important;
-          color: #6e6e73 !important;
-        }
-        .bm-si { pointer-events: none !important; opacity: 0.75 !important; }
-        .result-sel { pointer-events: none !important; opacity: 0.75 !important; }
-      `;
-      document.head.appendChild(style);
     }
     // Re-render siempre en Grupos
     renderPhaseTabs();
