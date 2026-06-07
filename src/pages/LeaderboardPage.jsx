@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase, getQuinielaPicks, getAllResults } from '../lib/supabase'
 
 const ENTRY_FEE = 15
+const LOCK_DATE = new Date('2026-06-11T18:00:00Z') // Inicio del Mundial
 
 const MEDALS = ['🥇','🥈','🥉']
 const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
@@ -101,6 +102,14 @@ export default function LeaderboardPage() {
   }
 
   async function openViewer(row) {
+    const worldCupStarted = new Date() >= LOCK_DATE
+    const isMe = row.quinielas?.profiles?.username === profile?.username
+
+    // Block viewing other players' quinielas before World Cup starts
+    if (!worldCupStarted && !isMe) {
+      alert('👁 Las quinielas de otros participantes estarán visibles una vez inicie el Mundial (11 Jun 2026). Esto garantiza que nadie pueda copiar las quinielas de otros antes del cierre.')
+      return
+    }
     setViewing({ quinielaId: row.quiniela_id, name: row.quinielas?.profiles?.username, quinielaName: row.quinielas?.name })
     setIframeReady(false)
   }
@@ -221,9 +230,28 @@ export default function LeaderboardPage() {
           <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-.4px' }}>Tabla de Posiciones</h1>
           <span style={{ fontSize:12, color:'#ff453a', fontWeight:600 }}>● En vivo</span>
         </div>
-        <p style={{ color:'#6e6e73', fontSize:12, marginBottom:14 }}>
-          {enriched.length} quinielas · click en cualquier fila para ver la quiniela completa
+        <p style={{ color:'#6e6e73', fontSize:12, marginBottom:10 }}>
+          {enriched.length} quinielas · {new Date() >= LOCK_DATE ? 'click en cualquier fila para ver la quiniela completa' : 'Las quinielas de otros serán visibles al iniciar el Mundial'}
         </p>
+
+        {/* Transparency banner */}
+        {new Date() < LOCK_DATE ? (
+          <div style={{ background:'rgba(0,113,227,.06)', border:'1px solid rgba(0,113,227,.15)', borderRadius:10, padding:'10px 14px', marginBottom:14, display:'flex', alignItems:'center', gap:10, fontSize:12 }}>
+            <span style={{ fontSize:18 }}>🔒</span>
+            <div>
+              <span style={{ fontWeight:700, color:'#0071e3' }}>Quinielas privadas hasta el 11 Jun · </span>
+              <span style={{ color:'#6e6e73' }}>Al inicio del Mundial todas las quinielas serán visibles para garantizar transparencia. Un respaldo oficial será enviado por email a todos los participantes.</span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ background:'rgba(48,209,88,.06)', border:'1px solid rgba(48,209,88,.2)', borderRadius:10, padding:'10px 14px', marginBottom:14, display:'flex', alignItems:'center', gap:10, fontSize:12 }}>
+            <span style={{ fontSize:18 }}>✅</span>
+            <div>
+              <span style={{ fontWeight:700, color:'#1a7a38' }}>Quinielas públicas · </span>
+              <span style={{ color:'#6e6e73' }}>Puedes ver la quiniela completa de cualquier participante. El respaldo oficial fue enviado al inicio del torneo.</span>
+            </div>
+          </div>
+        )}
 
         {/* Mi posición */}
         {myRow && (
@@ -289,7 +317,7 @@ export default function LeaderboardPage() {
                   const bgRow = isMe ? 'rgba(0,113,227,.04)' : i % 2 === 0 ? '#fff' : '#fafafa'
                   return (
                     <tr key={r.quiniela_id} onClick={() => openViewer(r)}
-                      style={{ background: bgRow, cursor:'pointer', borderBottom:'0.5px solid rgba(0,0,0,.04)', transition:'background .1s' }}
+                      style={{ background: bgRow, cursor: (new Date() >= LOCK_DATE || r.quinielas?.profiles?.username === profile?.username) ? 'pointer' : 'default', borderBottom:'0.5px solid rgba(0,0,0,.04)', transition:'background .1s' }}
                       onMouseOver={e => e.currentTarget.style.background = '#eef3ff'}
                       onMouseOut={e => e.currentTarget.style.background = bgRow}>
 
