@@ -29,6 +29,7 @@ export default function Layout() {
         <nav style={{ display:'flex', gap:2 }}>
           <NavLink to="/"       style={navStyle}>Mis Quinielas</NavLink>
           <NavLink to="/tabla"  style={navStyle}>Tabla</NavLink>
+          <NavLink to="/guia"   style={navStyle}>📖 Guía</NavLink>
           {profile?.is_admin && <NavLink to="/admin" style={navStyle}>Admin</NavLink>}
           <span style={{ fontSize:13, color:'#6e6e73', padding:'5px 8px' }}>{profile?.username}</span>
           <button onClick={handleSignOut}
