@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -13,6 +13,16 @@ const PHASES = [
 
 const ENTRY_FEE = 15
 
+// ── Helper: carga script dinámico ────────────────────────────────
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
+    const s = document.createElement('script')
+    s.src = src; s.onload = resolve; s.onerror = reject
+    document.head.appendChild(s)
+  })
+}
+
 export default function AdminPage() {
   const { profile: adminProfile } = useAuth()
   const [tab, setTab]         = useState('payments') // payments | results
@@ -23,15 +33,18 @@ export default function AdminPage() {
   const [syncing, setSyncing] = useState(false)
   const [msg, setMsg]         = useState('')
   const [loadingUsers, setLoadingUsers] = useState(true)
+  const [downloading, setDownloading] = useState(false)
+  const [dlProgress, setDlProgress] = useState('')
+  const [allPicksData, setAllPicksData] = useState([])
 
   useEffect(() => { loadUsers(); loadResults() }, [])
 
   async function loadUsers() {
     setLoadingUsers(true)
     const { data } = await supabase
-      .from('profiles_with_email')
+      .from('profiles')
       .select(`
-        id, username, full_name, phone, email, has_paid, paid_at,
+        id, username, full_name, phone, has_paid, paid_at,
         quinielas (
           id, name, is_locked,
           picks (match_id, goals_home),
@@ -48,6 +61,148 @@ export default function AdminPage() {
     const map = {}
     data?.forEach(r => { map[r.match_id] = r })
     setResults(map)
+  }
+
+  // Carga picks completos de todas las quinielas para el PDF batch
+  async function loadAllPicks() {
+    const { data } = await supabase
+      .from('profiles')
+      .select(`
+        id, username, full_name,
+        quinielas (
+          id, name, created_at, is_locked,
+          picks ( match_id, goals_home, goals_away, winner, h_team, a_team )
+        )
+      `)
+      .order('username')
+    setAllPicksData(data || [])
+    return data || []
+  }
+
+  async function downloadAllPDFs() {
+    setDownloading(true)
+    setDlProgress('Cargando librerías...')
+    try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      const { jsPDF } = window.jspdf
+
+      setDlProgress('Cargando quinielas...')
+      const profilesData = await loadAllPicks()
+      const withQ = profilesData.filter(p => p.quinielas?.length > 0)
+      if (!withQ.length) { alert('No hay quinielas registradas.'); setDownloading(false); return }
+
+      // Lista plana de todas las quinielas
+      const allQ = withQ.flatMap(p => p.quinielas.map(q => ({ quinielaId: q.id, name: q.name, username: p.username })))
+      const total = allQ.length
+
+      // PDF inicial — se irán agregando páginas
+      let pdf = null
+      let pageCount = 0
+
+      for (let qi = 0; qi < allQ.length; qi++) {
+        const { quinielaId, name, username } = allQ[qi]
+        setDlProgress(`Capturando (${qi + 1}/${total}): ${username} · ${name}`)
+
+        // Renderizar /print/:id en iframe oculto
+        const captured = await captureQuinielaPage(quinielaId)
+        if (!captured) continue
+
+        const { grupos, bracket } = captured
+
+        // Página de grupos
+        const pW1 = 210
+        const pH1 = Math.round((grupos.height / grupos.width) * pW1)
+        if (!pdf) {
+          pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pW1, pH1] })
+        } else {
+          pdf.addPage([pW1, pH1], 'portrait')
+        }
+        pdf.addImage(grupos.img, 'JPEG', 0, 0, pW1, pH1)
+        pageCount++
+
+        // Página de bracket
+        const pW2 = Math.max(297, Math.round(bracket.width / 3.78))
+        const pH2 = Math.round((bracket.height / bracket.width) * pW2)
+        pdf.addPage([pW2, pH2], pW2 > pH2 ? 'landscape' : 'portrait')
+        pdf.addImage(bracket.img, 'JPEG', 0, 0, pW2, pH2)
+        pageCount++
+      }
+
+      if (!pdf) { alert('No se pudo generar ninguna página.'); setDownloading(false); return }
+
+      setDlProgress('Guardando PDF...')
+      const fecha = new Date().toISOString().slice(0, 10)
+      pdf.save(`Quinielas_Mundial_2026_TODAS_${fecha}.pdf`)
+      setDlProgress('')
+    } catch (e) {
+      console.error(e)
+      alert('Error generando PDF: ' + e.message)
+      setDlProgress('')
+    }
+    setDownloading(false)
+  }
+
+  // Abre /print/:id en iframe oculto, espera que cargue, captura las dos secciones
+  async function captureQuinielaPage(quinielaId) {
+    return new Promise((resolve) => {
+      const iframe = document.createElement('iframe')
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1200px;height:3000px;border:none;opacity:0;pointer-events:none'
+      document.body.appendChild(iframe)
+
+      // Timeout de seguridad
+      const timeout = setTimeout(() => {
+        document.body.removeChild(iframe)
+        resolve(null)
+      }, 15000)
+
+      iframe.onload = async () => {
+        try {
+          // Esperar que React renderice
+          await new Promise(r => setTimeout(r, 1500))
+
+          const iDoc = iframe.contentDocument
+          if (!iDoc) { clearTimeout(timeout); document.body.removeChild(iframe); resolve(null); return }
+
+          // Encontrar las dos secciones por su ref (buscar por contenido)
+          const sections = iDoc.querySelectorAll('[data-section]')
+          let gruposEl = null, bracketEl = null
+
+          if (sections.length >= 2) {
+            gruposEl  = sections[0]
+            bracketEl = sections[1]
+          } else {
+            // Fallback: las dos divs principales con fondo blanco y padding
+            const divs = Array.from(iDoc.querySelectorAll('div')).filter(d =>
+              d.style.background === 'rgb(255, 255, 255)' ||
+              d.style.backgroundColor === 'rgb(255, 255, 255)'
+            )
+            gruposEl  = divs[0] || iDoc.body
+            bracketEl = divs[1] || iDoc.body
+          }
+
+          const opts = { scale: 1.8, useCORS: true, backgroundColor: '#ffffff',
+            logging: false, allowTaint: true }
+
+          const c1 = await window.html2canvas(gruposEl, { ...opts, windowWidth: 1200 })
+          const c2 = await window.html2canvas(bracketEl, { ...opts, windowWidth: bracketEl.scrollWidth + 40 })
+
+          clearTimeout(timeout)
+          document.body.removeChild(iframe)
+
+          resolve({
+            grupos:  { img: c1.toDataURL('image/jpeg', 0.92), width: c1.width, height: c1.height },
+            bracket: { img: c2.toDataURL('image/jpeg', 0.92), width: c2.width, height: c2.height },
+          })
+        } catch (err) {
+          clearTimeout(timeout)
+          document.body.removeChild(iframe)
+          resolve(null)
+        }
+      }
+
+      iframe.src = `/print/${quinielaId}`
+    })
   }
 
   async function togglePayment(userId, currentPaid) {
@@ -133,6 +288,7 @@ export default function AdminPage() {
       <div style={{ display:'flex', gap:6, marginBottom:20 }}>
         <button style={tabStyle('payments')} onClick={() => setTab('payments')}>💰 Pagos</button>
         <button style={tabStyle('results')}  onClick={() => setTab('results')}>⚽ Resultados</button>
+        <button style={tabStyle('pdfs')}    onClick={() => setTab('pdfs')}>📄 PDFs</button>
       </div>
 
       {/* ══ TAB: PAGOS ══ */}
@@ -182,21 +338,9 @@ export default function AdminPage() {
 
                   <div>
                     <div style={{ fontWeight:700, fontSize:14 }}>{u.username}</div>
-                    {u.full_name && <div style={{ fontSize:12, color:'#3a3a3c', marginTop:1 }}>{u.full_name}</div>}
-                    {u.email && (
-                      <div style={{ fontSize:11, color:'#6e6e73', marginTop:2, display:'flex', alignItems:'center', gap:3 }}>
-                        <span>✉️</span>
-                        <a href={`mailto:${u.email}`} style={{ color:'#0071e3', textDecoration:'none' }}>{u.email}</a>
-                      </div>
-                    )}
-                    {u.phone && (
-                      <div style={{ fontSize:11, color:'#6e6e73', marginTop:1, display:'flex', alignItems:'center', gap:3 }}>
-                        <span>📱</span>
-                        <a href={`tel:${u.phone}`} style={{ color:'#6e6e73', textDecoration:'none' }}>{u.phone}</a>
-                      </div>
-                    )}
+                    {u.full_name && <div style={{ fontSize:11, color:'#aeaeb2' }}>{u.full_name}</div>}
                     {u.has_paid && u.paid_at && (
-                      <div style={{ fontSize:10, color:'#30d158', marginTop:3 }}>
+                      <div style={{ fontSize:10, color:'#30d158', marginTop:2 }}>
                         ✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
                       </div>
                     )}
@@ -238,6 +382,59 @@ export default function AdminPage() {
 
           <div style={{ marginTop:12, fontSize:12, color:'#6e6e73', textAlign:'center' }}>
             Click en el botón de pago para confirmar o revertir · Solo visible para administradores
+          </div>
+        </div>
+      )}
+
+      {/* ══ TAB: PDFs ══ */}
+      {tab === 'pdfs' && (
+        <div>
+          <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14,
+            padding:'32px 24px', boxShadow:'0 1px 4px rgba(0,0,0,.06)', textAlign:'center' }}>
+            <div style={{ fontSize:48, marginBottom:12 }}>📄</div>
+            <h2 style={{ fontSize:20, fontWeight:800, marginBottom:8 }}>Descargar todas las quinielas</h2>
+            <p style={{ fontSize:13, color:'#6e6e73', marginBottom:24, maxWidth:480, margin:'0 auto 24px' }}>
+              Genera un PDF con una página por cada quiniela registrada. Ideal para el respaldo previo al inicio del Mundial.
+            </p>
+
+            {/* Stats */}
+            <div style={{ display:'flex', justifyContent:'center', gap:24, marginBottom:28, flexWrap:'wrap' }}>
+              {[
+                ['👥', users.length, 'Participantes'],
+                ['📋', users.reduce((s,u)=>s+(u.quinielas?.length||0),0), 'Quinielas'],
+                ['💰', users.filter(u=>u.has_paid).length, 'Pagados'],
+              ].map(([icon,val,label])=>(
+                <div key={label} style={{ textAlign:'center' }}>
+                  <div style={{ fontSize:24, fontWeight:900, color:'#0071e3' }}>{icon} {val}</div>
+                  <div style={{ fontSize:11, color:'#6e6e73' }}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {dlProgress && (
+              <div style={{ background:'rgba(0,113,227,.06)', border:'1px solid rgba(0,113,227,.2)',
+                borderRadius:10, padding:'12px 20px', marginBottom:20, fontSize:13,
+                color:'#0071e3', fontWeight:600 }}>
+                ⏳ {dlProgress}
+              </div>
+            )}
+
+            <button onClick={downloadAllPDFs} disabled={downloading}
+              style={{ padding:'14px 32px', background: downloading?'#6e6e73':'#0071e3',
+                color:'#fff', border:'none', borderRadius:12, fontWeight:700, fontSize:15,
+                cursor: downloading?'wait':'pointer', fontFamily:'inherit',
+                boxShadow: downloading?'none':'0 4px 16px rgba(0,113,227,.3)',
+                display:'inline-flex', alignItems:'center', gap:10 }}>
+              {downloading
+                ? <><span style={{ display:'inline-block', width:16, height:16,
+                    border:'2px solid #fff', borderTopColor:'transparent',
+                    borderRadius:'50%', animation:'spin .7s linear infinite' }}/> Generando...</>
+                : '⬇️ Descargar PDF de todas las quinielas'}
+            </button>
+
+            <p style={{ fontSize:11, color:'#aeaeb2', marginTop:16 }}>
+              El proceso puede tomar 1-2 minutos dependiendo del número de quinielas.
+            </p>
           </div>
         </div>
       )}
