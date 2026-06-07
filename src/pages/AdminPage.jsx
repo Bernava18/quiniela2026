@@ -81,169 +81,128 @@ export default function AdminPage() {
 
   async function downloadAllPDFs() {
     setDownloading(true)
-    setDlProgress('Cargando datos...')
+    setDlProgress('Cargando librerías...')
     try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
       const { jsPDF } = window.jspdf
 
+      setDlProgress('Cargando quinielas...')
       const profilesData = await loadAllPicks()
       const withQ = profilesData.filter(p => p.quinielas?.length > 0)
       if (!withQ.length) { alert('No hay quinielas registradas.'); setDownloading(false); return }
 
-      const GROUPS_DATA = {
-        A:['México','Sudáfrica','Rep. de Corea','Rep. Checa'],
-        B:['Canadá','Bosnia','Catar','Suiza'],
-        C:['Brasil','Marruecos','Haití','Escocia'],
-        D:['EE. UU.','Paraguay','Australia','Turquía'],
-        E:['Alemania','Curazao','Costa de Marfil','Ecuador'],
-        F:['Países Bajos','Japón','Suecia','Túnez'],
-        G:['Bélgica','Egipto','RI de Irán','Nueva Zelanda'],
-        H:['España','Islas de Cabo Verde','Arabia Saudí','Uruguay'],
-        I:['Francia','Senegal','Irak','Noruega'],
-        J:['Argentina','Argelia','Austria','Jordania'],
-        K:['Portugal','RD Congo','Uzbekistán','Colombia'],
-        L:['Inglaterra','Croacia','Ghana','Panamá'],
-      }
-      const ELIM_LABELS = {
-        M73:'R32',M74:'R32',M75:'R32',M76:'R32',M77:'R32',M78:'R32',M79:'R32',M80:'R32',
-        M81:'R32',M82:'R32',M83:'R32',M84:'R32',M85:'R32',M86:'R32',M87:'R32',M88:'R32',
-        M89:'Octavos',M90:'Octavos',M91:'Octavos',M92:'Octavos',
-        M93:'Octavos',M94:'Octavos',M95:'Octavos',M96:'Octavos',
-        M97:'Cuartos',M98:'Cuartos',M99:'Cuartos',M100:'Cuartos',
-        M101:'Semis',M102:'Semis',M103:'3er Puesto',M104:'Gran Final',
-      }
+      // Lista plana de todas las quinielas
+      const allQ = withQ.flatMap(p => p.quinielas.map(q => ({ quinielaId: q.id, name: q.name, username: p.username })))
+      const total = allQ.length
 
-      // Generar HTML completo con todas las quinielas
-      const fecha = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})
-      const totalQ = withQ.reduce((s,p)=>s+p.quinielas.length,0)
+      // PDF inicial — se irán agregando páginas
+      let pdf = null
+      let pageCount = 0
 
-      let htmlBody = `
-        <div style="text-align:center;padding:60px 40px;background:linear-gradient(135deg,#0055d4,#003a9e);color:#fff;page-break-after:always">
-          <div style="font-size:56px;margin-bottom:16px">🏆</div>
-          <h1 style="font-size:32px;font-weight:900;margin-bottom:10px">Quiniela Mundial FIFA 2026</h1>
-          <p style="font-size:15px;opacity:.8;margin-bottom:6px">Respaldo oficial de todas las quinielas</p>
-          <p style="font-size:14px;font-weight:700">${withQ.length} participantes · ${totalQ} quinielas</p>
-          <p style="font-size:12px;opacity:.6;margin-top:20px">Generado el ${fecha} · quiniela2026panas.netlify.app</p>
-        </div>`
+      for (let qi = 0; qi < allQ.length; qi++) {
+        const { quinielaId, name, username } = allQ[qi]
+        setDlProgress(`Capturando (${qi + 1}/${total}): ${username} · ${name}`)
 
-      for (const prof of withQ) {
-        for (const q of prof.quinielas) {
-          setDlProgress(`Preparando: ${prof.username} · ${q.name}`)
-          const pm = {}
-          q.picks?.forEach(p => { pm[p.match_id] = p })
+        // Renderizar /print/:id en iframe oculto
+        const captured = await captureQuinielaPage(quinielaId)
+        if (!captured) continue
 
-          // Tabla de grupos
-          let gruposHTML = ''
-          for (const [g, teams] of Object.entries(GROUPS_DATA)) {
-            const ms = [
-              {id:`${g}1`,h:teams[0],a:teams[1]},{id:`${g}2`,h:teams[2],a:teams[3]},
-              {id:`${g}3`,h:teams[0],a:teams[2]},{id:`${g}4`,h:teams[3],a:teams[1]},
-              {id:`${g}5`,h:teams[3],a:teams[0]},{id:`${g}6`,h:teams[1],a:teams[2]},
-            ]
-            const rows = ms.map(m => {
-              const pk = pm[m.id]
-              const pick = pk?.goals_home != null
-                ? `<b style="color:#0055d4;font-size:13px">${pk.goals_home}–${pk.goals_away}</b>`
-                : `<span style="color:#ccc;font-style:italic">–</span>`
-              return `<tr style="border-bottom:0.5px solid #f0f0f0">
-                <td style="padding:3px 6px;color:#888;font-size:9px">${m.id}</td>
-                <td style="padding:3px 6px;font-size:10px">${m.h}</td>
-                <td style="padding:3px 6px;text-align:center">${pick}</td>
-                <td style="padding:3px 6px;font-size:10px;text-align:right">${m.a}</td>
-              </tr>`
-            }).join('')
-            gruposHTML += `
-              <div style="margin-bottom:8px;break-inside:avoid">
-                <div style="background:#0055d4;color:#fff;padding:4px 10px;font-weight:800;font-size:11px;border-radius:4px 4px 0 0">
-                  GRUPO ${g} — ${teams.join(' · ')}
-                </div>
-                <table style="width:100%;border-collapse:collapse;border:1px solid #e5e5e5;border-top:none">
-                  <thead><tr style="background:#f5f5f5">
-                    <th style="padding:3px 6px;font-size:8px;color:#999;font-weight:700;text-align:left">ID</th>
-                    <th style="padding:3px 6px;font-size:8px;color:#999;font-weight:700;text-align:left">Local</th>
-                    <th style="padding:3px 6px;font-size:8px;color:#0055d4;font-weight:700;text-align:center">PICK</th>
-                    <th style="padding:3px 6px;font-size:8px;color:#999;font-weight:700;text-align:right">Visitante</th>
-                  </tr></thead>
-                  <tbody>${rows}</tbody>
-                </table>
-              </div>`
-          }
+        const { grupos, bracket } = captured
 
-          // Tabla eliminatorias
-          const elimIds = ['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88','M89','M90','M91','M92','M93','M94','M95','M96','M97','M98','M99','M100','M101','M102','M103','M104']
-          const elimRows = elimIds.map(mid => {
-            const pk = pm[mid]
-            if (!pk) return ''
-            const pick = pk.goals_home != null
-              ? `<b style="color:#d97706">${pk.goals_home}–${pk.goals_away}</b>` : '–'
-            const win = pk.winner ? `<b style="color:#15803d">${pk.winner}</b>` : '–'
-            return `<tr style="border-bottom:0.5px solid #f0f0f0">
-              <td style="padding:3px 6px;color:#888;font-size:9px">${mid}</td>
-              <td style="padding:3px 6px;font-size:9px;color:#666">${ELIM_LABELS[mid]||mid}</td>
-              <td style="padding:3px 6px;text-align:center">${pick}</td>
-              <td style="padding:3px 6px;font-size:10px">${win}</td>
-            </tr>`
-          }).filter(Boolean).join('')
-
-          const picksCount = q.picks?.filter(p=>p.goals_home!=null).length || 0
-
-          htmlBody += `
-          <div style="page-break-before:always;padding:18px 20px;font-family:Arial,sans-serif">
-            <div style="background:linear-gradient(135deg,#0055d4,#003a9e);color:#fff;padding:12px 18px;border-radius:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
-              <div>
-                <div style="font-size:18px;font-weight:900">👤 ${prof.username}${prof.full_name?' · '+prof.full_name:''}</div>
-                <div style="font-size:11px;opacity:.8;margin-top:2px">📋 ${q.name} · ${picksCount}/104 picks</div>
-              </div>
-              <div style="text-align:right;font-size:11px;opacity:.7">${fecha}</div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-              ${gruposHTML}
-            </div>
-            <div style="border-top:2px solid #d97706;padding-top:10px">
-              <div style="font-weight:800;font-size:12px;color:#d97706;margin-bottom:8px">⚡ Fase Eliminatoria</div>
-              <table style="width:100%;border-collapse:collapse;border:1px solid #e5e5e5">
-                <thead><tr style="background:#fffbeb">
-                  <th style="padding:4px 8px;font-size:8px;color:#999;font-weight:700;text-align:left">ID</th>
-                  <th style="padding:4px 8px;font-size:8px;color:#999;font-weight:700;text-align:left">Fase</th>
-                  <th style="padding:4px 8px;font-size:8px;color:#d97706;font-weight:700;text-align:center">PICK</th>
-                  <th style="padding:4px 8px;font-size:8px;color:#999;font-weight:700;text-align:left">Equipo avanza</th>
-                </tr></thead>
-                <tbody>${elimRows}</tbody>
-              </table>
-            </div>
-            <div style="margin-top:10px;padding-top:8px;border-top:0.5px solid #e5e5e5;display:flex;justify-content:space-between;font-size:8px;color:#999">
-              <span>🏆 Quiniela Mundial FIFA 2026 · ${prof.username} · ${q.name}</span>
-              <span>quiniela2026panas.netlify.app</span>
-            </div>
-          </div>`
+        // Página de grupos
+        const pW1 = 210
+        const pH1 = Math.round((grupos.height / grupos.width) * pW1)
+        if (!pdf) {
+          pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pW1, pH1] })
+        } else {
+          pdf.addPage([pW1, pH1], 'portrait')
         }
+        pdf.addImage(grupos.img, 'JPEG', 0, 0, pW1, pH1)
+        pageCount++
+
+        // Página de bracket
+        const pW2 = Math.max(297, Math.round(bracket.width / 3.78))
+        const pH2 = Math.round((bracket.height / bracket.width) * pW2)
+        pdf.addPage([pW2, pH2], pW2 > pH2 ? 'landscape' : 'portrait')
+        pdf.addImage(bracket.img, 'JPEG', 0, 0, pW2, pH2)
+        pageCount++
       }
 
-      // Abrir en ventana nueva para imprimir/guardar
-      setDlProgress('Abriendo PDF...')
-      const win = window.open('', '_blank')
-      win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-        <title>Quinielas Mundial 2026 - ${fecha}</title>
-        <style>
-          *{box-sizing:border-box;margin:0;padding:0}
-          body{font-family:Arial,sans-serif;font-size:11px;color:#111;background:#fff}
-          @media print{
-            @page{margin:.8cm;size:A4 portrait}
-            body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-          }
-        </style>
-      </head><body>${htmlBody}</body></html>`)
-      win.document.close()
-      await new Promise(r => setTimeout(r, 800))
-      win.print()
+      if (!pdf) { alert('No se pudo generar ninguna página.'); setDownloading(false); return }
 
+      setDlProgress('Guardando PDF...')
+      const fecha = new Date().toISOString().slice(0, 10)
+      pdf.save(`Quinielas_Mundial_2026_TODAS_${fecha}.pdf`)
       setDlProgress('')
-    } catch(e) {
+    } catch (e) {
       console.error(e)
-      alert('Error: ' + e.message)
+      alert('Error generando PDF: ' + e.message)
       setDlProgress('')
     }
     setDownloading(false)
+  }
+
+  // Abre /print/:id en iframe oculto, espera que cargue, captura las dos secciones
+  async function captureQuinielaPage(quinielaId) {
+    return new Promise((resolve) => {
+      const iframe = document.createElement('iframe')
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1200px;height:3000px;border:none;opacity:0;pointer-events:none'
+      document.body.appendChild(iframe)
+
+      // Timeout de seguridad
+      const timeout = setTimeout(() => {
+        document.body.removeChild(iframe)
+        resolve(null)
+      }, 15000)
+
+      iframe.onload = async () => {
+        try {
+          // Esperar que React renderice
+          await new Promise(r => setTimeout(r, 1500))
+
+          const iDoc = iframe.contentDocument
+          if (!iDoc) { clearTimeout(timeout); document.body.removeChild(iframe); resolve(null); return }
+
+          // Encontrar las dos secciones por su ref (buscar por contenido)
+          const sections = iDoc.querySelectorAll('[data-section]')
+          let gruposEl = null, bracketEl = null
+
+          if (sections.length >= 2) {
+            gruposEl  = sections[0]
+            bracketEl = sections[1]
+          } else {
+            // Fallback: las dos divs principales con fondo blanco y padding
+            const divs = Array.from(iDoc.querySelectorAll('div')).filter(d =>
+              d.style.background === 'rgb(255, 255, 255)' ||
+              d.style.backgroundColor === 'rgb(255, 255, 255)'
+            )
+            gruposEl  = divs[0] || iDoc.body
+            bracketEl = divs[1] || iDoc.body
+          }
+
+          const opts = { scale: 1.8, useCORS: true, backgroundColor: '#ffffff',
+            logging: false, allowTaint: true }
+
+          const c1 = await window.html2canvas(gruposEl, { ...opts, windowWidth: 1200 })
+          const c2 = await window.html2canvas(bracketEl, { ...opts, windowWidth: bracketEl.scrollWidth + 40 })
+
+          clearTimeout(timeout)
+          document.body.removeChild(iframe)
+
+          resolve({
+            grupos:  { img: c1.toDataURL('image/jpeg', 0.92), width: c1.width, height: c1.height },
+            bracket: { img: c2.toDataURL('image/jpeg', 0.92), width: c2.width, height: c2.height },
+          })
+        } catch (err) {
+          clearTimeout(timeout)
+          document.body.removeChild(iframe)
+          resolve(null)
+        }
+      }
+
+      iframe.src = `/print/${quinielaId}`
+    })
   }
 
   async function togglePayment(userId, currentPaid) {
