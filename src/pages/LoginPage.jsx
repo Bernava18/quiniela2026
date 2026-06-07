@@ -377,46 +377,6 @@ export function LoginPage() {
           </div>
         )}
 
-        {/* TRANSPARENCIA */}
-        <div style={{ padding:'clamp(32px,6vw,60px) clamp(16px,4vw,48px)', borderTop:'0.5px solid rgba(255,255,255,.06)', background:'rgba(255,255,255,.02)' }}>
-          <h2 style={{ fontSize:26, fontWeight:800, textAlign:'center', letterSpacing:'-1px', marginBottom:8 }}>🔍 Transparencia total</h2>
-          <p style={{ textAlign:'center', color:C.sub, marginBottom:28, fontSize:14 }}>La quiniela más justa — todas las reglas claras desde el inicio</p>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:12, maxWidth:900, margin:'0 auto' }}>
-            {[
-              {
-                icon:'🔒',
-                title:'Quinielas privadas antes del Mundial',
-                desc:'Nadie puede ver la quiniela de otro participante antes del 11 de junio. Así garantizamos que nadie copie los picks de otros.',
-                color:'#0071e3'
-              },
-              {
-                icon:'👁',
-                title:'Quinielas públicas al iniciar',
-                desc:'Una vez iniciado el Mundial, todas las quinielas son visibles para todos. Puedes ver los picks de cualquier participante en cualquier momento.',
-                color:'#30d158'
-              },
-              {
-                icon:'📧',
-                title:'Respaldo oficial por email',
-                desc:'Al inicio del torneo, se envía automáticamente un PDF con TODAS las quinielas a todos los participantes. Es el respaldo de auditoría oficial.',
-                color:'#ff9f0a'
-              },
-              {
-                icon:'⚡',
-                title:'Resultados automáticos en vivo',
-                desc:'Los resultados se sincronizan automáticamente desde fuentes oficiales cada 2 minutos. Sin entrada manual, sin posibilidad de manipulación.',
-                color:'#bf5af2'
-              },
-            ].map(({ icon, title, desc, color }) => (
-              <div key={title} style={{ background:C.card, border:`0.5px solid ${color}30`, borderRadius:14, padding:'20px 16px' }}>
-                <div style={{ fontSize:28, marginBottom:8 }}>{icon}</div>
-                <div style={{ fontWeight:700, fontSize:14, color, marginBottom:6 }}>{title}</div>
-                <div style={{ fontSize:12, color:C.sub, lineHeight:1.6 }}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div style={{ padding:'clamp(32px,5vw,60px) clamp(16px,4vw,48px)', textAlign:'center', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
           <a href="/guia" style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,.06)', border:'0.5px solid rgba(255,255,255,.15)', borderRadius:12, padding:'12px 24px', color:'#fff', textDecoration:'none', fontSize:14, fontWeight:600 }}>
             📖 Ver guía completa de uso →
