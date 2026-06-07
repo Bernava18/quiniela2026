@@ -31,7 +31,7 @@ export default function AdminPage() {
     const { data } = await supabase
       .from('profiles')
       .select(`
-        id, username, full_name, has_paid, paid_at,
+        id, username, full_name, phone, has_paid, paid_at,
         quinielas (
           id, name, is_locked,
           picks (match_id, goals_home),
