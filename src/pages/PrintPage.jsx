@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase, getQuinielaPicks } from '../lib/supabase'
-import { useAuth } from '../context/AuthContext'
 
 // ── Fixture ──────────────────────────────────────────────────────
 const GROUPS = {
@@ -22,29 +21,28 @@ const GROUPS = {
 const GROUP_MATCHES = {}
 Object.entries(GROUPS).forEach(([g, teams]) => {
   GROUP_MATCHES[g] = [
-    {id:`${g}1`, h:teams[0], a:teams[1]},
-    {id:`${g}2`, h:teams[2], a:teams[3]},
-    {id:`${g}3`, h:teams[0], a:teams[2]},
-    {id:`${g}4`, h:teams[3], a:teams[1]},
-    {id:`${g}5`, h:teams[3], a:teams[0]},
-    {id:`${g}6`, h:teams[1], a:teams[2]},
+    {id:`${g}1`,h:teams[0],a:teams[1]},
+    {id:`${g}2`,h:teams[2],a:teams[3]},
+    {id:`${g}3`,h:teams[0],a:teams[2]},
+    {id:`${g}4`,h:teams[3],a:teams[1]},
+    {id:`${g}5`,h:teams[3],a:teams[0]},
+    {id:`${g}6`,h:teams[1],a:teams[2]},
   ]
 })
 
 function calcStandings(g, picks) {
   const teams = GROUPS[g]
-  const matches = GROUP_MATCHES[g]
   const s = {}
-  teams.forEach(t => { s[t] = { pts:0, gf:0, ga:0, gd:0, pj:0 } })
-  matches.forEach(m => {
+  teams.forEach(t => { s[t]={pts:0,gf:0,ga:0,gd:0,pj:0} })
+  GROUP_MATCHES[g].forEach(m => {
     const pk = picks[m.id]
-    if (pk?.h == null) return
-    const h = pk.h, a = pk.a
+    if (pk?.h==null) return
+    const h=pk.h, a=pk.a
     s[m.h].pj++; s[m.a].pj++
     s[m.h].gf+=h; s[m.h].ga+=a; s[m.h].gd+=h-a
     s[m.a].gf+=a; s[m.a].ga+=h; s[m.a].gd+=a-h
-    if (h>a) s[m.h].pts+=3
-    else if (h<a) s[m.a].pts+=3
+    if(h>a) s[m.h].pts+=3
+    else if(h<a) s[m.a].pts+=3
     else { s[m.h].pts+=1; s[m.a].pts+=1 }
   })
   return teams.map(t=>({team:t,...s[t]}))
@@ -52,74 +50,115 @@ function calcStandings(g, picks) {
 }
 
 const R32_STATIC = {
-  M73:{h:'2º Gr.A',a:'2º Gr.B'}, M74:{h:'Alemania(1E)',a:'3º BCEF'},
-  M75:{h:'P.Bajos(1F)',a:'2º Gr.C'}, M76:{h:'Brasil(1C)',a:'2º Gr.F'},
-  M77:{h:'Francia(1I)',a:'3º GHIJ'}, M78:{h:'2º Gr.E',a:'2º Gr.I'},
-  M79:{h:'México(1A)',a:'3º ABCD'}, M80:{h:'Inglaterra(1L)',a:'3º IJKL'},
-  M81:{h:'EE.UU.(1D)',a:'3º ABCD'}, M82:{h:'Bélgica(1G)',a:'3º EFGH'},
-  M83:{h:'2º Gr.K',a:'2º Gr.L'}, M84:{h:'España(1H)',a:'2º Gr.J'},
-  M85:{h:'Canadá(1B)',a:'3º ABCD'}, M86:{h:'Argentina(1J)',a:'2º Gr.H'},
-  M87:{h:'Portugal(1K)',a:'3º IJKL'}, M88:{h:'2º Gr.D',a:'2º Gr.G'},
+  M73:{h:'2ºA',a:'2ºB'},       M74:{h:'Alemania(1E)',a:'3ºBCEF'},
+  M75:{h:'P.Bajos(1F)',a:'2ºC'}, M76:{h:'Brasil(1C)',a:'2ºF'},
+  M77:{h:'Francia(1I)',a:'3ºGHIJ'}, M78:{h:'2ºE',a:'2ºI'},
+  M79:{h:'México(1A)',a:'3ºABCD'}, M80:{h:'Inglaterra(1L)',a:'3ºIJKL'},
+  M81:{h:'EE.UU.(1D)',a:'3ºABCD'}, M82:{h:'Bélgica(1G)',a:'3ºEFGH'},
+  M83:{h:'2ºK',a:'2ºL'},        M84:{h:'España(1H)',a:'2ºJ'},
+  M85:{h:'Canadá(1B)',a:'3ºABCD'}, M86:{h:'Argentina(1J)',a:'2ºH'},
+  M87:{h:'Portugal(1K)',a:'3ºIJKL'}, M88:{h:'2ºD',a:'2ºG'},
 }
 
-const C = {
-  blue:'#0055d4', blueDk:'#003a9e', blueLt:'#dbeafe',
-  orange:'#d97706', orangeLt:'#fef3c7',
-  green:'#15803d', greenLt:'#dcfce7',
-  gray:'#6b7280', grayLt:'#f9fafb', border:'#e5e7eb',
-  dark:'#111827', mid:'#374151',
+// Colores
+const BL='#0055d4', BD='#003a9e', BLT='#dbeafe'
+const OR='#d97706', GR='#15803d', GLT='#dcfce7'
+const GY='#6b7280', GB='#f9fafb', BO='#e5e7eb'
+const DK='#111827'
+
+// ── Carga dinámica de librerías PDF ──────────────────────────────
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
+    const s = document.createElement('script')
+    s.src = src; s.onload = resolve; s.onerror = reject
+    document.head.appendChild(s)
+  })
 }
 
-const thS = { padding:'2px 5px', fontSize:7.5, fontWeight:700, textTransform:'uppercase',
-  letterSpacing:'.3px', color:'#9ca3af', textAlign:'center', borderBottom:`0.5px solid ${C.border}` }
-const tdS = { padding:'3px 6px', fontSize:10 }
+async function loadPdfLibs() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+}
 
-// ── GroupCard ─────────────────────────────────────────────────────
+// ── Genera PDF capturando cada sección como imagen ────────────────
+async function generatePDF(gruposRef, bracketRef, quinielaName) {
+  await loadPdfLibs()
+  const { jsPDF } = window.jspdf
+
+  const opts = { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false }
+
+  // Captura sección grupos
+  const canvas1 = await window.html2canvas(gruposRef, opts)
+  const img1 = canvas1.toDataURL('image/jpeg', 0.95)
+  const w1 = canvas1.width, h1 = canvas1.height
+
+  // Captura sección bracket
+  const canvas2 = await window.html2canvas(bracketRef, opts)
+  const img2 = canvas2.toDataURL('image/jpeg', 0.95)
+  const w2 = canvas2.width, h2 = canvas2.height
+
+  // Página 1: portrait proporcional al contenido de grupos
+  const pdfW1 = 297, pdfH1 = Math.round((h1 / w1) * pdfW1) // A4 landscape width
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [pdfW1, pdfH1] })
+  pdf.addImage(img1, 'JPEG', 0, 0, pdfW1, pdfH1)
+
+  // Página 2: landscape proporcional al bracket
+  const pdfW2 = 420, pdfH2 = Math.round((h2 / w2) * pdfW2) // A3 landscape
+  pdf.addPage([pdfW2, pdfH2], 'landscape')
+  pdf.addImage(img2, 'JPEG', 0, 0, pdfW2, pdfH2)
+
+  const fileName = `Quiniela Mundial 2026 - ${quinielaName || 'Mi Quiniela'}.pdf`
+  pdf.save(fileName)
+}
+
+// ── Componentes UI ───────────────────────────────────────────────
+
 function GroupCard({ g, matches, picks }) {
-  const standings = calcStandings(g, picks)
+  const st = calcStandings(g, picks)
   const cnt = matches.filter(m=>picks[m.id]?.h!=null).length
-  const posClr = [C.blue,C.orange,C.green,'#9333ea']
-  const medals = ['🥇','🥈','🥉','4']
+  const PC = [BL,OR,GR,'#9333ea']
+  const ME = ['🥇','🥈','🥉','4']
 
   return (
-    <div style={{ border:`1px solid ${C.border}`, borderRadius:9, overflow:'hidden',
-      background:'#fff', breakInside:'avoid' }}>
+    <div style={{ border:`1px solid ${BO}`, borderRadius:8, overflow:'hidden', background:'#fff' }}>
       {/* Header */}
-      <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDk})`, color:'#fff',
+      <div style={{ background:`linear-gradient(135deg,${BL},${BD})`, color:'#fff',
         padding:'5px 9px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontWeight:900, fontSize:12, letterSpacing:'.4px' }}>GRUPO {g}</span>
-        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <span style={{ fontSize:7.5, opacity:.7 }}>{GROUPS[g].map(t=>t.split(' ')[0]).join(' · ')}</span>
+        <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+          <span style={{ fontSize:7, opacity:.7 }}>{GROUPS[g].map(t=>t.split(' ')[0]).join(' · ')}</span>
           <span style={{ fontSize:8, fontWeight:700, background:'rgba(255,255,255,.2)',
-            borderRadius:4, padding:'1px 5px' }}>{cnt}/6</span>
+            borderRadius:3, padding:'1px 5px' }}>{cnt}/6</span>
         </div>
       </div>
       {/* Standings */}
-      <div style={{ background:C.blueLt, borderBottom:`1px solid ${C.border}` }}>
-        <div style={{ padding:'2px 8px 1px', fontSize:6.5, fontWeight:800, textTransform:'uppercase',
-          letterSpacing:'.4px', color:C.blue }}>Clasificación proyectada</div>
+      <div style={{ background:BLT, borderBottom:`1px solid ${BO}` }}>
+        <div style={{ padding:'2px 8px 1px', fontSize:6.5, fontWeight:800,
+          textTransform:'uppercase', letterSpacing:'.4px', color:BL }}>Clasificación proyectada</div>
         <table style={{ width:'100%', borderCollapse:'collapse' }}>
-          <thead>
-            <tr>
-              {['#','Equipo','PJ','PTS','GF','GA','DG'].map(h=>(
-                <th key={h} style={{ ...thS, padding:'1px 4px', fontSize:7 }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
+          <thead><tr>
+            {['#','Equipo','PJ','PTS','GF','GA','DG'].map(h=>(
+              <th key={h} style={{ padding:'1px 4px', fontSize:7, fontWeight:700,
+                textTransform:'uppercase', color:'#9ca3af', textAlign:'center',
+                borderBottom:`0.5px solid ${BO}` }}>{h}</th>
+            ))}
+          </tr></thead>
           <tbody>
-            {standings.map((s,i)=>(
-              <tr key={s.team} style={{ borderTop:`0.5px solid ${C.border}88`,
+            {st.map((s,i)=>(
+              <tr key={s.team} style={{ borderTop:`0.5px solid ${BO}88`,
                 background:i===0?'rgba(0,85,212,.07)':i===1?'rgba(0,85,212,.03)':'transparent' }}>
-                <td style={{ ...thS, padding:'2px 4px', color:posClr[i], fontSize:9 }}>{medals[i]}</td>
-                <td style={{ padding:'2px 5px', fontSize:8.5, fontWeight:i<2?700:500, color:C.dark,
-                  maxWidth:85, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.team}</td>
-                <td style={{ ...thS, padding:'2px 3px', fontSize:8.5, color:C.gray }}>{s.pj}</td>
-                <td style={{ ...thS, padding:'2px 3px', fontSize:9, fontWeight:800,
-                  color:i<2?C.blue:C.gray }}>{s.pts}</td>
-                <td style={{ ...thS, padding:'2px 3px', fontSize:8.5, color:C.gray }}>{s.gf}</td>
-                <td style={{ ...thS, padding:'2px 3px', fontSize:8.5, color:C.gray }}>{s.ga}</td>
-                <td style={{ ...thS, padding:'2px 3px', fontSize:8.5, fontWeight:s.gd!==0?700:400,
-                  color:s.gd>0?C.green:s.gd<0?'#dc2626':C.gray }}>{s.gd>0?'+':''}{s.gd}</td>
+                <td style={{ padding:'2px 4px', fontSize:9, fontWeight:700,
+                  color:PC[i], textAlign:'center' }}>{ME[i]}</td>
+                <td style={{ padding:'2px 5px', fontSize:8.5, fontWeight:i<2?700:500, color:DK,
+                  maxWidth:80, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.team}</td>
+                <td style={{ padding:'2px 3px', fontSize:8.5, color:GY, textAlign:'center' }}>{s.pj}</td>
+                <td style={{ padding:'2px 3px', fontSize:9, fontWeight:800,
+                  color:i<2?BL:GY, textAlign:'center' }}>{s.pts}</td>
+                <td style={{ padding:'2px 3px', fontSize:8.5, color:GY, textAlign:'center' }}>{s.gf}</td>
+                <td style={{ padding:'2px 3px', fontSize:8.5, color:GY, textAlign:'center' }}>{s.ga}</td>
+                <td style={{ padding:'2px 3px', fontSize:8.5, textAlign:'center', fontWeight:s.gd!==0?700:400,
+                  color:s.gd>0?GR:s.gd<0?'#dc2626':GY }}>{s.gd>0?'+':''}{s.gd}</td>
               </tr>
             ))}
           </tbody>
@@ -127,33 +166,38 @@ function GroupCard({ g, matches, picks }) {
       </div>
       {/* Matches */}
       <table style={{ width:'100%', borderCollapse:'collapse' }}>
-        <thead>
-          <tr style={{ background:C.grayLt }}>
-            <th style={{ ...thS, textAlign:'left', paddingLeft:7 }}>ID</th>
-            <th style={{ ...thS, textAlign:'left' }}>Local</th>
-            <th style={{ ...thS, color:C.blue }}>PICK</th>
-            <th style={{ ...thS, textAlign:'right', paddingRight:7 }}>Visitante</th>
-          </tr>
-        </thead>
+        <thead><tr style={{ background:GB }}>
+          <th style={{ padding:'3px 6px', fontSize:7.5, fontWeight:700, textTransform:'uppercase',
+            color:'#9ca3af', textAlign:'left', borderBottom:`0.5px solid ${BO}`, width:26 }}>ID</th>
+          <th style={{ padding:'3px 6px', fontSize:7.5, fontWeight:700, textTransform:'uppercase',
+            color:'#9ca3af', textAlign:'left', borderBottom:`0.5px solid ${BO}` }}>Local</th>
+          <th style={{ padding:'3px 6px', fontSize:7.5, fontWeight:700, textTransform:'uppercase',
+            color:BL, textAlign:'center', borderBottom:`0.5px solid ${BO}`, width:60 }}>PICK</th>
+          <th style={{ padding:'3px 6px', fontSize:7.5, fontWeight:700, textTransform:'uppercase',
+            color:'#9ca3af', textAlign:'right', borderBottom:`0.5px solid ${BO}` }}>Visitante</th>
+        </tr></thead>
         <tbody>
           {matches.map((m,i)=>{
             const pk=picks[m.id]; const hp=pk?.h!=null
             return (
               <tr key={m.id} style={{ background:i%2===0?'#fff':'#fafafa',
-                borderTop:`0.5px solid ${C.border}` }}>
-                <td style={{ ...tdS, color:C.gray, fontWeight:700, fontSize:8.5, width:24 }}>{m.id}</td>
-                <td style={{ ...tdS, fontSize:9.5, fontWeight:600, maxWidth:85 }}>
-                  <span style={{ display:'block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.h}</span>
+                borderTop:`0.5px solid ${BO}` }}>
+                <td style={{ padding:'3px 6px', fontSize:8.5, color:GY, fontWeight:700 }}>{m.id}</td>
+                <td style={{ padding:'3px 6px', fontSize:9.5, fontWeight:600 }}>
+                  <span style={{ display:'block', overflow:'hidden',
+                    textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:100 }}>{m.h}</span>
                 </td>
-                <td style={{ ...tdS, textAlign:'center' }}>
+                <td style={{ padding:'3px 6px', textAlign:'center' }}>
                   {hp
-                    ? <span style={{ fontWeight:900, fontSize:11.5, color:C.blue }}>
-                        {pk.h}<span style={{ color:C.gray, margin:'0 2px' }}>–</span>{pk.a}
+                    ? <span style={{ fontWeight:900, fontSize:12, color:BL }}>
+                        {pk.h}<span style={{ color:GY, margin:'0 2px' }}>–</span>{pk.a}
                       </span>
-                    : <span style={{ color:'#d1d5db', fontSize:7.5, fontStyle:'italic' }}>–</span>}
+                    : <span style={{ color:'#d1d5db', fontSize:8, fontStyle:'italic' }}>–</span>}
                 </td>
-                <td style={{ ...tdS, fontSize:9.5, fontWeight:600, textAlign:'right', maxWidth:85 }}>
-                  <span style={{ display:'block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textAlign:'right' }}>{m.a}</span>
+                <td style={{ padding:'3px 6px', fontSize:9.5, fontWeight:600, textAlign:'right' }}>
+                  <span style={{ display:'block', overflow:'hidden',
+                    textOverflow:'ellipsis', whiteSpace:'nowrap',
+                    textAlign:'right', maxWidth:100 }}>{m.a}</span>
                 </td>
               </tr>
             )
@@ -164,153 +208,120 @@ function GroupCard({ g, matches, picks }) {
   )
 }
 
-// ── Bracket: tarjeta de partido ──────────────────────────────────
+// Tarjeta de partido del bracket
 function BMatch({ mid, picks }) {
   const pk = picks[mid] || {}
   const hp = pk.h != null
   const st = R32_STATIC[mid] || {}
   const h = pk.hTeam || st.h || null
   const a = pk.aTeam || st.a || null
-  const hWin = pk.win && pk.win === h
-  const aWin = pk.win && pk.win === a
+  const hW = pk.win && pk.win===h
+  const aW = pk.win && pk.win===a
+
+  const teamRow = (team, score, win, isAway) => (
+    <div style={{ display:'flex', alignItems:'center', gap:3, padding:'3px 6px',
+      minHeight:24, background:win?GLT:'#fff',
+      borderTop: isAway?`0.5px solid ${BO}`:'none' }}>
+      <span style={{ flex:1, fontSize:8.5, fontWeight:win?700:500,
+        color:win?GR:team?DK:GY,
+        overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+        {team || <em style={{ fontStyle:'italic', color:GY, fontSize:7.5 }}>TBD</em>}
+      </span>
+      {team && score!=null &&
+        <span style={{ fontSize:9, fontWeight:800, color:BL, background:BLT,
+          borderRadius:3, padding:'0 4px', minWidth:14, textAlign:'center' }}>{score}</span>}
+      {win && <span style={{ fontSize:7, color:GR }}>▶</span>}
+    </div>
+  )
 
   return (
-    <div style={{ border:`1.5px solid ${hp?C.blue:C.border}`, borderRadius:6,
-      overflow:'hidden', background:'#fff', width:'100%',
-      boxShadow:hp?`0 0 0 2px ${C.blue}22`:'none' }}>
-      {/* ID bar */}
-      <div style={{ background:hp?C.blue:C.grayLt, color:hp?'#fff':C.gray,
+    <div style={{ border:`1.5px solid ${hp?BL:BO}`, borderRadius:5,
+      overflow:'hidden', background:'#fff',
+      boxShadow:hp?`0 0 0 2px ${BL}22`:'none' }}>
+      <div style={{ background:hp?BL:GB, color:hp?'#fff':GY,
         padding:'2px 6px', display:'flex', justifyContent:'space-between',
         fontSize:7.5, fontWeight:700, lineHeight:1.4 }}>
         <span>{mid}</span>
         {hp && <span style={{ fontWeight:900 }}>{pk.h}–{pk.a}</span>}
       </div>
-      {/* Home */}
-      <div style={{ display:'flex', alignItems:'center', gap:3, padding:'3px 6px',
-        minHeight:22, background:hWin?C.greenLt:'#fff' }}>
-        <span style={{ flex:1, fontSize:8.5, fontWeight:hWin?700:500,
-          color:hWin?C.green:h?C.dark:C.gray,
-          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-          {h || <em style={{ fontStyle:'italic', color:C.gray, fontSize:7.5 }}>TBD</em>}
-        </span>
-        {h && pk.h!=null &&
-          <span style={{ fontSize:9, fontWeight:800, color:C.blue, background:C.blueLt,
-            borderRadius:3, padding:'0 4px', minWidth:14, textAlign:'center' }}>{pk.h}</span>}
-        {hWin && <span style={{ fontSize:7, color:C.green }}>▶</span>}
-      </div>
-      {/* Away */}
-      <div style={{ display:'flex', alignItems:'center', gap:3, padding:'3px 6px',
-        minHeight:22, borderTop:`0.5px solid ${C.border}`, background:aWin?C.greenLt:'#fff' }}>
-        <span style={{ flex:1, fontSize:8.5, fontWeight:aWin?700:500,
-          color:aWin?C.green:a?C.dark:C.gray,
-          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-          {a || <em style={{ fontStyle:'italic', color:C.gray, fontSize:7.5 }}>TBD</em>}
-        </span>
-        {a && pk.a!=null &&
-          <span style={{ fontSize:9, fontWeight:800, color:C.blue, background:C.blueLt,
-            borderRadius:3, padding:'0 4px', minWidth:14, textAlign:'center' }}>{pk.a}</span>}
-        {aWin && <span style={{ fontSize:7, color:C.green }}>▶</span>}
-      </div>
+      {teamRow(h, pk.h, hW, false)}
+      {teamRow(a, pk.a, aW, true)}
     </div>
   )
 }
 
-// ── Bracket: columna ─────────────────────────────────────────────
-// Renderiza matches distribuidos verticalmente dentro de altura fija
-function BCol({ title, mids, picks, h: colH }) {
-  const n = mids.length
+// Columna del bracket
+function BCol({ title, mids, picks }) {
   return (
-    <div style={{ display:'flex', flexDirection:'column', flex:1 }}>
-      {/* Título */}
-      <div style={{ textAlign:'center', fontSize:7.5, fontWeight:800, textTransform:'uppercase',
-        letterSpacing:'.7px', color:'#fff', background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
-        padding:'4px 2px', marginBottom:0, borderRadius:'5px 5px 0 0' }}>{title}</div>
-      {/* Matches distribuidos uniformemente */}
+    <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
+      <div style={{ textAlign:'center', fontSize:7.5, fontWeight:800,
+        textTransform:'uppercase', letterSpacing:'.6px', color:'#fff',
+        background:`linear-gradient(135deg,${BL},${BD})`,
+        padding:'4px 2px', borderRadius:'5px 5px 0 0' }}>{title}</div>
       <div style={{ flex:1, display:'flex', flexDirection:'column',
-        justifyContent:'space-around', padding:'6px 4px', gap:0,
-        background:C.grayLt, border:`1px solid ${C.border}`, borderTop:'none',
-        borderRadius:'0 0 5px 5px', height: colH }}>
-        {mids.map(mid => (
-          <div key={mid} style={{ padding:'3px 0' }}>
-            <BMatch mid={mid} picks={picks} />
-          </div>
-        ))}
+        justifyContent:'space-around', padding:'5px 3px', gap:4,
+        background:GB, border:`1px solid ${BO}`,
+        borderTop:'none', borderRadius:'0 0 5px 5px' }}>
+        {mids.map(mid => <BMatch key={mid} mid={mid} picks={picks} />)}
       </div>
     </div>
   )
 }
 
-// Conector SVG entre columnas
-function BConn({ count }) {
-  // count = número de matches de la columna izquierda
-  const h = 72 // altura por match aproximada
-  const totalH = count * h + (count-1)*6
-  return (
-    <div style={{ width:16, flexShrink:0, alignSelf:'stretch',
-      display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ width:1, height:'60%', background:`${C.border}` }} />
-    </div>
-  )
+// Separador vertical
+function Div() {
+  return <div style={{ width:12, flexShrink:0, display:'flex',
+    alignItems:'center', justifyContent:'center' }}>
+    <div style={{ width:1, height:'50%', background:BO }} />
+  </div>
 }
 
-// ── Centro del bracket ───────────────────────────────────────────
+// Centro del bracket
 function BCenter({ picks }) {
-  const fin = picks['M104'] || {}
-  const t3  = picks['M103'] || {}
-
-  const champ   = fin.win || null
-  const runner  = champ ? (champ===fin.hTeam?fin.aTeam:fin.hTeam) : null
-  const thirdW  = t3.win || null
-  const thirdL  = thirdW ? (thirdW===t3.hTeam?t3.aTeam:t3.hTeam) : null
-
-  const podium = [
-    { e:'🏆', l:'Campeón',    pts:20, v: champ  || fin.hTeam  || '–' },
-    { e:'🥈', l:'Subcampeón', pts:10, v: runner || fin.aTeam  || '–' },
-    { e:'🥉', l:'3er lugar',  pts:5,  v: thirdW || t3.hTeam   || '–' },
-    { e:'4️⃣', l:'4to lugar',  pts:3,  v: thirdL || t3.aTeam   || '–' },
+  const fin=picks['M104']||{}, t3=picks['M103']||{}
+  const champ = fin.win||null
+  const runner = champ?(champ===fin.hTeam?fin.aTeam:fin.hTeam):null
+  const thirdW = t3.win||null
+  const thirdL = thirdW?(thirdW===t3.hTeam?t3.aTeam:t3.hTeam):null
+  const pod = [
+    {e:'🏆',l:'Campeón',   pts:20,v:champ ||fin.hTeam||'–'},
+    {e:'🥈',l:'Subcampeón',pts:10,v:runner||fin.aTeam||'–'},
+    {e:'🥉',l:'3er lugar', pts:5, v:thirdW||t3.hTeam ||'–'},
+    {e:'4️⃣',l:'4to lugar', pts:3, v:thirdL||t3.aTeam ||'–'},
   ]
-
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
-      justifyContent:'center', gap:8, width:170, flexShrink:0, padding:'0 8px' }}>
-
-      {/* Gran Final */}
+      justifyContent:'center', gap:8, width:175, flexShrink:0, padding:'0 6px' }}>
+      {/* Final */}
       <div style={{ width:'100%' }}>
-        <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDk})`, color:'#fff',
-          fontSize:8, fontWeight:900, textAlign:'center', padding:'5px 4px',
-          borderRadius:'7px 7px 0 0', letterSpacing:'.3px' }}>🏆 GRAN FINAL · 19 JUL</div>
+        <div style={{ background:`linear-gradient(135deg,${BL},${BD})`, color:'#fff',
+          fontSize:8, fontWeight:900, textAlign:'center',
+          padding:'5px 4px', borderRadius:'6px 6px 0 0' }}>🏆 GRAN FINAL · 19 JUL</div>
         <BMatch mid="M104" picks={picks} />
       </div>
-
-      <div style={{ width:'65%', height:1, background:C.border }} />
-
-      {/* 3er Puesto */}
+      <div style={{ width:'60%', height:1, background:BO }} />
+      {/* 3er */}
       <div style={{ width:'100%' }}>
-        <div style={{ fontSize:8, fontWeight:800, color:C.orange, textAlign:'center',
-          padding:'3px 0', textTransform:'uppercase', letterSpacing:'.3px' }}>
-          🥉 3er Puesto · 18 Jul
-        </div>
+        <div style={{ fontSize:8, fontWeight:800, color:OR, textAlign:'center',
+          padding:'2px 0 3px', textTransform:'uppercase' }}>🥉 3er Puesto · 18 Jul</div>
         <BMatch mid="M103" picks={picks} />
       </div>
-
-      <div style={{ width:'65%', height:1, background:C.border }} />
-
+      <div style={{ width:'60%', height:1, background:BO }} />
       {/* Orden final */}
-      <div style={{ border:`1.5px solid ${C.blue}44`, borderRadius:8,
+      <div style={{ border:`1.5px solid ${BL}44`, borderRadius:7,
         overflow:'hidden', width:'100%' }}>
-        <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
-          color:'#fff', fontSize:8, fontWeight:700, padding:'4px 8px',
-          textTransform:'uppercase', letterSpacing:'.4px' }}>🏅 Orden Final</div>
-        {podium.map(r=>(
+        <div style={{ background:`linear-gradient(135deg,${BL},${BD})`,
+          color:'#fff', fontSize:8, fontWeight:700,
+          padding:'4px 8px', textTransform:'uppercase' }}>🏅 Orden Final</div>
+        {pod.map(r=>(
           <div key={r.l} style={{ display:'flex', alignItems:'center', gap:4,
-            padding:'3px 7px', borderTop:`0.5px solid ${C.border}`,
-            background:r.e==='🏆'?'rgba(0,85,212,.04)':'#fff' }}>
+            padding:'3px 7px', borderTop:`0.5px solid ${BO}` }}>
             <span style={{ fontSize:9 }}>{r.e}</span>
-            <span style={{ flex:1, fontSize:8, color:C.mid, fontWeight:600 }}>{r.l}</span>
-            <span style={{ fontSize:8, fontWeight:800, color:C.blue,
-              background:C.blueLt, borderRadius:3, padding:'0 4px' }}>{r.pts}p</span>
-            <span style={{ fontSize:8, fontWeight:700, color:C.dark,
-              maxWidth:60, overflow:'hidden', textOverflow:'ellipsis',
+            <span style={{ flex:1, fontSize:8, fontWeight:600, color:'#374151' }}>{r.l}</span>
+            <span style={{ fontSize:8, fontWeight:800, color:BL, background:BLT,
+              borderRadius:3, padding:'0 4px' }}>{r.pts}p</span>
+            <span style={{ fontSize:8, fontWeight:700, color:DK,
+              maxWidth:55, overflow:'hidden', textOverflow:'ellipsis',
               whiteSpace:'nowrap', textAlign:'right' }}>{r.v}</span>
           </div>
         ))}
@@ -319,89 +330,35 @@ function BCenter({ picks }) {
   )
 }
 
-// ── BRACKET COMPLETO como tabla HTML pura para garantizar render ──
-// Usamos <table> porque flex con minWidth no siempre respeta el ancho en print
-function FullBracket({ picks }) {
-  const COL_W = 145 // px por columna
-  const CONN_W = 16
-
-  const colsL = [
-    { title:'R32',     mids:['M73','M74','M75','M76','M77','M78','M79','M80'] },
-    { title:'Octavos', mids:['M89','M90','M91','M92'] },
-    { title:'Cuartos', mids:['M97','M98'] },
-    { title:'Semis',   mids:['M101'] },
+// Bracket completo
+function Bracket({ picks }) {
+  const L = [
+    {t:'R32',    ids:['M73','M74','M75','M76','M77','M78','M79','M80']},
+    {t:'Octavos',ids:['M89','M90','M91','M92']},
+    {t:'Cuartos',ids:['M97','M98']},
+    {t:'Semis',  ids:['M101']},
   ]
-  const colsR = [
-    { title:'Semis',   mids:['M102'] },
-    { title:'Cuartos', mids:['M99','M100'] },
-    { title:'Octavos', mids:['M93','M94','M95','M96'] },
-    { title:'R32',     mids:['M81','M82','M83','M84','M85','M86','M87','M88'] },
+  const R = [
+    {t:'Semis',  ids:['M102']},
+    {t:'Cuartos',ids:['M99','M100']},
+    {t:'Octavos',ids:['M93','M94','M95','M96']},
+    {t:'R32',    ids:['M81','M82','M83','M84','M85','M86','M87','M88']},
   ]
-
   return (
-    <table style={{ width:'100%', borderCollapse:'collapse', tableLayout:'fixed' }}>
-      <colgroup>
-        {colsL.map((_,i) => <col key={'l'+i} style={{ width:COL_W }} />)}
-        <col style={{ width:CONN_W }} />
-        {/* Centro */}
-        <col style={{ width:180 }} />
-        <col style={{ width:CONN_W }} />
-        {colsR.map((_,i) => <col key={'r'+i} style={{ width:COL_W }} />)}
-      </colgroup>
-      <tbody>
-        <tr style={{ verticalAlign:'top' }}>
-          {/* Columnas izquierda */}
-          {colsL.map((col,i) => (
-            <td key={'l'+i} style={{ padding:'0 2px', verticalAlign:'stretch' }}>
-              <ColContent title={col.title} mids={col.mids} picks={picks} />
-            </td>
-          ))}
-          {/* Conector */}
-          <td style={{ width:CONN_W }} />
-          {/* Centro */}
-          <td style={{ padding:'0 4px', verticalAlign:'middle' }}>
-            <BCenter picks={picks} />
-          </td>
-          {/* Conector */}
-          <td style={{ width:CONN_W }} />
-          {/* Columnas derecha */}
-          {colsR.map((col,i) => (
-            <td key={'r'+i} style={{ padding:'0 2px', verticalAlign:'stretch' }}>
-              <ColContent title={col.title} mids={col.mids} picks={picks} />
-            </td>
-          ))}
-        </tr>
-      </tbody>
-    </table>
-  )
-}
-
-function ColContent({ title, mids, picks }) {
-  return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-      {/* Título col */}
-      <div style={{ textAlign:'center', fontSize:7.5, fontWeight:800, textTransform:'uppercase',
-        letterSpacing:'.7px', color:'#fff',
-        background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
-        padding:'4px 2px', borderRadius:'5px 5px 0 0' }}>{title}</div>
-      {/* Matches distribuidos */}
-      <div style={{ flex:1, display:'flex', flexDirection:'column',
-        justifyContent:'space-around', padding:'5px 2px',
-        background:C.grayLt, border:`1px solid ${C.border}`,
-        borderTop:'none', borderRadius:'0 0 5px 5px', gap:4 }}>
-        {mids.map(mid => (
-          <BMatch key={mid} mid={mid} picks={picks} />
-        ))}
-      </div>
+    <div style={{ display:'flex', gap:0, alignItems:'stretch', width:'100%' }}>
+      {L.map((c,i)=><><BCol key={'l'+i} title={c.t} mids={c.ids} picks={picks}/>{i<L.length-1&&<Div/>}</>)}
+      <Div/>
+      <BCenter picks={picks}/>
+      <Div/>
+      {R.map((c,i)=><><Div key={'rd'+i}/><BCol key={'r'+i} title={c.t} mids={c.ids} picks={picks}/></>)}
     </div>
   )
 }
 
-// ── Footer ───────────────────────────────────────────────────────
 function Footer({ profile, quiniela }) {
   return (
-    <div style={{ marginTop:10, paddingTop:7, borderTop:`0.5px solid ${C.border}`,
-      display:'flex', justifyContent:'space-between', color:C.gray, fontSize:8 }}>
+    <div style={{ marginTop:10, paddingTop:7, borderTop:`0.5px solid ${BO}`,
+      display:'flex', justifyContent:'space-between', color:GY, fontSize:8 }}>
       <span>🏆 Quiniela Mundial FIFA 2026 · {profile?.username} · {quiniela?.name}</span>
       <span>quiniela2026panas.netlify.app · {new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})}</span>
     </div>
@@ -416,6 +373,10 @@ export default function PrintPage() {
   const [picks, setPicks]       = useState({})
   const [profile, setProfile]   = useState(null)
   const [loading, setLoading]   = useState(true)
+  const [generating, setGenerating] = useState(false)
+
+  const grupRef = useRef(null)
+  const brackRef = useRef(null)
 
   useEffect(() => { load() }, [quinielaId])
 
@@ -430,131 +391,141 @@ export default function PrintPage() {
     setLoading(false)
   }
 
-  // Nombre del archivo PDF
-  useEffect(() => {
-    if (quiniela?.name) {
-      document.title = `Quiniela Mundial 2026 - ${quiniela.name}`
+  async function handleSavePDF() {
+    if (!grupRef.current || !brackRef.current) return
+    setGenerating(true)
+    try {
+      await generatePDF(grupRef.current, brackRef.current, quiniela?.name || 'Mi Quiniela')
+    } catch(e) {
+      console.error(e)
+      alert('Error generando PDF. Intenta de nuevo.')
     }
-  }, [quiniela])
+    setGenerating(false)
+  }
 
   const filledCount = Object.values(picks).filter(p=>p?.h!=null).length
+  const dateStr = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})
 
   if (loading) return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
       justifyContent:'center', height:'100vh',
-      fontFamily:'"Helvetica Neue",Arial,sans-serif', color:C.gray, gap:12 }}>
+      fontFamily:'"Helvetica Neue",Arial,sans-serif', color:GY, gap:12 }}>
       <div style={{ fontSize:32 }}>🏆</div>
-      <div style={{ fontWeight:700, fontSize:14 }}>Preparando quiniela...</div>
+      <div style={{ fontWeight:700, fontSize:14 }}>Cargando quiniela...</div>
     </div>
   )
 
-  const dateStr = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})
-
   return (
     <div style={{ fontFamily:'"Helvetica Neue",Arial,sans-serif',
-      fontSize:11, color:C.dark, background:'#fff' }}>
+      color:DK, background:'#f3f4f6', minHeight:'100vh' }}>
 
-      <style>{`
-        @media print {
-          .no-print { display:none !important; }
-          body { margin:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; background:#fff; }
-          .bracket-page { page-break-before: always; }
-        }
-        @page { margin:1cm; size:A4 portrait; }
-        @page .landscape-page { size:A4 landscape; margin:.8cm; }
-      `}</style>
-
-      {/* Botones */}
-      <div className="no-print" style={{ position:'fixed', bottom:20, right:20, zIndex:100,
-        display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end' }}>
-        <div style={{ fontSize:11, color:C.gray, background:'#fff', border:`1px solid ${C.border}`,
-          borderRadius:8, padding:'8px 12px', lineHeight:1.5, maxWidth:270 }}>
-          💡 Al guardar PDF selecciona <strong>"Más configuraciones"</strong> y activa
-          <strong> "Gráficos de fondo"</strong>.
+      {/* ── Barra de controles ── */}
+      <div style={{ position:'sticky', top:0, zIndex:100, background:'#fff',
+        borderBottom:`1px solid ${BO}`, padding:'12px 24px',
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        boxShadow:'0 1px 8px rgba(0,0,0,.08)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ fontSize:20 }}>🏆</span>
+          <div>
+            <div style={{ fontWeight:800, fontSize:14, color:DK }}>{quiniela?.name}</div>
+            <div style={{ fontSize:11, color:GY }}>{profile?.username} · {filledCount}/104 picks</div>
+          </div>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <button onClick={()=>navigate(-1)} style={{ padding:'10px 16px', background:C.grayLt,
-            color:C.dark, border:'none', borderRadius:10, fontWeight:600, fontSize:13,
-            cursor:'pointer' }}>← Volver</button>
-          <button onClick={()=>window.print()} style={{ padding:'10px 22px', background:C.blue,
-            color:'#fff', border:'none', borderRadius:10, fontWeight:700, fontSize:13,
-            cursor:'pointer', boxShadow:`0 4px 14px ${C.blue}44` }}>
-            🖨️ Guardar PDF
+          <button onClick={()=>navigate(-1)}
+            style={{ padding:'9px 16px', background:'#f3f4f6', color:DK,
+              border:'none', borderRadius:9, fontWeight:600, fontSize:13, cursor:'pointer' }}>
+            ← Volver
+          </button>
+          <button onClick={handleSavePDF} disabled={generating}
+            style={{ padding:'9px 22px', background: generating?'#6b7280':BL,
+              color:'#fff', border:'none', borderRadius:9, fontWeight:700, fontSize:13,
+              cursor: generating?'wait':'pointer',
+              boxShadow: generating?'none':`0 4px 14px ${BL}44`,
+              display:'flex', alignItems:'center', gap:8 }}>
+            {generating
+              ? <><span style={{ display:'inline-block', width:14, height:14,
+                  border:'2px solid #fff', borderTopColor:'transparent',
+                  borderRadius:'50%', animation:'spin .7s linear infinite' }}/>
+                  Generando PDF...</>
+              : '⬇️ Descargar PDF'}
           </button>
         </div>
       </div>
 
-      {/* ══ PÁGINA 1: GRUPOS ══════════════════════════════════════ */}
-      <div style={{ padding:'20px 22px 16px', maxWidth:1400, margin:'0 auto' }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
 
-        {/* Header */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
-          marginBottom:14, paddingBottom:10, borderBottom:`2.5px solid ${C.blue}` }}>
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{ width:40, height:40, borderRadius:10, flexShrink:0,
-              background:`linear-gradient(135deg,${C.blue},${C.blueDk})`,
-              display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🏆</div>
-            <div>
-              <div style={{ fontSize:17, fontWeight:900, color:C.dark }}>Quiniela Mundial FIFA 2026</div>
-              <div style={{ fontSize:10.5, color:C.gray, marginTop:1 }}>
-                {profile?.username}{profile?.full_name?` · ${profile.full_name}`:''} · <em>{quiniela?.name}</em>
+      <div style={{ padding:'24px', display:'flex', flexDirection:'column', gap:24 }}>
+
+        {/* ══ SECCIÓN 1: GRUPOS ══ */}
+        <div ref={grupRef} style={{ background:'#fff', borderRadius:12, padding:'20px 22px',
+          boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
+
+          {/* Header grupos */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
+            marginBottom:14, paddingBottom:10, borderBottom:`2.5px solid ${BL}` }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:40, height:40, borderRadius:10, flexShrink:0,
+                background:`linear-gradient(135deg,${BL},${BD})`,
+                display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>🏆</div>
+              <div>
+                <div style={{ fontSize:17, fontWeight:900, color:DK }}>Quiniela Mundial FIFA 2026</div>
+                <div style={{ fontSize:10.5, color:GY, marginTop:1 }}>
+                  {profile?.username}{profile?.full_name?` · ${profile.full_name}`:''} · <em>{quiniela?.name}</em>
+                </div>
               </div>
             </div>
-          </div>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontSize:10, fontWeight:800, color:C.blue, background:C.blueLt,
-              borderRadius:6, padding:'4px 12px', textTransform:'uppercase',
-              letterSpacing:'.5px', display:'inline-block' }}>Fase de Grupos</div>
-            <div style={{ fontSize:8.5, color:C.gray, marginTop:4 }}>
-              {filledCount}/104 picks · {dateStr}
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:10, fontWeight:800, color:BL, background:BLT,
+                borderRadius:6, padding:'4px 12px', textTransform:'uppercase',
+                letterSpacing:'.5px', display:'inline-block' }}>Fase de Grupos</div>
+              <div style={{ fontSize:8.5, color:GY, marginTop:4 }}>{filledCount}/104 picks · {dateStr}</div>
             </div>
           </div>
-        </div>
 
-        {/* 12 grupos 3×4 */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
-          {Object.entries(GROUP_MATCHES).map(([g,ms]) => (
-            <GroupCard key={g} g={g} matches={ms} picks={picks} />
-          ))}
-        </div>
-
-        <Footer profile={profile} quiniela={quiniela} />
-      </div>
-
-      {/* ══ PÁGINA 2: LLAVE ═══════════════════════════════════════ */}
-      <div className="bracket-page" style={{ padding:'16px 14px 14px' }}>
-
-        {/* Header */}
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
-          marginBottom:10, paddingBottom:8, borderBottom:`2.5px solid ${C.orange}` }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:20 }}>⚡</span>
-            <div>
-              <div style={{ fontSize:15, fontWeight:900, color:C.dark }}>Fase Eliminatoria — Llave Completa</div>
-              <div style={{ fontSize:10, color:C.gray }}>
-                {profile?.username}{profile?.full_name?` · ${profile.full_name}`:''} · {quiniela?.name}
-              </div>
-            </div>
-          </div>
-          {/* Leyenda fases */}
-          <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'flex-end' }}>
-            {[['R32','28Jun–3Jul'],['Octavos','4–7Jul'],['Cuartos','9–11Jul'],
-              ['Semis','14–15Jul'],['Final','19Jul']].map(([ph,d])=>(
-              <div key={ph} style={{ display:'flex', alignItems:'center', gap:3, fontSize:9 }}>
-                <div style={{ width:7, height:7, borderRadius:2, background:C.blue }} />
-                <strong style={{ color:C.dark }}>{ph}</strong>
-                <span style={{ color:C.gray }}>{d}</span>
-              </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+            {Object.entries(GROUP_MATCHES).map(([g,ms])=>(
+              <GroupCard key={g} g={g} matches={ms} picks={picks} />
             ))}
           </div>
+          <Footer profile={profile} quiniela={quiniela} />
         </div>
 
-        {/* Bracket completo como tabla */}
-        <FullBracket picks={picks} />
+        {/* ══ SECCIÓN 2: BRACKET ══ */}
+        <div ref={brackRef} style={{ background:'#fff', borderRadius:12, padding:'20px 22px',
+          boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
 
-        <Footer profile={profile} quiniela={quiniela} />
+          {/* Header bracket */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
+            marginBottom:12, paddingBottom:8, borderBottom:`2.5px solid ${OR}` }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:20 }}>⚡</span>
+              <div>
+                <div style={{ fontSize:15, fontWeight:900, color:DK }}>Fase Eliminatoria — Llave Completa</div>
+                <div style={{ fontSize:10, color:GY }}>
+                  {profile?.username}{profile?.full_name?` · ${profile.full_name}`:''} · {quiniela?.name}
+                </div>
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'flex-end' }}>
+              {[['R32','28Jun–3Jul'],['Octavos','4–7Jul'],['Cuartos','9–11Jul'],
+                ['Semis','14–15Jul'],['Final','19Jul']].map(([ph,d])=>(
+                <div key={ph} style={{ display:'flex', alignItems:'center', gap:3, fontSize:9 }}>
+                  <div style={{ width:7, height:7, borderRadius:2, background:BL }} />
+                  <strong style={{ color:DK }}>{ph}</strong>
+                  <span style={{ color:GY }}>{d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Bracket picks={picks} />
+          <Footer profile={profile} quiniela={quiniela} />
+        </div>
+
       </div>
-
     </div>
   )
 }
