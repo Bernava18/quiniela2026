@@ -86,29 +86,31 @@ async function generatePDF(gruposRef, bracketRef, quinielaName) {
   await loadPdfLibs()
   const { jsPDF } = window.jspdf
 
+  // Escala alta para buena resolución
   const opts = { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false }
 
-  // Captura sección grupos
+  // ── Página 1: Grupos (portrait, ajusta al ancho A4) ──
   const canvas1 = await window.html2canvas(gruposRef, opts)
   const img1 = canvas1.toDataURL('image/jpeg', 0.95)
-  const w1 = canvas1.width, h1 = canvas1.height
+  const ratio1 = canvas1.height / canvas1.width
+  const pW1 = 210, pH1 = Math.round(ratio1 * pW1)  // A4 portrait width
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pW1, pH1] })
+  pdf.addImage(img1, 'JPEG', 0, 0, pW1, pH1)
 
-  // Captura sección bracket
-  const canvas2 = await window.html2canvas(bracketRef, opts)
+  // ── Página 2: Bracket (landscape, sin recorte — usa ancho real del elemento) ──
+  // Captamos a escala 1.5 el elemento completo sin limitar ancho
+  const bracketOpts = { scale: 1.5, useCORS: true, backgroundColor: '#ffffff',
+    logging: false, windowWidth: bracketRef.scrollWidth + 60 }
+  const canvas2 = await window.html2canvas(bracketRef, bracketOpts)
   const img2 = canvas2.toDataURL('image/jpeg', 0.95)
-  const w2 = canvas2.width, h2 = canvas2.height
+  const ratio2 = canvas2.height / canvas2.width
+  // Página ancha: usamos el ancho real en mm (max 500mm para cubrir bracket completo)
+  const pW2 = Math.max(297, Math.round(canvas2.width / 4))  // aprox mm
+  const pH2 = Math.round(ratio2 * pW2)
+  pdf.addPage([pW2, pH2], pW2 > pH2 ? 'landscape' : 'portrait')
+  pdf.addImage(img2, 'JPEG', 0, 0, pW2, pH2)
 
-  // Página 1: portrait proporcional al contenido de grupos
-  const pdfW1 = 297, pdfH1 = Math.round((h1 / w1) * pdfW1) // A4 landscape width
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [pdfW1, pdfH1] })
-  pdf.addImage(img1, 'JPEG', 0, 0, pdfW1, pdfH1)
-
-  // Página 2: landscape proporcional al bracket
-  const pdfW2 = 420, pdfH2 = Math.round((h2 / w2) * pdfW2) // A3 landscape
-  pdf.addPage([pdfW2, pdfH2], 'landscape')
-  pdf.addImage(img2, 'JPEG', 0, 0, pdfW2, pdfH2)
-
-  const fileName = `Quiniela Mundial 2026 - ${quinielaName || 'Mi Quiniela'}.pdf`
+  const fileName = 'Quiniela Mundial 2026 - ' + (quinielaName || 'Mi Quiniela') + '.pdf'
   pdf.save(fileName)
 }
 
@@ -332,25 +334,28 @@ function BCenter({ picks }) {
 
 // Bracket completo
 function Bracket({ picks }) {
-  const L = [
-    {t:'R32',    ids:['M73','M74','M75','M76','M77','M78','M79','M80']},
-    {t:'Octavos',ids:['M89','M90','M91','M92']},
-    {t:'Cuartos',ids:['M97','M98']},
-    {t:'Semis',  ids:['M101']},
-  ]
-  const R = [
-    {t:'Semis',  ids:['M102']},
-    {t:'Cuartos',ids:['M99','M100']},
-    {t:'Octavos',ids:['M93','M94','M95','M96']},
-    {t:'R32',    ids:['M81','M82','M83','M84','M85','M86','M87','M88']},
-  ]
   return (
     <div style={{ display:'flex', gap:0, alignItems:'stretch', width:'100%' }}>
-      {L.map((c,i)=><><BCol key={'l'+i} title={c.t} mids={c.ids} picks={picks}/>{i<L.length-1&&<Div/>}</>)}
+      {/* Lado izquierdo */}
+      <BCol title="R32"     mids={['M73','M74','M75','M76','M77','M78','M79','M80']} picks={picks}/>
       <Div/>
+      <BCol title="Octavos" mids={['M89','M90','M91','M92']} picks={picks}/>
+      <Div/>
+      <BCol title="Cuartos" mids={['M97','M98']} picks={picks}/>
+      <Div/>
+      <BCol title="Semis"   mids={['M101']} picks={picks}/>
+      <Div/>
+      {/* Centro */}
       <BCenter picks={picks}/>
       <Div/>
-      {R.map((c,i)=><><Div key={'rd'+i}/><BCol key={'r'+i} title={c.t} mids={c.ids} picks={picks}/></>)}
+      {/* Lado derecho */}
+      <BCol title="Semis"   mids={['M102']} picks={picks}/>
+      <Div/>
+      <BCol title="Cuartos" mids={['M99','M100']} picks={picks}/>
+      <Div/>
+      <BCol title="Octavos" mids={['M93','M94','M95','M96']} picks={picks}/>
+      <Div/>
+      <BCol title="R32"     mids={['M81','M82','M83','M84','M85','M86','M87','M88']} picks={picks}/>
     </div>
   )
 }
@@ -460,7 +465,7 @@ export default function PrintPage() {
       <div style={{ padding:'24px', display:'flex', flexDirection:'column', gap:24 }}>
 
         {/* ══ SECCIÓN 1: GRUPOS ══ */}
-        <div ref={grupRef} style={{ background:'#fff', borderRadius:12, padding:'20px 22px',
+        <div ref={grupRef} data-section="grupos" style={{ background:'#fff', borderRadius:12, padding:'20px 22px',
           boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
 
           {/* Header grupos */}
@@ -494,7 +499,7 @@ export default function PrintPage() {
         </div>
 
         {/* ══ SECCIÓN 2: BRACKET ══ */}
-        <div ref={brackRef} style={{ background:'#fff', borderRadius:12, padding:'20px 22px',
+        <div ref={brackRef} data-section="bracket" style={{ background:'#fff', borderRadius:12, padding:'20px 22px',
           boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
 
           {/* Header bracket */}
