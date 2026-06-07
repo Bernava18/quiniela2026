@@ -212,83 +212,6 @@ export function LoginPage() {
       <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, background:'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255,214,10,.1) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 80% 80%, rgba(0,113,227,.08) 0%, transparent 50%)' }} />
       <div style={{ position:'relative', zIndex:1 }}>
 
-        {/* ── BANNER TRANSPARENCIA + GUÍA (sticky top) ── */}
-        <div style={{ position:'sticky', top:0, zIndex:50, backdropFilter:'blur(20px)',
-          background:'rgba(7,8,15,.85)', borderBottom:'0.5px solid rgba(255,255,255,.08)' }}>
-          {/* Franja guía */}
-          <div style={{ background:'linear-gradient(90deg,rgba(0,113,227,.9),rgba(0,85,180,.9))',
-            padding:'8px clamp(16px,4vw,48px)', display:'flex', alignItems:'center',
-            justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:16 }}>📖</span>
-              <span style={{ fontSize:12, fontWeight:700, color:'#fff' }}>
-                ¿Primera vez? Lee la guía antes de llenar tu quiniela
-              </span>
-            </div>
-            <a href="/guia" style={{ display:'inline-flex', alignItems:'center', gap:6,
-              background:'rgba(255,255,255,.15)', border:'1px solid rgba(255,255,255,.3)',
-              borderRadius:8, padding:'5px 14px', color:'#fff', textDecoration:'none',
-              fontSize:12, fontWeight:700, whiteSpace:'nowrap' }}>
-              Ver guía de 6 pasos →
-            </a>
-          </div>
-          {/* Franja transparencia */}
-          <div style={{ padding:'6px clamp(16px,4vw,48px)',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            gap:8, flexWrap:'wrap' }}>
-            {[
-              ['🔒','Picks privados hasta el 11 Jun'],
-              ['👁','Públicos al iniciar el Mundial'],
-              ['📧','PDF enviado a todos al inicio'],
-              ['⚡','Resultados automáticos cada 2 min'],
-            ].map(([icon, text]) => (
-              <div key={text} style={{ display:'flex', alignItems:'center', gap:5,
-                fontSize:11, color:'rgba(255,255,255,.55)', padding:'0 12px',
-                borderRight:'0.5px solid rgba(255,255,255,.1)' }}>
-                <span style={{ fontSize:13 }}>{icon}</span>
-                <span style={{ fontWeight:500 }}>{text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── SECCIÓN TRANSPARENCIA (prominente, antes del hero) ── */}
-        <div style={{ background:'linear-gradient(180deg,rgba(0,113,227,.07) 0%,transparent 100%)',
-          padding:'clamp(28px,4vw,48px) clamp(16px,4vw,48px) clamp(20px,3vw,36px)',
-          borderBottom:'0.5px solid rgba(255,255,255,.06)' }}>
-          <div style={{ maxWidth:960, margin:'0 auto' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20,
-              justifyContent:'center', flexWrap:'wrap' }}>
-              <div style={{ fontSize:11, fontWeight:800, textTransform:'uppercase',
-                letterSpacing:'1px', color:'#0071e3', background:'rgba(0,113,227,.15)',
-                border:'0.5px solid rgba(0,113,227,.3)', borderRadius:20,
-                padding:'4px 14px' }}>🔍 Transparencia total</div>
-              <h2 style={{ fontSize:'clamp(20px,3vw,28px)', fontWeight:900,
-                letterSpacing:'-1px', color:'#fff', textAlign:'center' }}>
-                La quiniela más justa — reglas claras desde el inicio
-              </h2>
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',
-              gap:10, maxWidth:960, margin:'0 auto' }}>
-              {[
-                { icon:'🔒', title:'Picks privados', desc:'Nadie ve la quiniela de otro antes del 11 Jun. Sin copias.', color:'#0071e3', bg:'rgba(0,113,227,.12)' },
-                { icon:'👁', title:'Públicos al iniciar', desc:'Al arrancar el Mundial todas las quinielas se hacen visibles para todos.', color:'#30d158', bg:'rgba(48,209,88,.1)' },
-                { icon:'📧', title:'PDF a todos por email', desc:'Antes del primer partido se envía un respaldo con TODOS los picks a todos los participantes.', color:'#ff9f0a', bg:'rgba(255,159,10,.1)' },
-                { icon:'⚡', title:'Resultados automáticos', desc:'Sync oficial cada 2 minutos. Sin entrada manual, sin manipulación posible.', color:'#bf5af2', bg:'rgba(191,90,242,.1)' },
-              ].map(({ icon, title, desc, color, bg }) => (
-                <div key={title} style={{ background:bg, border:`1px solid ${color}30`,
-                  borderRadius:12, padding:'16px 14px', display:'flex', gap:10, alignItems:'flex-start' }}>
-                  <div style={{ fontSize:24, flexShrink:0, marginTop:2 }}>{icon}</div>
-                  <div>
-                    <div style={{ fontWeight:700, fontSize:13, color, marginBottom:4 }}>{title}</div>
-                    <div style={{ fontSize:11, color:'rgba(255,255,255,.5)', lineHeight:1.6 }}>{desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* HERO */}
         <div style={{ minHeight:'100vh', display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))', alignItems:'center' }}>
           <div style={{ padding:'clamp(32px,5vw,60px) clamp(20px,5vw,60px)' }}>
@@ -368,7 +291,9 @@ export function LoginPage() {
                 <div style={{ fontSize:12, color:C.sub, marginTop:4 }}>Gratis · Necesitas código de invitación</div>
               </div>
               <AuthForm />
-
+              <div style={{ textAlign:'center', marginTop:12 }}>
+                <a href="/guia" style={{ fontSize:12, color:'rgba(255,255,255,.4)', textDecoration:'none' }}>📖 Ver guía de uso →</a>
+              </div>
             </div>
           </div>
         </div>
@@ -451,6 +376,46 @@ export function LoginPage() {
             </div>
           </div>
         )}
+
+        {/* TRANSPARENCIA */}
+        <div style={{ padding:'clamp(32px,6vw,60px) clamp(16px,4vw,48px)', borderTop:'0.5px solid rgba(255,255,255,.06)', background:'rgba(255,255,255,.02)' }}>
+          <h2 style={{ fontSize:26, fontWeight:800, textAlign:'center', letterSpacing:'-1px', marginBottom:8 }}>🔍 Transparencia total</h2>
+          <p style={{ textAlign:'center', color:C.sub, marginBottom:28, fontSize:14 }}>La quiniela más justa — todas las reglas claras desde el inicio</p>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:12, maxWidth:900, margin:'0 auto' }}>
+            {[
+              {
+                icon:'🔒',
+                title:'Quinielas privadas antes del Mundial',
+                desc:'Nadie puede ver la quiniela de otro participante antes del 11 de junio. Así garantizamos que nadie copie los picks de otros.',
+                color:'#0071e3'
+              },
+              {
+                icon:'👁',
+                title:'Quinielas públicas al iniciar',
+                desc:'Una vez iniciado el Mundial, todas las quinielas son visibles para todos. Puedes ver los picks de cualquier participante en cualquier momento.',
+                color:'#30d158'
+              },
+              {
+                icon:'📧',
+                title:'Respaldo oficial por email',
+                desc:'Al inicio del torneo, se envía automáticamente un PDF con TODAS las quinielas a todos los participantes. Es el respaldo de auditoría oficial.',
+                color:'#ff9f0a'
+              },
+              {
+                icon:'⚡',
+                title:'Resultados automáticos en vivo',
+                desc:'Los resultados se sincronizan automáticamente desde fuentes oficiales cada 2 minutos. Sin entrada manual, sin posibilidad de manipulación.',
+                color:'#bf5af2'
+              },
+            ].map(({ icon, title, desc, color }) => (
+              <div key={title} style={{ background:C.card, border:`0.5px solid ${color}30`, borderRadius:14, padding:'20px 16px' }}>
+                <div style={{ fontSize:28, marginBottom:8 }}>{icon}</div>
+                <div style={{ fontWeight:700, fontSize:14, color, marginBottom:6 }}>{title}</div>
+                <div style={{ fontSize:12, color:C.sub, lineHeight:1.6 }}>{desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div style={{ padding:'clamp(32px,5vw,60px) clamp(16px,4vw,48px)', textAlign:'center', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
           <a href="/guia" style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,.06)', border:'0.5px solid rgba(255,255,255,.15)', borderRadius:12, padding:'12px 24px', color:'#fff', textDecoration:'none', fontSize:14, fontWeight:600 }}>
