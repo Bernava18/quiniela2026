@@ -2934,6 +2934,19 @@ const SB = {
     // Bloquear picks si la quiniela está cerrada
     if (this.isLocked) {
       document.body.setAttribute('data-locked', 'true');
+      const style = document.createElement('style');
+      style.textContent = `
+        input[type="number"], select.fsel, select.gsel {
+          pointer-events: none !important;
+          opacity: 0.75 !important;
+          cursor: not-allowed !important;
+          background: #f2f2f7 !important;
+          color: #6e6e73 !important;
+        }
+        .bm-si { pointer-events: none !important; opacity: 0.75 !important; }
+        .result-sel { pointer-events: none !important; opacity: 0.75 !important; }
+      `;
+      document.head.appendChild(style);
     }
     // Re-render siempre en Grupos
     renderPhaseTabs();
