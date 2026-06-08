@@ -335,10 +335,10 @@ export default function LeaderboardPage() {
 
                       <td style={{ padding:'9px 14px', borderRight:'1px solid #e5e5ea' }}>
                         <div style={{ fontWeight:700, fontSize:13, display:'flex', alignItems:'center', gap:5 }}>
-                          {r.quinielas?.profiles?.username}
+                          {r.quinielas?.name}
                           {isMe && <span style={{ fontSize:9, background:'rgba(0,113,227,.12)', color:'#0071e3', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>TÚ</span>}
                         </div>
-                        <div style={{ fontSize:10, color:'#aeaeb2', marginTop:1 }}>{r.quinielas?.name}</div>
+                        <div style={{ fontSize:10, color:'#aeaeb2', marginTop:1 }}>{r.quinielas?.profiles?.username}</div>
                       </td>
 
                       {/* Grupos A-L */}
