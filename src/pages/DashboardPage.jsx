@@ -37,6 +37,9 @@ export default function DashboardPage() {
   const [creating, setCreating]     = useState(false)
   const [newName, setNewName]       = useState('')
   const [expanded, setExpanded]     = useState(null)
+  const [renaming, setRenaming]     = useState(null) // quinielaId being renamed
+  const [renameTxt, setRenameTxt]   = useState('')
+  const [renameSaving, setRenameSaving] = useState(false)
 
   const isLocked  = new Date() >= LOCK_DATE
   const daysLeft  = Math.max(0, Math.floor((LOCK_DATE - new Date()) / 86400000))
@@ -91,6 +94,16 @@ export default function DashboardPage() {
   async function handleDelete(id, name) {
     if (!confirm(`¿Eliminar "${name}"?`)) return
     await deleteQuiniela(id)
+    load()
+  }
+
+  async function handleRename(id) {
+    if (!renameTxt.trim()) return
+    setRenameSaving(true)
+    await supabase.from('quinielas').update({ name: renameTxt.trim() }).eq('id', id)
+    setRenaming(null)
+    setRenameTxt('')
+    setRenameSaving(false)
     load()
   }
 
@@ -183,7 +196,27 @@ export default function DashboardPage() {
                 </div>
 
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontWeight:700, fontSize:15 }}>{q.name}</div>
+                  {renaming === q.id ? (
+                    <div style={{ display:'flex', gap:6, alignItems:'center' }} onClick={e=>e.stopPropagation()}>
+                      <input
+                        autoFocus
+                        value={renameTxt}
+                        onChange={e=>setRenameTxt(e.target.value)}
+                        onKeyDown={e=>{ if(e.key==='Enter') handleRename(q.id); if(e.key==='Escape') setRenaming(null) }}
+                        style={{ flex:1, padding:'5px 10px', border:'1.5px solid #0071e3', borderRadius:7, fontSize:14, fontWeight:700, outline:'none', fontFamily:'inherit' }}
+                      />
+                      <button onClick={()=>handleRename(q.id)} disabled={renameSaving||!renameTxt.trim()}
+                        style={{ padding:'5px 12px', background:'#0071e3', color:'#fff', border:'none', borderRadius:7, fontWeight:700, fontSize:12, cursor:'pointer' }}>
+                        {renameSaving?'...':'✓'}
+                      </button>
+                      <button onClick={()=>setRenaming(null)}
+                        style={{ padding:'5px 10px', background:'#f2f2f7', color:'#6e6e73', border:'none', borderRadius:7, fontWeight:600, fontSize:12, cursor:'pointer' }}>
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ fontWeight:700, fontSize:15 }}>{q.name}</div>
+                  )}
                   <div style={{ fontSize:11, color:'#6e6e73', marginTop:2 }}>
                     {new Date(q.created_at).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}
                     {q.is_locked && <span style={{ marginLeft:8, color:'#ff9f0a' }}>🔒 Cerrada</span>}
@@ -221,6 +254,13 @@ export default function DashboardPage() {
                     style={{ padding:'5px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:7, background:'none', cursor:'pointer', fontSize:13 }}>
                     🖨️
                   </button>
+                  {!q.is_locked && !isLocked && (
+                    <button onClick={()=>{ setRenaming(q.id); setRenameTxt(q.name) }}
+                      title="Renombrar quiniela"
+                      style={{ padding:'5px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:7, background:'none', cursor:'pointer', fontSize:13 }}>
+                      ✏️
+                    </button>
+                  )}
                   {!q.is_locked && !isLocked && (
                     <button onClick={()=>handleDelete(q.id, q.name)}
                       title="Eliminar"
