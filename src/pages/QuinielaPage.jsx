@@ -47,7 +47,7 @@ export default function QuinielaPage() {
     try {
       const { data: q, error: qErr } = await supabase
         .from('quinielas')
-        .select('*, profiles(username)')
+        .select('*, profiles!quinielas_user_id_fkey(username)')
         .eq('id', quinielaId)
         .single()
 
