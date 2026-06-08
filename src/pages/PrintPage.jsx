@@ -332,7 +332,7 @@ export default function PrintPage() {
       <div style={{ padding:'24px', display:'flex', flexDirection:'column', gap:24 }}>
 
         {/* ── HOJA 1: GRUPOS ── */}
-        <div ref={grupRef} style={{ background:'#fff', borderRadius:12, padding:'18px 20px', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
+        <div ref={grupRef} data-section="grupos" style={{ background:'#fff', borderRadius:12, padding:'18px 20px', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
           {/* Header */}
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14, paddingBottom:10, borderBottom:`2.5px solid ${BL}` }}>
             <div style={{ display:'flex', alignItems:'center', gap:12 }}>
@@ -359,7 +359,7 @@ export default function PrintPage() {
         </div>
 
         {/* ── HOJA 2: BRACKET ── */}
-        <div ref={brackRef} style={{ background:'#fff', borderRadius:12, padding:'18px 20px', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
+        <div ref={brackRef} data-section="bracket" style={{ background:'#fff', borderRadius:12, padding:'18px 20px', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
           {/* Header */}
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10, paddingBottom:8, borderBottom:`2.5px solid ${OR}` }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>

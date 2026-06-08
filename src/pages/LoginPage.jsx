@@ -182,6 +182,7 @@ export function LoginPage() {
   const [timeLeft, setTimeLeft]   = useState(calcTimeLeft())
   const [stats, setStats]         = useState({ players:0, quinielas:0, topPlayer:'', topPts:0 })
   const [liveResults, setLiveResults] = useState([])
+  const [top10, setTop10] = useState([])
   const [activeGroup, setActiveGroup] = useState('A')
 
   useEffect(() => {
@@ -189,15 +190,23 @@ export function LoginPage() {
     return () => clearInterval(t)
   }, [])
 
-  useEffect(() => { loadStats(); loadResults() }, [])
+  useEffect(() => {
+    loadStats(); loadResults()
+    // Realtime top10
+    const ch = supabase.channel('scores-landing')
+      .on('postgres_changes', { event:'*', schema:'public', table:'scores' }, () => loadStats())
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [])
 
   async function loadStats() {
     const [{ count: p }, { count: q }, { data: top }] = await Promise.all([
       supabase.from('profiles').select('*', { count:'exact', head:true }),
       supabase.from('quinielas').select('*', { count:'exact', head:true }),
-      supabase.from('scores').select('total_pts,quinielas(profiles(username))').order('total_pts',{ascending:false}).limit(1),
+      supabase.from('scores').select('total_pts,quinielas(name,profiles!quinielas_user_id_fkey(username))').order('total_pts',{ascending:false}).limit(10),
     ])
     setStats({ players:p||0, quinielas:q||0, topPlayer:top?.[0]?.quinielas?.profiles?.username||'', topPts:top?.[0]?.total_pts||0 })
+    setTop10(top||[])
   }
 
   async function loadResults() {
@@ -377,45 +386,84 @@ export function LoginPage() {
           </div>
         )}
 
-        {/* TRANSPARENCIA */}
-        <div style={{ padding:'clamp(32px,6vw,60px) clamp(16px,4vw,48px)', borderTop:'0.5px solid rgba(255,255,255,.06)', background:'rgba(255,255,255,.02)' }}>
-          <h2 style={{ fontSize:26, fontWeight:800, textAlign:'center', letterSpacing:'-1px', marginBottom:8 }}>🔍 Transparencia total</h2>
-          <p style={{ textAlign:'center', color:C.sub, marginBottom:28, fontSize:14 }}>La quiniela más justa — todas las reglas claras desde el inicio</p>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:12, maxWidth:900, margin:'0 auto' }}>
+        {/* TRANSPARENCIA — destacada */}
+        <div style={{ padding:'clamp(28px,5vw,52px) clamp(16px,4vw,48px)', borderTop:'0.5px solid rgba(255,255,255,.06)', background:'linear-gradient(180deg,rgba(0,113,227,.06) 0%,transparent 100%)' }}>
+          {/* Badge + título */}
+          <div style={{ textAlign:'center', marginBottom:28 }}>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(0,113,227,.15)', border:'1px solid rgba(0,113,227,.35)', borderRadius:20, padding:'6px 16px', fontSize:12, fontWeight:800, color:'#4da3ff', letterSpacing:'.5px', textTransform:'uppercase', marginBottom:14 }}>
+              🔍 Transparencia Total
+            </div>
+            <h2 style={{ fontSize:'clamp(22px,3vw,32px)', fontWeight:900, letterSpacing:'-1px', marginBottom:8, color:'#fff' }}>
+              La quiniela más justa
+            </h2>
+            <p style={{ color:C.sub, fontSize:14, maxWidth:480, margin:'0 auto' }}>
+              Reglas claras, sin trampa posible — así funciona desde el inicio hasta el final
+            </p>
+          </div>
+          {/* Cards horizontales */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:12, maxWidth:960, margin:'0 auto' }}>
             {[
-              {
-                icon:'🔒',
-                title:'Quinielas privadas antes del Mundial',
-                desc:'Nadie puede ver la quiniela de otro participante antes del 11 de junio. Así garantizamos que nadie copie los picks de otros.',
-                color:'#0071e3'
-              },
-              {
-                icon:'👁',
-                title:'Quinielas públicas al iniciar',
-                desc:'Una vez iniciado el Mundial, todas las quinielas son visibles para todos. Puedes ver los picks de cualquier participante en cualquier momento.',
-                color:'#30d158'
-              },
-              {
-                icon:'📧',
-                title:'Respaldo oficial por email',
-                desc:'Al inicio del torneo, se envía automáticamente un PDF con TODAS las quinielas a todos los participantes. Es el respaldo de auditoría oficial.',
-                color:'#ff9f0a'
-              },
-              {
-                icon:'⚡',
-                title:'Resultados automáticos en vivo',
-                desc:'Los resultados se sincronizan automáticamente desde fuentes oficiales cada 2 minutos. Sin entrada manual, sin posibilidad de manipulación.',
-                color:'#bf5af2'
-              },
-            ].map(({ icon, title, desc, color }) => (
-              <div key={title} style={{ background:C.card, border:`0.5px solid ${color}30`, borderRadius:14, padding:'20px 16px' }}>
-                <div style={{ fontSize:28, marginBottom:8 }}>{icon}</div>
-                <div style={{ fontWeight:700, fontSize:14, color, marginBottom:6 }}>{title}</div>
-                <div style={{ fontSize:12, color:C.sub, lineHeight:1.6 }}>{desc}</div>
+              { icon:'🔒', title:'Picks privados hasta el 11 Jun', desc:'Nadie ve la quiniela de otro antes del Mundial. Sin copias posibles.', color:'#0071e3', bg:'rgba(0,113,227,.12)' },
+              { icon:'👁', title:'Públicas al iniciar', desc:'Al arrancar el torneo todas las quinielas son visibles para todos.', color:'#30d158', bg:'rgba(48,209,88,.1)' },
+              { icon:'📧', title:'PDF oficial a todos', desc:'Antes del primer partido se envía respaldo con TODOS los picks por email.', color:'#ff9f0a', bg:'rgba(255,159,10,.1)' },
+              { icon:'⚡', title:'Resultados automáticos', desc:'Sync cada 2 min desde fuentes oficiales. Sin entrada manual posible.', color:'#bf5af2', bg:'rgba(191,90,242,.1)' },
+            ].map(({ icon, title, desc, color, bg }) => (
+              <div key={title} style={{ background:bg, border:`1px solid ${color}30`, borderRadius:14, padding:'18px 16px', display:'flex', gap:12, alignItems:'flex-start' }}>
+                <div style={{ fontSize:26, flexShrink:0 }}>{icon}</div>
+                <div>
+                  <div style={{ fontWeight:700, fontSize:13, color, marginBottom:5 }}>{title}</div>
+                  <div style={{ fontSize:11.5, color:C.sub, lineHeight:1.65 }}>{desc}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* TOP 10 EN VIVO */}
+        {top10.length > 0 && (
+          <div style={{ padding:'clamp(28px,5vw,52px) clamp(16px,4vw,48px)', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
+            <div style={{ maxWidth:700, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:8 }}>
+                <div>
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:'rgba(255,214,10,.1)', border:'0.5px solid rgba(255,214,10,.25)', borderRadius:20, padding:'4px 12px', fontSize:11, fontWeight:800, color:C.gold, letterSpacing:'.4px', marginBottom:8 }}>
+                    ⚡ En vivo
+                  </div>
+                  <h2 style={{ fontSize:'clamp(20px,3vw,28px)', fontWeight:900, letterSpacing:'-1px', color:'#fff' }}>
+                    Top 10 — Tabla de Posiciones
+                  </h2>
+                </div>
+              </div>
+              <div style={{ background:C.card, border:`0.5px solid ${C.border}`, borderRadius:14, overflow:'hidden' }}>
+                {/* Header */}
+                <div style={{ display:'grid', gridTemplateColumns:'40px 1fr 80px', padding:'8px 16px', background:'rgba(255,255,255,.04)', borderBottom:`0.5px solid ${C.border}` }}>
+                  {['POS','Quiniela / Jugador','Puntos'].map((h,i) => (
+                    <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#6e6e73', textAlign:i===2?'right':'left' }}>{h}</span>
+                  ))}
+                </div>
+                {top10.map((r, i) => {
+                  const medals = ['🥇','🥈','🥉']
+                  return (
+                    <div key={i} style={{ display:'grid', gridTemplateColumns:'40px 1fr 80px', padding:'10px 16px', borderBottom: i < top10.length-1 ? `0.5px solid ${C.border}` : 'none', alignItems:'center', background: i===0?'rgba(255,214,10,.04)':i<3?'rgba(255,255,255,.02)':'transparent' }}>
+                      <div style={{ fontSize:i<3?18:13, fontWeight:700, color: i<3?C.gold:'#6e6e73' }}>
+                        {i < 3 ? medals[i] : i+1}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:13, color:'#fff' }}>{r.quinielas?.name || '–'}</div>
+                        <div style={{ fontSize:10.5, color:'#6e6e73', marginTop:1 }}>{r.quinielas?.profiles?.username || '–'}</div>
+                      </div>
+                      <div style={{ textAlign:'right' }}>
+                        <span style={{ fontWeight:900, fontSize:15, color: i===0?C.gold:i<3?'#fff':'#6e6e73' }}>
+                          {r.total_pts}
+                        </span>
+                        <span style={{ fontSize:10, color:'#6e6e73', marginLeft:2 }}>pts</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div style={{ padding:'clamp(32px,5vw,60px) clamp(16px,4vw,48px)', textAlign:'center', borderTop:'0.5px solid rgba(255,255,255,.06)' }}>
           <a href="/guia" style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,.06)', border:'0.5px solid rgba(255,255,255,.15)', borderRadius:12, padding:'12px 24px', color:'#fff', textDecoration:'none', fontSize:14, fontWeight:600 }}>

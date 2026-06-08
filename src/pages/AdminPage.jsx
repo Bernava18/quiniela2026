@@ -125,35 +125,84 @@ export default function AdminPage() {
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
       const { jsPDF } = window.jspdf
 
-      const allQ = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, username: u.username })))
+      const allQ = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, username: u.username, userEmail: u.email })))
       if (!allQ.length) { alert('No hay quinielas.'); setPrinting(false); return }
 
       let pdf = null
+      const fecha = new Date().toISOString().slice(0,10)
+
       for (let i = 0; i < allQ.length; i++) {
         const q = allQ[i]
-        setPrintProgress(`Abriendo ${i+1}/${allQ.length}: ${q.username} · ${q.name}`)
+        setPrintProgress(`Capturando ${i+1}/${allQ.length}: ${q.username} · ${q.name}`)
 
-        await new Promise((resolve) => {
-          const win = window.open(`/print/${q.id}`, '_blank', 'width=1200,height=900')
-          if (!win) { resolve(); return }
-          const timer = setTimeout(() => { win.close(); resolve() }, 12000)
-          const check = setInterval(() => {
-            try {
-              if (win.closed) { clearInterval(check); clearTimeout(timer); resolve() }
-            } catch(e) {}
-          }, 500)
-        })
-        await new Promise(r => setTimeout(r, 500))
+        // Abrir /print/:id en iframe oculto y capturar
+        const captured = await captureQuinielaPrint(q.id)
+        if (!captured) continue
+
+        const { grupos, bracket } = captured
+
+        // Página grupos — portrait
+        const pW1 = 210, pH1 = Math.round((grupos.height/grupos.width)*pW1)
+        if (!pdf) {
+          pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:[pW1,pH1] })
+        } else {
+          pdf.addPage([pW1,pH1],'portrait')
+        }
+        pdf.addImage(grupos.img,'JPEG',0,0,pW1,pH1)
+
+        // Página bracket — landscape
+        const pW2 = Math.max(297, Math.round(bracket.width/3.78))
+        const pH2 = Math.round((bracket.height/bracket.width)*pW2)
+        pdf.addPage([pW2,pH2], pW2>pH2?'landscape':'portrait')
+        pdf.addImage(bracket.img,'JPEG',0,0,pW2,pH2)
+      }
+
+      if (pdf) {
+        setPrintProgress('Guardando PDF...')
+        pdf.save(`Quinielas_Mundial_2026_TODAS_${fecha}.pdf`)
       }
       setPrintProgress('')
-      setMsg('✓ Quinielas abiertas en ventanas separadas')
+      setMsg(`✓ PDF generado con ${allQ.length} quinielas`)
     } catch(e) {
       console.error(e)
       alert('Error: ' + e.message)
       setPrintProgress('')
     }
     setPrinting(false)
-    setTimeout(() => setMsg(''), 4000)
+    setTimeout(() => setMsg(''), 5000)
+  }
+
+  async function captureQuinielaPrint(quinielaId) {
+    return new Promise((resolve) => {
+      const iframe = document.createElement('iframe')
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1200px;height:4000px;border:none;opacity:0;pointer-events:none;z-index:-1'
+      document.body.appendChild(iframe)
+      const timeout = setTimeout(() => { document.body.removeChild(iframe); resolve(null) }, 20000)
+
+      iframe.onload = async () => {
+        try {
+          await new Promise(r => setTimeout(r, 2000)) // wait for React render
+          const iDoc = iframe.contentDocument
+          if (!iDoc) { clearTimeout(timeout); document.body.removeChild(iframe); resolve(null); return }
+
+          const sections = iDoc.querySelectorAll('[data-section]')
+          const grupEl  = sections[0] || iDoc.body
+          const brackEl = sections[1] || iDoc.body
+
+          const opts = { scale:1.8, useCORS:true, backgroundColor:'#ffffff', logging:false, allowTaint:true }
+          const c1 = await window.html2canvas(grupEl,  { ...opts, windowWidth:1200 })
+          const c2 = await window.html2canvas(brackEl, { ...opts, windowWidth: brackEl.scrollWidth+40 })
+
+          clearTimeout(timeout)
+          document.body.removeChild(iframe)
+          resolve({
+            grupos:  { img:c1.toDataURL('image/jpeg',0.92), width:c1.width, height:c1.height },
+            bracket: { img:c2.toDataURL('image/jpeg',0.92), width:c2.width, height:c2.height },
+          })
+        } catch(e) { clearTimeout(timeout); document.body.removeChild(iframe); resolve(null) }
+      }
+      iframe.src = `/print/${quinielaId}`
+    })
   }
 
   const tabStyle = (t) => ({
