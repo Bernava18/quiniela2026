@@ -155,7 +155,6 @@ export default function QuinielaPage() {
           display: iframeReady ? 'block' : 'none',
         }}
         title="Quiniela Mundial 2026"
-        allow="same-origin"
       />
     </div>
   )
