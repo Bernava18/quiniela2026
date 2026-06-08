@@ -271,8 +271,8 @@ export default function AdminPage() {
           {/* Users table — grouped, numbered */}
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             {/* Header */}
-            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
-              {['#','Quiniela','Picks','Puntos','Pago ($15 c/u)'].map((h,i) => (
+            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
+              {['#','Quiniela','Picks','Puntos','PDF','Pago ($15 c/u)'].map((h,i) => (
                 <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#aeaeb2', textAlign: i===0?'center':'left' }}>{h}</span>
               ))}
             </div>
@@ -305,7 +305,7 @@ export default function AdminPage() {
                   const qPts   = q.scores?.[0]?.total_pts || 0
                   const isLast = qi === (u.quinielas.length-1)
                   return (
-                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
                       <div style={{ display:'flex', justifyContent:'center' }}>
                         <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
                       </div>
@@ -323,6 +323,14 @@ export default function AdminPage() {
                       </div>
                       <div style={{ textAlign:'center' }}>
                         <span style={{ fontSize:13, fontWeight:800, color:'#0071e3' }}>{qPts} pts</span>
+                      </div>
+                      <div style={{ textAlign:'center' }}>
+                        <button
+                          onClick={() => window.open(`/print/${q.id}`, '_blank')}
+                          title="Imprimir quiniela"
+                          style={{ padding:'6px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
+                          🖨️
+                        </button>
                       </div>
                       <div style={{ textAlign:'center' }}>
                         <button
