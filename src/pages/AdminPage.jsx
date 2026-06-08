@@ -99,13 +99,16 @@ export default function AdminPage() {
   }
 
   // ── PAYMENT STATS ─────────────────────────────────────────────
-  const paidUsers    = users.filter(u => u.has_paid)
-  const unpaidUsers  = users.filter(u => !u.has_paid)
-  const totalPaid    = paidUsers.length * ENTRY_FEE
-  const prize1st     = Math.floor(totalPaid * 0.60)
-  const prize2nd     = Math.floor(totalPaid * 0.20)
-  const prize3rd     = Math.floor(totalPaid * 0.10)
-  const prizeOrg     = Math.floor(totalPaid * 0.10)
+  // Contar quinielas pagadas (no usuarios) — un usuario puede tener varias quinielas
+  const allQuinielas   = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, userId: u.id })))
+  const paidQuinielas  = allQuinielas.filter(q => q.userId && users.find(u=>u.id===q.userId)?.has_paid)
+  const paidUsers      = users.filter(u => u.has_paid)
+  const unpaidUsers    = users.filter(u => !u.has_paid)
+  const totalPaid      = paidQuinielas.length * ENTRY_FEE
+  const prize1st       = Math.floor(totalPaid * 0.60)
+  const prize2nd       = Math.floor(totalPaid * 0.20)
+  const prize3rd       = Math.floor(totalPaid * 0.10)
+  const prizeOrg       = Math.floor(totalPaid * 0.10)
 
   // ── Imprimir todas las quinielas ──────────────────────────────
   function loadScript(src) {
@@ -247,7 +250,7 @@ export default function AdminPage() {
           {/* Prize summary */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:10, marginBottom:20 }}>
             {[
-              ['👥 Pagados',    `${paidUsers.length} / ${users.length}`, '#30d158'],
+              ['📋 Quinielas pagadas', `${paidQuinielas.length} / ${allQuinielas.length}`, '#30d158'],
               ['💰 Recaudado',  `$${totalPaid}`,                        '#0071e3'],
               ['🥇 1er lugar',  `$${prize1st} (60%)`,                   '#ffd60a'],
               ['🥈 2do lugar',  `$${prize2nd} (20%)`,                   '#aeaeb2'],
