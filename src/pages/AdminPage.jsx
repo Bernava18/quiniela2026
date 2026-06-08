@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -23,6 +23,8 @@ export default function AdminPage() {
   const [syncing, setSyncing] = useState(false)
   const [msg, setMsg]         = useState('')
   const [loadingUsers, setLoadingUsers] = useState(true)
+  const [printing, setPrinting] = useState(false)
+  const [printProgress, setPrintProgress] = useState('')
 
   useEffect(() => { loadUsers(); loadResults() }, [])
 
@@ -105,6 +107,55 @@ export default function AdminPage() {
   const prize3rd     = Math.floor(totalPaid * 0.10)
   const prizeOrg     = Math.floor(totalPaid * 0.10)
 
+  // ── Imprimir todas las quinielas ──────────────────────────────
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
+      const s = document.createElement('script')
+      s.src = src; s.onload = resolve; s.onerror = reject
+      document.head.appendChild(s)
+    })
+  }
+
+  async function printAllQuinielas() {
+    setPrinting(true)
+    setPrintProgress('Cargando librerías...')
+    try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      const { jsPDF } = window.jspdf
+
+      const allQ = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, username: u.username })))
+      if (!allQ.length) { alert('No hay quinielas.'); setPrinting(false); return }
+
+      let pdf = null
+      for (let i = 0; i < allQ.length; i++) {
+        const q = allQ[i]
+        setPrintProgress(`Abriendo ${i+1}/${allQ.length}: ${q.username} · ${q.name}`)
+
+        await new Promise((resolve) => {
+          const win = window.open(`/print/${q.id}`, '_blank', 'width=1200,height=900')
+          if (!win) { resolve(); return }
+          const timer = setTimeout(() => { win.close(); resolve() }, 12000)
+          const check = setInterval(() => {
+            try {
+              if (win.closed) { clearInterval(check); clearTimeout(timer); resolve() }
+            } catch(e) {}
+          }, 500)
+        })
+        await new Promise(r => setTimeout(r, 500))
+      }
+      setPrintProgress('')
+      setMsg('✓ Quinielas abiertas en ventanas separadas')
+    } catch(e) {
+      console.error(e)
+      alert('Error: ' + e.message)
+      setPrintProgress('')
+    }
+    setPrinting(false)
+    setTimeout(() => setMsg(''), 4000)
+  }
+
   const tabStyle = (t) => ({
     padding:'8px 20px', border:'none', borderRadius:8, fontFamily:'inherit',
     fontSize:13, fontWeight:700, cursor:'pointer',
@@ -120,6 +171,12 @@ export default function AdminPage() {
         <h1 style={{ fontSize:22, fontWeight:800 }}>⚙️ Panel de Admin</h1>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
           {msg && <span style={{ fontSize:13, color:'#30d158', fontWeight:600 }}>{msg}</span>}
+          {tab==='payments' && (
+            <button onClick={printAllQuinielas} disabled={printing}
+              style={{ padding:'8px 16px', background:'#6e6e73', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:printing?.5:1, display:'flex', alignItems:'center', gap:6 }}>
+              {printing ? `⏳ ${printProgress||'Procesando...'}` : '🖨️ Imprimir todas'}
+            </button>
+          )}
           {tab==='results' && (
             <button onClick={triggerSync} disabled={syncing}
               style={{ padding:'8px 16px', background:'#30d158', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:syncing?.4:1 }}>
@@ -162,78 +219,75 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Users table */}
+          {/* Users table — grouped, numbered */}
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 80px 80px 100px 120px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
-              {['Participante','Quinielas','Picks','Puntos','Pago ($15)'].map(h => (
-                <span key={h} style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#6e6e73' }}>{h}</span>
+            {/* Header */}
+            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
+              {['#','Quiniela','Picks','Puntos','Pago ($15 c/u)'].map((h,i) => (
+                <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#aeaeb2', textAlign: i===0?'center':'left' }}>{h}</span>
               ))}
             </div>
 
             {loadingUsers ? (
               <div style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Cargando...</div>
-            ) : users.map(u => {
-              const totalPicks = u.quinielas?.reduce((s,q) => s + (q.picks?.filter(p=>p.goals_home!=null).length||0), 0) || 0
-              const totalPicksMax = (u.quinielas?.length || 0) * 104
-              const pts = u.quinielas?.reduce((s,q) => s + (q.scores?.[0]?.total_pts || 0), 0) ?? 0
-
-              return (
-                <div key={u.id} style={{ display:'grid', gridTemplateColumns:'1fr 80px 80px 100px 120px', padding:'11px 16px', borderBottom:'0.5px solid rgba(0,0,0,.04)', alignItems:'center', gap:8, background: u.has_paid ? 'rgba(48,209,88,.02)' : 'rgba(255,69,58,.02)' }}>
-
-                  <div>
-                    <div style={{ fontWeight:700, fontSize:14 }}>{u.username}</div>
-                    {u.full_name && <div style={{ fontSize:12, color:'#3a3a3c', marginTop:1 }}>{u.full_name}</div>}
+            ) : users.map((u, ui) => (
+              <div key={u.id} style={{ borderBottom:'1.5px solid rgba(0,0,0,.06)' }}>
+                {/* User header */}
+                <div style={{ display:'grid', gridTemplateColumns:'36px 1fr', padding:'9px 16px', gap:8, alignItems:'center', background:'#f5f5f7', borderBottom:'0.5px solid rgba(0,0,0,.05)' }}>
+                  <div style={{ width:26, height:26, background:'#0071e3', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, color:'#fff', margin:'0 auto' }}>
+                    {ui+1}
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+                    <span style={{ fontWeight:800, fontSize:13.5 }}>{u.username}</span>
+                    {u.full_name && u.full_name !== u.username && <span style={{ fontSize:11, color:'#3a3a3c' }}>{u.full_name}</span>}
                     {u.email && (
-                      <div style={{ fontSize:11, color:'#6e6e73', marginTop:2, display:'flex', alignItems:'center', gap:3 }}>
-                        <span>✉️</span>
-                        <a href={`mailto:${u.email}`} style={{ color:'#0071e3', textDecoration:'none' }}>{u.email}</a>
-                      </div>
+                      <a href={`mailto:${u.email}`} style={{ fontSize:11, color:'#0071e3', textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>✉️ {u.email}</a>
                     )}
                     {u.phone && (
-                      <div style={{ fontSize:11, color:'#6e6e73', marginTop:1, display:'flex', alignItems:'center', gap:3 }}>
-                        <span>📱</span>
-                        <a href={`tel:${u.phone}`} style={{ color:'#6e6e73', textDecoration:'none' }}>{u.phone}</a>
-                      </div>
+                      <a href={`tel:${u.phone}`} style={{ fontSize:11, color:'#6e6e73', textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>📱 {u.phone}</a>
                     )}
-                    {u.has_paid && u.paid_at && (
-                      <div style={{ fontSize:10, color:'#30d158', marginTop:3 }}>
-                        ✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ fontSize:13, fontWeight:600, color:'#6e6e73', textAlign:'center' }}>
-                    {u.quinielas?.length || 0}
-                  </div>
-
-                  <div style={{ textAlign:'center' }}>
-                    <span style={{ fontSize:12, fontWeight:700, color: totalPicks===totalPicksMax?'#30d158':totalPicks>0?'#ff9f0a':'#aeaeb2' }}>
-                      {totalPicks}
-                    </span>
-                    <span style={{ fontSize:10, color:'#aeaeb2' }}>/{totalPicksMax}</span>
-                  </div>
-
-                  <div style={{ textAlign:'center' }}>
-                    <span style={{ fontSize:14, fontWeight:800, color:'#0071e3' }}>{pts} pts</span>
-                  </div>
-
-                  <div style={{ textAlign:'center' }}>
-                    <button
-                      onClick={() => togglePayment(u.id, u.has_paid)}
-                      disabled={saving === u.id}
-                      style={{
-                        padding:'6px 14px', border:'none', borderRadius:8,
-                        fontWeight:700, cursor:'pointer', fontSize:12, fontFamily:'inherit',
-                        background: u.has_paid ? 'rgba(48,209,88,.15)' : 'rgba(255,69,58,.1)',
-                        color: u.has_paid ? '#1a7a38' : '#c0392b',
-                        opacity: saving===u.id ? .5 : 1,
-                      }}>
-                      {saving===u.id ? '...' : u.has_paid ? '✅ Pagado' : '⬜ Sin pagar'}
-                    </button>
+                    {!u.quinielas?.length && <span style={{ fontSize:10, color:'#c7c7cc', fontStyle:'italic' }}>sin quinielas</span>}
                   </div>
                 </div>
-              )
-            })}
+
+                {/* Quiniela rows — sorted by name */}
+                {(u.quinielas||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map((q, qi) => {
+                  const qPicks = q.picks?.filter(p=>p.goals_home!=null).length || 0
+                  const qPts   = q.scores?.[0]?.total_pts || 0
+                  const isLast = qi === (u.quinielas.length-1)
+                  return (
+                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+                      <div style={{ display:'flex', justifyContent:'center' }}>
+                        <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
+                      </div>
+                      <div>
+                        <div style={{ fontSize:12.5, fontWeight:700, color:'#1d1d1f' }}>📋 {q.name}</div>
+                        {u.has_paid && u.paid_at && (
+                          <div style={{ fontSize:10, color:'#30d158', fontWeight:600, marginTop:2 }}>
+                            ✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ textAlign:'center' }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:qPicks===104?'#30d158':qPicks>0?'#ff9f0a':'#aeaeb2' }}>{qPicks}</span>
+                        <span style={{ fontSize:10, color:'#aeaeb2' }}>/104</span>
+                      </div>
+                      <div style={{ textAlign:'center' }}>
+                        <span style={{ fontSize:13, fontWeight:800, color:'#0071e3' }}>{qPts} pts</span>
+                      </div>
+                      <div style={{ textAlign:'center' }}>
+                        <button
+                          onClick={() => togglePayment(u.id, u.has_paid)}
+                          disabled={saving===u.id}
+                          style={{ padding:'6px 14px', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:11, fontFamily:'inherit', background:u.has_paid?'rgba(48,209,88,.15)':'rgba(255,69,58,.1)', color:u.has_paid?'#1a7a38':'#c0392b', opacity:saving===u.id?.5:1 }}>
+                          {saving===u.id?'...':u.has_paid?'✅ Pagado':'⬜ Sin pagar'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
           </div>
 
           <div style={{ marginTop:12, fontSize:12, color:'#6e6e73', textAlign:'center' }}>

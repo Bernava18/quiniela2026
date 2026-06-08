@@ -279,7 +279,7 @@ export default function LeaderboardPage() {
                 <tr style={{ background:'#0071e3' }}>
                   <th style={{ padding:'10px 8px', fontWeight:700, color:'#fff', textAlign:'center', minWidth:42, fontSize:11, textTransform:'uppercase', position:'sticky', left:0, background:'#0071e3', borderRight:'0.5px solid rgba(255,255,255,.15)' }}>POS</th>
                   <th style={{ padding:'10px 6px', fontWeight:700, color:'rgba(255,255,255,.6)', textAlign:'center', minWidth:38, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>ANT</th>
-                  <th style={{ padding:'10px 14px', fontWeight:700, color:'#fff', textAlign:'left', minWidth:170, fontSize:11, textTransform:'uppercase', borderRight:'1px solid rgba(255,255,255,.2)' }}>JUGADOR / QUINIELA</th>
+                  <th style={{ padding:'10px 14px', fontWeight:700, color:'#fff', textAlign:'left', minWidth:170, fontSize:11, textTransform:'uppercase', borderRight:'1px solid rgba(255,255,255,.2)' }}>QUINIELA / JUGADOR</th>
                   {GROUPS.map(g => (
                     <th key={g} style={{ padding:'10px 5px', fontWeight:700, color:'rgba(255,255,255,.8)', textAlign:'center', minWidth:40, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>
                       GR.{g}
