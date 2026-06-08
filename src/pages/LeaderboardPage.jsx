@@ -44,9 +44,13 @@ export default function LeaderboardPage() {
     if (!user) return
     const { data } = await supabase.from('profiles').select('has_paid').eq('id', user.id).single()
     setHasPaid(data?.has_paid || false)
-    // Calculate prize pool
-    const { count } = await supabase.from('profiles').select('*', { count:'exact', head:true }).eq('has_paid', true)
-    const total = (count || 0) * ENTRY_FEE
+    // Calculate prize pool — contar QUINIELAS de usuarios pagados (no usuarios)
+    const { data: paidProfiles } = await supabase
+      .from('profiles')
+      .select('id, quinielas(id)')
+      .eq('has_paid', true)
+    const paidQCount = (paidProfiles || []).reduce((s, p) => s + (p.quinielas?.length || 0), 0)
+    const total = paidQCount * ENTRY_FEE
     setPrizePool({ total, p1: Math.floor(total*.6), p2: Math.floor(total*.2), p3: Math.floor(total*.1) })
   }
 

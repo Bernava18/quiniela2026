@@ -183,6 +183,7 @@ export function LoginPage() {
   const [stats, setStats]         = useState({ players:0, quinielas:0, topPlayer:'', topPts:0 })
   const [liveResults, setLiveResults] = useState([])
   const [top10, setTop10] = useState([])
+  const [visits, setVisits] = useState(0)
   const [activeGroup, setActiveGroup] = useState('A')
 
   useEffect(() => {
@@ -191,7 +192,7 @@ export function LoginPage() {
   }, [])
 
   useEffect(() => {
-    loadStats(); loadResults()
+    loadStats(); loadResults(); registerVisit()
     // Realtime top10
     const ch = supabase.channel('scores-landing')
       .on('postgres_changes', { event:'*', schema:'public', table:'scores' }, () => loadStats())
@@ -207,6 +208,14 @@ export function LoginPage() {
     ])
     setStats({ players:p||0, quinielas:q||0, topPlayer:top?.[0]?.quinielas?.profiles?.username||'', topPts:top?.[0]?.total_pts||0 })
     setTop10(top||[])
+  }
+
+  async function registerVisit() {
+    // Registrar visita
+    await supabase.from('page_visits').insert({})
+    // Obtener total
+    const { count } = await supabase.from('page_visits').select('*', { count:'exact', head:true })
+    setVisits(count || 0)
   }
 
   async function loadResults() {
@@ -253,7 +262,7 @@ export function LoginPage() {
             )}
 
             <div style={{ display:'flex', gap:20, flexWrap:'wrap', marginBottom:20 }}>
-              {[['👥',stats.players,'Participantes'],['📋',stats.quinielas,'Quinielas'],['⚽',104,'Partidos'],['🏟️',16,'Sedes']].map(([icon,val,label]) => (
+              {[['👥',stats.players,'Participantes'],['📋',stats.quinielas,'Quinielas'],['⚽',104,'Partidos'],['🏟️',16,'Sedes'],['👁',visits,'Visitas']].map(([icon,val,label]) => (
                 <div key={label}>
                   <div style={{ fontSize:20, fontWeight:800, color:C.gold }}>{icon} {val}</div>
                   <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>{label}</div>
