@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useAuth } from '../context/AuthContext'
 import { supabase, getQuinielaPicks, getAllResults } from '../lib/supabase'
@@ -34,6 +34,39 @@ export default function LeaderboardPage() {
   const [enriched, setEnriched]   = useState([])
   const [hasPaid, setHasPaid]     = useState(false)
   const [prizePool, setPrizePool] = useState({ total:0, p1:0, p2:0, p3:0, committedCount:0 })
+  const tableRef = useRef(null)
+
+  async function exportPDF() {
+    const el = tableRef.current
+    if (!el) return
+    const { default: html2canvas } = await import('html2canvas')
+    const { default: jsPDF } = await import('jspdf')
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#fff' })
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+    const pageW = pdf.internal.pageSize.getWidth()
+    const pageH = pdf.internal.pageSize.getHeight()
+    const ratio = canvas.width / canvas.height
+    const imgH = pageW / ratio
+    let y = 0
+    while (y < imgH) {
+      if (y > 0) pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 0, -y, pageW, imgH)
+      y += pageH
+    }
+    pdf.save(`tabla-posiciones-${new Date().toLocaleDateString('es-ES').replace(/\//g,'-')}.pdf`)
+  }
+
+  async function exportImage() {
+    const el = tableRef.current
+    if (!el) return
+    const { default: html2canvas } = await import('html2canvas')
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#fff' })
+    const link = document.createElement('a')
+    link.download = `tabla-posiciones-${new Date().toLocaleDateString('es-ES').replace(/\//g,'-')}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
 
   useEffect(() => { loadResults(); checkPayment() }, [])
   useEffect(() => { if (rows.length > 0) loadAllPicks() }, [rows])
@@ -231,9 +264,21 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Header */}
-        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:4 }}>
-          <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-.4px' }}>Tabla de Posiciones</h1>
-          <span style={{ fontSize:12, color:'#ff453a', fontWeight:600 }}>● En vivo</span>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4, flexWrap:'wrap', gap:8 }}>
+          <div style={{ display:'flex', alignItems:'baseline', gap:12 }}>
+            <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-.4px' }}>Tabla de Posiciones</h1>
+            <span style={{ fontSize:12, color:'#ff453a', fontWeight:600 }}>● En vivo</span>
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={exportPDF}
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:'#0071e3', color:'#fff', border:'none', borderRadius:8, fontWeight:700, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>
+              🖨️ PDF
+            </button>
+            <button onClick={exportImage}
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:'#fff', color:'#1d1d1f', border:'0.5px solid rgba(0,0,0,.15)', borderRadius:8, fontWeight:700, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>
+              📷 Imagen
+            </button>
+          </div>
         </div>
         <p style={{ color:'#6e6e73', fontSize:12, marginBottom:10 }}>
           {enriched.length} quinielas · {new Date() >= LOCK_DATE ? 'click en cualquier fila para ver la quiniela completa' : 'Las quinielas de otros serán visibles al iniciar el Mundial'}
@@ -288,7 +333,7 @@ export default function LeaderboardPage() {
         )}
 
         {/* Tabla */}
-        <div style={{ background:'#fff', borderRadius:14, border:'0.5px solid rgba(0,0,0,.08)', boxShadow:'0 2px 12px rgba(0,0,0,.06)', overflow:'hidden' }}>
+        <div ref={tableRef} style={{ background:'#fff', borderRadius:14, border:'0.5px solid rgba(0,0,0,.08)', boxShadow:'0 2px 12px rgba(0,0,0,.06)', overflow:'hidden' }}>
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead>
