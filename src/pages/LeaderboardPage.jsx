@@ -51,9 +51,8 @@ export default function LeaderboardPage() {
     const eligibleQ = (allQ||[]).filter(q => q.payment_status === 'paid' || q.payment_status === 'committed')
     const total = eligibleQ.length * ENTRY_FEE
     const committedCount = (allQ||[]).filter(q => q.payment_status === 'committed').length
-    setPrizePool(prev => ({ ...prev, committedCount }))
     const p1=Math.floor(total*.6), p2=Math.floor(total*.2), p3=Math.floor(total*.1)
-    setPrizePool(prev => ({ total, p1, p2, p3, committedCount: prev.committedCount||0 }))
+    setPrizePool({ total, p1, p2, p3, committedCount })
   }
 
   useEffect(() => {

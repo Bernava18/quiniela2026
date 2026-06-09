@@ -314,35 +314,56 @@ export default function AdminPage() {
                       <div style={{ display:'flex', justifyContent:'center' }}>
                         <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
                       </div>
+                      {/* Name + ID */}
                       <div>
-                        <div style={{ fontSize:12.5, fontWeight:700, color:'#1d1d1f' }}>📋 {q.name}</div>
-                        {u.has_paid && u.paid_at && (
-                          <div style={{ fontSize:10, color:'#30d158', fontWeight:600, marginTop:2 }}>
-                            ✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
-                          </div>
+                        <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:2 }}>
+                          <span style={{ fontSize:10, fontWeight:800, color:'#fff', borderRadius:5, padding:'1px 6px', letterSpacing:'.3px',
+                            background: q.payment_status==='paid'?'#0071e3':q.payment_status==='committed'?'#ff9f0a':'#aeaeb2' }}>
+                            Q{String(q.seq_num||0).padStart(2,'0')}
+                          </span>
+                          <span style={{ fontSize:12.5, fontWeight:700, color:'#1d1d1f' }}>📋 {q.name}</span>
+                        </div>
+                        {q.payment_status==='paid' && u.paid_at && (
+                          <div style={{ fontSize:10, color:'#30d158', fontWeight:600 }}>✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</div>
+                        )}
+                        {q.payment_status==='committed' && (
+                          <div style={{ fontSize:10, color:'#ff9f0a', fontWeight:600 }}>🤝 Pago comprometido</div>
                         )}
                       </div>
+                      {/* Picks */}
                       <div style={{ textAlign:'center' }}>
                         <span style={{ fontSize:12, fontWeight:700, color:qPicks===104?'#30d158':qPicks>0?'#ff9f0a':'#aeaeb2' }}>{qPicks}</span>
                         <span style={{ fontSize:10, color:'#aeaeb2' }}>/104</span>
                       </div>
+                      {/* Points */}
                       <div style={{ textAlign:'center' }}>
                         <span style={{ fontSize:13, fontWeight:800, color:'#0071e3' }}>{qPts} pts</span>
                       </div>
+                      {/* Print */}
                       <div style={{ textAlign:'center' }}>
-                        <button
-                          onClick={() => window.open(`/print/${q.id}`, '_blank')}
-                          title="Imprimir quiniela"
+                        <button onClick={() => window.open(`/print/${q.id}`, '_blank')} title="Imprimir"
                           style={{ padding:'6px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
                           🖨️
                         </button>
                       </div>
+                      {/* Method */}
+                      <div>
+                        <select value={q.payment_method||''} onChange={e=>savePaymentMethod(q.id, e.target.value)}
+                          style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 6px', background:'#fff', cursor:'pointer', width:'100%' }}>
+                          <option value="">— Método —</option>
+                          <option value="zelle">🏦 Zelle</option>
+                          <option value="transfer_usd">💱 Transfer $</option>
+                          <option value="transfer_bs">🇻🇪 Transfer Bs</option>
+                          <option value="cash_usd">💵 $ Efectivo</option>
+                        </select>
+                      </div>
+                      {/* Payment cycle button */}
                       <div style={{ textAlign:'center' }}>
-                        <button
-                          onClick={() => togglePayment(u.id, u.has_paid)}
-                          disabled={saving===u.id}
-                          style={{ padding:'6px 14px', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:11, fontFamily:'inherit', background:u.has_paid?'rgba(48,209,88,.15)':'rgba(255,69,58,.1)', color:u.has_paid?'#1a7a38':'#c0392b', opacity:saving===u.id?.5:1 }}>
-                          {saving===u.id?'...':u.has_paid?'✅ Pagado':'⬜ Sin pagar'}
+                        <button onClick={() => togglePayment(q.id, q.payment_status||'unpaid')} disabled={saving===q.id}
+                          style={{ padding:'6px 12px', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:11, fontFamily:'inherit', opacity:saving===q.id?.5:1,
+                            background: q.payment_status==='paid'?'rgba(48,209,88,.15)':q.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
+                            color: q.payment_status==='paid'?'#1a7a38':q.payment_status==='committed'?'#b06000':'#c0392b' }}>
+                          {saving===q.id?'...':q.payment_status==='paid'?'✅ Pagado':q.payment_status==='committed'?'🤝 Comprometido':'⬜ Sin pagar'}
                         </button>
                       </div>
                     </div>
