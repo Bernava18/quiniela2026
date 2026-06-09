@@ -52,22 +52,31 @@ export default function AdminPage() {
     setResults(map)
   }
 
-  async function togglePayment(userId, currentPaid) {
-    setSaving(userId)
+  async function togglePayment(quinielaId, currentStatus) {
+    setSaving(quinielaId)
+    // Cycle: unpaid → committed → paid → unpaid
+    const next = currentStatus === 'unpaid' ? 'committed'
+               : currentStatus === 'committed' ? 'paid' : 'unpaid'
     const { error } = await supabase
-      .from('profiles')
+      .from('quinielas')
       .update({
-        has_paid: !currentPaid,
-        paid_at:  !currentPaid ? new Date().toISOString() : null,
-        paid_by:  !currentPaid ? adminProfile.id : null,
+        payment_status: next,
+        has_paid: next === 'paid',
+        paid_at: next === 'paid' ? new Date().toISOString() : null,
       })
-      .eq('id', userId)
+      .eq('id', quinielaId)
     if (!error) {
-      setMsg(!currentPaid ? '✓ Pago confirmado' : '✓ Pago removido')
+      const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
+      setMsg(msgs[next])
       loadUsers()
     }
     setSaving(null)
-    setTimeout(() => setMsg(''), 2000)
+    setTimeout(() => setMsg(''), 2500)
+  }
+
+  async function savePaymentMethod(quinielaId, method) {
+    await supabase.from('quinielas').update({ payment_method: method }).eq('id', quinielaId)
+    loadUsers()
   }
 
   async function saveResult(matchId, hs, as_, winner) {
