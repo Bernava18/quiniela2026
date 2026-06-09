@@ -52,51 +52,27 @@ export default function AdminPage() {
     setResults(map)
   }
 
-  async function togglePayment(quinielaId, currentStatus, userId) {
+  async function savePaymentStatus(quinielaId, status) {
     setSaving(quinielaId)
-    // Cycle: unpaid → committed → paid → unpaid
-    const next = currentStatus === 'unpaid' ? 'committed'
-               : currentStatus === 'committed' ? 'paid' : 'unpaid'
-
-    // 1. Actualizar payment_status en quinielas
     const { error } = await supabase
       .from('quinielas')
-      .update({ payment_status: next })
+      .update({ payment_status: status })
       .eq('id', quinielaId)
-
-    // 2. Si paid, sincronizar has_paid + paid_at en profiles
-    if (!error && userId) {
-      if (next === 'paid') {
-        await supabase.from('profiles').update({
-          has_paid: true,
-          paid_at: new Date().toISOString(),
-        }).eq('id', userId)
-      } else if (next === 'unpaid') {
-        // Solo quitar has_paid si TODAS las quinielas del usuario están unpaid
-        const { data: otherQ } = await supabase
-          .from('quinielas')
-          .select('payment_status')
-          .eq('user_id', userId)
-          .neq('id', quinielaId)
-        const stillPaid = (otherQ || []).some(q => q.payment_status === 'paid')
-        if (!stillPaid) {
-          await supabase.from('profiles').update({ has_paid: false, paid_at: null }).eq('id', userId)
-        }
-      }
-    }
-
     if (!error) {
-      const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
-      setMsg(msgs[next])
-      loadUsers()
+      const msgs = { committed:'🤝 Comprometida', paid:'✅ Pagada', unpaid:'⬜ Sin pagar' }
+      setMsg(msgs[status])
+      await loadUsers()
     }
     setSaving(null)
     setTimeout(() => setMsg(''), 2500)
   }
 
   async function savePaymentMethod(quinielaId, method) {
-    await supabase.from('quinielas').update({ payment_method: method }).eq('id', quinielaId)
-    loadUsers()
+    const { error } = await supabase
+      .from('quinielas')
+      .update({ payment_method: method || null })
+      .eq('id', quinielaId)
+    if (!error) await loadUsers()
   }
 
   async function saveResult(matchId, hs, as_, winner) {
@@ -127,19 +103,18 @@ export default function AdminPage() {
     setTimeout(() => setMsg(''), 4000)
   }
 
-  // ── PAYMENT STATS ─────────────────────────────────────────────
-  // Contar quinielas — pagadas + comprometidas suman al premio
   const allQuinielas       = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, userId: u.id })))
   const paidQuinielas      = allQuinielas.filter(q => q.payment_status === 'paid')
   const committedQuinielas = allQuinielas.filter(q => q.payment_status === 'committed')
   const confirmedAndCommitted = allQuinielas.filter(q => q.payment_status === 'paid' || q.payment_status === 'committed')
   const paidUsers          = users.filter(u => u.has_paid)
   const unpaidUsers        = users.filter(u => !u.has_paid)
-  const totalPaid          = confirmedAndCommitted.length * ENTRY_FEE
-  const prize1st       = Math.floor(totalPaid * 0.60)
-  const prize2nd       = Math.floor(totalPaid * 0.20)
-  const prize3rd       = Math.floor(totalPaid * 0.10)
-  const prizeOrg       = Math.floor(totalPaid * 0.10)
+  const totalRecaudado     = paidQuinielas.length * ENTRY_FEE           // dinero real en mano
+  const totalPrize         = confirmedAndCommitted.length * ENTRY_FEE   // base del premio
+  const prize1st           = Math.floor(totalPrize * 0.60)
+  const prize2nd           = Math.floor(totalPrize * 0.20)
+  const prize3rd           = Math.floor(totalPrize * 0.10)
+  const prizeOrg           = Math.floor(totalPrize * 0.10)
 
   // ── Imprimir todas las quinielas ──────────────────────────────
   function loadScript(src) {
@@ -281,12 +256,14 @@ export default function AdminPage() {
           {/* Prize summary */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:10, marginBottom:20 }}>
             {[
-              ['📋 Pagadas + Comprometidas', `${confirmedAndCommitted.length} / ${allQuinielas.length}`, '#30d158'],
-              ['💰 Recaudado',  `$${totalPaid}`,                        '#0071e3'],
-              ['🥇 1er lugar',  `$${prize1st} (60%)`,                   '#ffd60a'],
-              ['🥈 2do lugar',  `$${prize2nd} (20%)`,                   '#aeaeb2'],
-              ['🥉 3er lugar',  `$${prize3rd} (10%)`,                   '#ff9f0a'],
-              ['🏛️ Organiz.',   `$${prizeOrg} (10%)`,                   '#6e6e73'],
+              ['✅ Pagadas',        `${paidQuinielas.length} quinielas`,         '#30d158'],
+              ['🤝 Comprometidas',  `${committedQuinielas.length} quinielas`,    '#ff9f0a'],
+              ['💵 Recaudado real', `$${totalRecaudado}`,                        '#30d158'],
+              ['🏆 Base del premio',`$${totalPrize}`,                            '#0071e3'],
+              ['🥇 1er lugar',      `$${prize1st} (60%)`,                        '#ffd60a'],
+              ['🥈 2do lugar',      `$${prize2nd} (20%)`,                        '#aeaeb2'],
+              ['🥉 3er lugar',      `$${prize3rd} (10%)`,                        '#ff9f0a'],
+              ['🏛️ Organiz.',       `$${prizeOrg} (10%)`,                        '#6e6e73'],
             ].map(([label, val, color]) => (
               <div key={label} style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:12, padding:'12px 14px', boxShadow:'0 1px 3px rgba(0,0,0,.04)' }}>
                 <div style={{ fontSize:11, color:'#6e6e73', fontWeight:600, marginBottom:4 }}>{label}</div>
@@ -305,8 +282,8 @@ export default function AdminPage() {
           {/* Users table — grouped, numbered */}
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             {/* Header */}
-            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 90px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
-              {['#','Quiniela','Picks','Puntos','PDF','Método','Estado','Pago ($15)'].map((h,i) => (
+            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 70px 70px 44px 130px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
+              {['#','Quiniela','Picks','Pts','PDF','Estado','Método'].map((h,i) => (
                 <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#aeaeb2', textAlign: i===0?'center':'left' }}>{h}</span>
               ))}
             </div>
@@ -339,7 +316,7 @@ export default function AdminPage() {
                   const qPts   = q.scores?.[0]?.total_pts || 0
                   const isLast = qi === (u.quinielas.length-1)
                   return (
-                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 90px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 70px 70px 44px 130px 130px', padding:'9px 16px', gap:8, alignItems:'center', background:'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
                       <div style={{ display:'flex', justifyContent:'center' }}>
                         <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
                       </div>
@@ -375,9 +352,26 @@ export default function AdminPage() {
                           🖨️
                         </button>
                       </div>
-                      {/* Method */}
+                      {/* Estado de pago — select */}
                       <div>
-                        <select value={q.payment_method||''} onChange={e=>savePaymentMethod(q.id, e.target.value)}
+                        <select
+                          value={q.payment_status || 'unpaid'}
+                          disabled={saving === q.id}
+                          onChange={e => savePaymentStatus(q.id, e.target.value)}
+                          style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 6px', cursor:'pointer', width:'100%',
+                            background: q.payment_status==='paid'?'rgba(48,209,88,.1)':q.payment_status==='committed'?'rgba(255,159,10,.1)':'#fff',
+                            color: q.payment_status==='paid'?'#1a7a38':q.payment_status==='committed'?'#b06000':'#6e6e73',
+                            fontWeight:700 }}>
+                          <option value="unpaid">⬜ Sin pagar</option>
+                          <option value="committed">🤝 Comprometida</option>
+                          <option value="paid">✅ Pagada</option>
+                        </select>
+                      </div>
+                      {/* Método de pago — select */}
+                      <div>
+                        <select
+                          value={q.payment_method || ''}
+                          onChange={e => savePaymentMethod(q.id, e.target.value)}
                           style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 6px', background:'#fff', cursor:'pointer', width:'100%' }}>
                           <option value="">— Método —</option>
                           <option value="zelle">🏦 Zelle</option>
@@ -385,22 +379,6 @@ export default function AdminPage() {
                           <option value="transfer_bs">🇻🇪 Transfer Bs</option>
                           <option value="cash_usd">💵 $ Efectivo</option>
                         </select>
-                      </div>
-                      {/* Estado — badge visual */}
-                      <div style={{ textAlign:'center' }}>
-                        <span style={{ display:'inline-block', padding:'4px 8px', borderRadius:7, fontWeight:700, fontSize:10,
-                          background: q.payment_status==='paid'?'rgba(48,209,88,.15)':q.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(174,174,178,.15)',
-                          color: q.payment_status==='paid'?'#1a7a38':q.payment_status==='committed'?'#b06000':'#6e6e73' }}>
-                          {q.payment_status==='paid'?'✅ Pagado':q.payment_status==='committed'?'🤝 Comprom.':'⬜ Sin pagar'}
-                        </span>
-                      </div>
-                      {/* Pago — botón ciclo */}
-                      <div style={{ textAlign:'center' }}>
-                        <button onClick={() => togglePayment(q.id, q.payment_status||'unpaid', u.id)} disabled={saving===q.id}
-                          style={{ padding:'6px 12px', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:11, fontFamily:'inherit', opacity:saving===q.id?.5:1,
-                            background:'#0071e3', color:'#fff' }}>
-                          {saving===q.id ? '...' : q.payment_status==='paid' ? '↩ Revertir' : q.payment_status==='committed' ? '✅ Confirmar' : '🤝 Comprom.'}
-                        </button>
                       </div>
                     </div>
                   )
