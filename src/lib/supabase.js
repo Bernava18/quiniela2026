@@ -96,12 +96,42 @@ export async function getAllResults() {
 // TABLA DE POSICIONES
 // ═══════════════════════════════════════════════════════════════
 export async function getLeaderboard() {
+  // Query desde quinielas para incluir todas, aunque no tengan score aún
   const { data, error } = await supabase
-    .from('scores')
-    .select('*, quinielas(name, user_id, profiles(username))')
-    .order('total_pts', { ascending: false })
+    .from('quinielas')
+    .select(`
+      id, name, user_id,
+      profiles ( id, username, full_name ),
+      scores ( quiniela_id, grp_pts, clasif_pts, elim_pts, final_pts, total_pts, updated_at )
+    `)
+    .order('name')
     .limit(200)
-  return { data: data || [], error }
+
+  if (!data) return { data: [], error }
+
+  // Transformar al formato que espera LeaderboardPage (igual que scores con quinielas embebidas)
+  const transformed = data.map(q => {
+    const s = q.scores?.[0] || { grp_pts:0, clasif_pts:0, elim_pts:0, final_pts:0, total_pts:0 }
+    return {
+      quiniela_id: q.id,
+      grp_pts: s.grp_pts || 0,
+      clasif_pts: s.clasif_pts || 0,
+      elim_pts: s.elim_pts || 0,
+      final_pts: s.final_pts || 0,
+      total_pts: s.total_pts || 0,
+      updated_at: s.updated_at,
+      quinielas: {
+        id: q.id,
+        name: q.name,
+        seq_num: q.seq_num,
+        payment_status: q.payment_status,
+        user_id: q.user_id,
+        profiles: q.profiles
+      }
+    }
+  }).sort((a, b) => b.total_pts - a.total_pts)
+
+  return { data: transformed, error }
 }
 
 // ═══════════════════════════════════════════════════════════════
