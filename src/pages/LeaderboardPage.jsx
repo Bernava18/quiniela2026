@@ -293,10 +293,8 @@ export default function LeaderboardPage() {
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12 }}>
               <thead>
                 <tr style={{ background:'#0071e3' }}>
-                  <th style={{ padding:'10px 8px', fontWeight:700, color:'#fff', textAlign:'center', minWidth:42, fontSize:11, textTransform:'uppercase', position:'sticky', left:0, background:'#0071e3', borderRight:'0.5px solid rgba(255,255,255,.15)' }}>POS</th>
-                  <th style={{ padding:'10px 6px', fontWeight:700, color:'rgba(255,255,255,.6)', textAlign:'center', minWidth:38, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>ANT</th>
-                  <th style={{ padding:'10px 8px', fontWeight:700, color:'#fff', textAlign:'center', width:52, fontSize:11, textTransform:'uppercase', borderRight:'1px solid rgba(255,255,255,.2)' }}>ID</th>
-                  <th style={{ padding:'10px 14px', fontWeight:700, color:'#fff', textAlign:'left', minWidth:170, fontSize:11, textTransform:'uppercase', borderRight:'1px solid rgba(255,255,255,.2)' }}>QUINIELA / JUGADOR</th>
+                  <th style={{ padding:'10px 8px', fontWeight:700, color:'#fff', textAlign:'center', minWidth:42, fontSize:11, textTransform:'uppercase', position:'sticky', left:0, background:'#0071e3', borderRight:'1px solid rgba(255,255,255,.2)' }}>POS</th>
+                  <th style={{ padding:'10px 14px', fontWeight:700, color:'#fff', textAlign:'left', minWidth:200, fontSize:11, textTransform:'uppercase', borderRight:'1px solid rgba(255,255,255,.2)' }}>QUINIELA / JUGADOR</th>
                   {GROUPS.map(g => (
                     <th key={g} style={{ padding:'10px 5px', fontWeight:700, color:'rgba(255,255,255,.8)', textAlign:'center', minWidth:40, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>
                       GR.{g}
@@ -306,11 +304,11 @@ export default function LeaderboardPage() {
                   <th style={{ padding:'10px 6px', fontWeight:700, color:'#a8d8ff', textAlign:'center', minWidth:48, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>ELIM</th>
                   <th style={{ padding:'10px 6px', fontWeight:700, color:'#ffd60a', textAlign:'center', minWidth:52, fontSize:11, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>FINAL</th>
                   <th style={{ padding:'10px 8px', fontWeight:800, color:'#ffd60a', textAlign:'center', minWidth:60, fontSize:12, borderRight:'0.5px solid rgba(255,255,255,.1)' }}>TOTAL</th>
-                  <th style={{ padding:'10px 6px', fontWeight:700, color:'rgba(255,255,255,.5)', textAlign:'center', minWidth:44, fontSize:11 }}>HOY</th>
+
                 </tr>
                 {/* Subtitle row */}
                 <tr style={{ background:'#f0f5ff', borderBottom:'1px solid #e5e5ea' }}>
-                  <td colSpan={3} style={{ padding:'4px 14px', fontSize:10, color:'#6e6e73', fontWeight:500 }}>
+                  <td colSpan={2} style={{ padding:'4px 14px', fontSize:10, color:'#6e6e73', fontWeight:500 }}>
                     Máx: Grupos 360 · Clasif 48 · Elim 160 · Orden Final 38 = <strong>606 pts</strong>
                   </td>
                   {GROUPS.map(g => (
@@ -320,7 +318,6 @@ export default function LeaderboardPage() {
                   <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#aeaeb2' }}>160</td>
                   <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#aeaeb2' }}>38</td>
                   <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#0071e3', fontWeight:700 }}>606</td>
-                  <td style={{ padding:'4px', textAlign:'center', fontSize:10, color:'#aeaeb2' }}>–</td>
                 </tr>
               </thead>
               <tbody>
@@ -330,7 +327,6 @@ export default function LeaderboardPage() {
                   <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Sin datos aún</td></tr>
                 ) : enriched.map((r, i) => {
                   const isMe = r.quinielas?.profiles?.username === profile?.username
-                  const rankDiff = r.prevRank - r.rank
                   const bgRow = isMe ? 'rgba(0,113,227,.04)' : i % 2 === 0 ? '#fff' : '#fafafa'
                   return (
                     <tr key={r.quiniela_id} onClick={() => openViewer(r)}
@@ -340,14 +336,6 @@ export default function LeaderboardPage() {
 
                       <td style={{ padding:'9px 8px', textAlign:'center', fontWeight:800, fontSize:14, position:'sticky', left:0, background: bgRow, borderRight:'0.5px solid #e5e5ea' }}>
                         {i < 3 ? MEDALS[i] : <span style={{ color:'#6e6e73', fontSize:12 }}>{r.rank}</span>}
-                      </td>
-
-                      <td style={{ padding:'9px 6px', textAlign:'center', borderRight:'0.5px solid #f2f2f7' }}>
-                        {rankDiff === 0
-                          ? <span style={{ color:'#c7c7cc', fontSize:11 }}>–</span>
-                          : rankDiff > 0
-                            ? <span style={{ color:'#30d158', fontSize:11, fontWeight:700 }}>▲{rankDiff}</span>
-                            : <span style={{ color:'#ff453a', fontSize:11, fontWeight:700 }}>▼{Math.abs(rankDiff)}</span>}
                       </td>
 
                       <td style={{ padding:'9px 14px', borderRight:'1px solid #e5e5ea' }}>
@@ -407,10 +395,7 @@ export default function LeaderboardPage() {
                         <span style={{ fontWeight:900, fontSize:16, color:'#0071e3' }}>{r.total}</span>
                       </td>
 
-                      {/* HOY */}
-                      <td style={{ padding:'9px 6px', textAlign:'center' }}>
-                        <span style={{ fontSize:11, color:'#aeaeb2', fontWeight:600 }}>–</span>
-                      </td>
+
                     </tr>
                   )
                 })}
