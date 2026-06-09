@@ -35,7 +35,7 @@ export default function AdminPage() {
       .select(`
         id, username, full_name, phone, email, has_paid, paid_at,
         quinielas (
-          id, name, is_locked,
+          id, name, seq_num, is_locked, payment_status, payment_method,
           picks (match_id, goals_home),
           scores (total_pts)
         )
@@ -99,12 +99,14 @@ export default function AdminPage() {
   }
 
   // ── PAYMENT STATS ─────────────────────────────────────────────
-  // Contar quinielas pagadas (no usuarios) — un usuario puede tener varias quinielas
-  const allQuinielas   = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, userId: u.id })))
-  const paidQuinielas  = allQuinielas.filter(q => q.userId && users.find(u=>u.id===q.userId)?.has_paid)
-  const paidUsers      = users.filter(u => u.has_paid)
-  const unpaidUsers    = users.filter(u => !u.has_paid)
-  const totalPaid      = paidQuinielas.length * ENTRY_FEE
+  // Contar quinielas — pagadas + comprometidas suman al premio
+  const allQuinielas       = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, userId: u.id })))
+  const paidQuinielas      = allQuinielas.filter(q => q.payment_status === 'paid')
+  const committedQuinielas = allQuinielas.filter(q => q.payment_status === 'committed')
+  const confirmedAndCommitted = allQuinielas.filter(q => q.payment_status === 'paid' || q.payment_status === 'committed')
+  const paidUsers          = users.filter(u => u.has_paid)
+  const unpaidUsers        = users.filter(u => !u.has_paid)
+  const totalPaid          = confirmedAndCommitted.length * ENTRY_FEE
   const prize1st       = Math.floor(totalPaid * 0.60)
   const prize2nd       = Math.floor(totalPaid * 0.20)
   const prize3rd       = Math.floor(totalPaid * 0.10)
@@ -250,7 +252,7 @@ export default function AdminPage() {
           {/* Prize summary */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:10, marginBottom:20 }}>
             {[
-              ['📋 Quinielas pagadas', `${paidQuinielas.length} / ${allQuinielas.length}`, '#30d158'],
+              ['📋 Pagadas + Comprometidas', `${confirmedAndCommitted.length} / ${allQuinielas.length}`, '#30d158'],
               ['💰 Recaudado',  `$${totalPaid}`,                        '#0071e3'],
               ['🥇 1er lugar',  `$${prize1st} (60%)`,                   '#ffd60a'],
               ['🥈 2do lugar',  `$${prize2nd} (20%)`,                   '#aeaeb2'],
@@ -274,8 +276,8 @@ export default function AdminPage() {
           {/* Users table — grouped, numbered */}
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             {/* Header */}
-            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
-              {['#','Quiniela','Picks','Puntos','PDF','Pago ($15 c/u)'].map((h,i) => (
+            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
+              {['#','Quiniela','Picks','Puntos','PDF','Método','Estado pago'].map((h,i) => (
                 <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#aeaeb2', textAlign: i===0?'center':'left' }}>{h}</span>
               ))}
             </div>
@@ -308,7 +310,7 @@ export default function AdminPage() {
                   const qPts   = q.scores?.[0]?.total_pts || 0
                   const isLast = qi === (u.quinielas.length-1)
                   return (
-                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
                       <div style={{ display:'flex', justifyContent:'center' }}>
                         <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
                       </div>

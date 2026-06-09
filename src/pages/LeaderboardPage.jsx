@@ -33,7 +33,7 @@ export default function LeaderboardPage() {
   const [iframeReady, setIframeReady] = useState(false)
   const [enriched, setEnriched]   = useState([])
   const [hasPaid, setHasPaid]     = useState(false)
-  const [prizePool, setPrizePool] = useState({ total:0, p1:0, p2:0, p3:0 })
+  const [prizePool, setPrizePool] = useState({ total:0, p1:0, p2:0, p3:0, committedCount:0 })
 
   useEffect(() => { loadResults(); checkPayment() }, [])
   useEffect(() => { if (rows.length > 0) loadAllPicks() }, [rows])
@@ -44,14 +44,16 @@ export default function LeaderboardPage() {
     if (!user) return
     const { data } = await supabase.from('profiles').select('has_paid').eq('id', user.id).single()
     setHasPaid(data?.has_paid || false)
-    // Calculate prize pool — contar QUINIELAS de usuarios pagados (no usuarios)
-    const { data: paidProfiles } = await supabase
-      .from('profiles')
-      .select('id, quinielas(id)')
-      .eq('has_paid', true)
-    const paidQCount = (paidProfiles || []).reduce((s, p) => s + (p.quinielas?.length || 0), 0)
-    const total = paidQCount * ENTRY_FEE
-    setPrizePool({ total, p1: Math.floor(total*.6), p2: Math.floor(total*.2), p3: Math.floor(total*.1) })
+    // Premio = quinielas pagadas + comprometidas
+    const { data: allQ } = await supabase
+      .from('quinielas')
+      .select('id, payment_status')
+    const eligibleQ = (allQ||[]).filter(q => q.payment_status === 'paid' || q.payment_status === 'committed')
+    const total = eligibleQ.length * ENTRY_FEE
+    const committedCount = (allQ||[]).filter(q => q.payment_status === 'committed').length
+    setPrizePool(prev => ({ ...prev, committedCount }))
+    const p1=Math.floor(total*.6), p2=Math.floor(total*.2), p3=Math.floor(total*.1)
+    setPrizePool(prev => ({ total, p1, p2, p3, committedCount: prev.committedCount||0 }))
   }
 
   useEffect(() => {
@@ -338,8 +340,17 @@ export default function LeaderboardPage() {
                       </td>
 
                       <td style={{ padding:'9px 14px', borderRight:'1px solid #e5e5ea' }}>
-                        <div style={{ fontWeight:700, fontSize:13, display:'flex', alignItems:'center', gap:5 }}>
+                        <div style={{ fontWeight:700, fontSize:13, display:'flex', alignItems:'center', gap:6 }}>
+                          {r.quinielas?.seq_num && (
+                            <span style={{ fontSize:9, fontWeight:800, color:'#fff', borderRadius:4, padding:'1px 5px', letterSpacing:'.2px',
+                              background: r.quinielas?.payment_status==='paid'?'#0071e3':r.quinielas?.payment_status==='committed'?'#ff9f0a':'#aeaeb2' }}>
+                              Q{String(r.quinielas.seq_num).padStart(2,'0')}
+                            </span>
+                          )}
                           {r.quinielas?.name}
+                          {r.quinielas?.payment_status==='committed' && (
+                            <span style={{ fontSize:9, background:'rgba(255,159,10,.15)', color:'#b06000', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>🤝</span>
+                          )}
                           {isMe && <span style={{ fontSize:9, background:'rgba(0,113,227,.12)', color:'#0071e3', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>TÚ</span>}
                         </div>
                         <div style={{ fontSize:10, color:'#aeaeb2', marginTop:1 }}>{r.quinielas?.profiles?.username}</div>
