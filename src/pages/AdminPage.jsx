@@ -52,19 +52,39 @@ export default function AdminPage() {
     setResults(map)
   }
 
-  async function togglePayment(quinielaId, currentStatus) {
+  async function togglePayment(quinielaId, currentStatus, userId) {
     setSaving(quinielaId)
     // Cycle: unpaid → committed → paid → unpaid
     const next = currentStatus === 'unpaid' ? 'committed'
                : currentStatus === 'committed' ? 'paid' : 'unpaid'
+
+    // 1. Actualizar payment_status en quinielas
     const { error } = await supabase
       .from('quinielas')
-      .update({
-        payment_status: next,
-        has_paid: next === 'paid',
-        paid_at: next === 'paid' ? new Date().toISOString() : null,
-      })
+      .update({ payment_status: next })
       .eq('id', quinielaId)
+
+    // 2. Si paid, sincronizar has_paid + paid_at en profiles
+    if (!error && userId) {
+      if (next === 'paid') {
+        await supabase.from('profiles').update({
+          has_paid: true,
+          paid_at: new Date().toISOString(),
+        }).eq('id', userId)
+      } else if (next === 'unpaid') {
+        // Solo quitar has_paid si TODAS las quinielas del usuario están unpaid
+        const { data: otherQ } = await supabase
+          .from('quinielas')
+          .select('payment_status')
+          .eq('user_id', userId)
+          .neq('id', quinielaId)
+        const stillPaid = (otherQ || []).some(q => q.payment_status === 'paid')
+        if (!stillPaid) {
+          await supabase.from('profiles').update({ has_paid: false, paid_at: null }).eq('id', userId)
+        }
+      }
+    }
+
     if (!error) {
       const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
       setMsg(msgs[next])
@@ -285,8 +305,8 @@ export default function AdminPage() {
           {/* Users table — grouped, numbered */}
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             {/* Header */}
-            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
-              {['#','Quiniela','Picks','Puntos','PDF','Método','Estado pago'].map((h,i) => (
+            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 90px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
+              {['#','Quiniela','Picks','Puntos','PDF','Método','Estado','Pago ($15)'].map((h,i) => (
                 <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#aeaeb2', textAlign: i===0?'center':'left' }}>{h}</span>
               ))}
             </div>
@@ -319,7 +339,7 @@ export default function AdminPage() {
                   const qPts   = q.scores?.[0]?.total_pts || 0
                   const isLast = qi === (u.quinielas.length-1)
                   return (
-                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 90px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
                       <div style={{ display:'flex', justifyContent:'center' }}>
                         <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
                       </div>
@@ -366,13 +386,20 @@ export default function AdminPage() {
                           <option value="cash_usd">💵 $ Efectivo</option>
                         </select>
                       </div>
-                      {/* Payment cycle button */}
+                      {/* Estado — badge visual */}
                       <div style={{ textAlign:'center' }}>
-                        <button onClick={() => togglePayment(q.id, q.payment_status||'unpaid')} disabled={saving===q.id}
+                        <span style={{ display:'inline-block', padding:'4px 8px', borderRadius:7, fontWeight:700, fontSize:10,
+                          background: q.payment_status==='paid'?'rgba(48,209,88,.15)':q.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(174,174,178,.15)',
+                          color: q.payment_status==='paid'?'#1a7a38':q.payment_status==='committed'?'#b06000':'#6e6e73' }}>
+                          {q.payment_status==='paid'?'✅ Pagado':q.payment_status==='committed'?'🤝 Comprom.':'⬜ Sin pagar'}
+                        </span>
+                      </div>
+                      {/* Pago — botón ciclo */}
+                      <div style={{ textAlign:'center' }}>
+                        <button onClick={() => togglePayment(q.id, q.payment_status||'unpaid', u.id)} disabled={saving===q.id}
                           style={{ padding:'6px 12px', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:11, fontFamily:'inherit', opacity:saving===q.id?.5:1,
-                            background: q.payment_status==='paid'?'rgba(48,209,88,.15)':q.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
-                            color: q.payment_status==='paid'?'#1a7a38':q.payment_status==='committed'?'#b06000':'#c0392b' }}>
-                          {saving===q.id?'...':q.payment_status==='paid'?'✅ Pagado':q.payment_status==='committed'?'🤝 Comprometido':'⬜ Sin pagar'}
+                            background:'#0071e3', color:'#fff' }}>
+                          {saving===q.id ? '...' : q.payment_status==='paid' ? '↩ Revertir' : q.payment_status==='committed' ? '✅ Confirmar' : '🤝 Comprom.'}
                         </button>
                       </div>
                     </div>
