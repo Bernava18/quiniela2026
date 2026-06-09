@@ -52,27 +52,37 @@ export default function AdminPage() {
     setResults(map)
   }
 
+  // Actualiza estado local sin recargar toda la lista
+  function updateQuinielaLocal(quinielaId, patch) {
+    setUsers(prev => prev.map(u => ({
+      ...u,
+      quinielas: (u.quinielas || []).map(q =>
+        q.id === quinielaId ? { ...q, ...patch } : q
+      )
+    })))
+  }
+
   async function savePaymentStatus(quinielaId, status) {
-    setSaving(quinielaId)
+    updateQuinielaLocal(quinielaId, { payment_status: status })
     const { error } = await supabase
       .from('quinielas')
       .update({ payment_status: status })
       .eq('id', quinielaId)
     if (!error) {
-      const msgs = { committed:'🤝 Comprometida', paid:'✅ Pagada', unpaid:'⬜ Sin pagar' }
-      setMsg(msgs[status])
-      await loadUsers()
+      setMsg(status === 'paid' ? '✅ Pagada' : status === 'committed' ? '🤝 Comprometida' : '⬜ Sin pagar')
+      setTimeout(() => setMsg(''), 2500)
+    } else {
+      loadUsers()
     }
-    setSaving(null)
-    setTimeout(() => setMsg(''), 2500)
   }
 
   async function savePaymentMethod(quinielaId, method) {
+    updateQuinielaLocal(quinielaId, { payment_method: method || null })
     const { error } = await supabase
       .from('quinielas')
       .update({ payment_method: method || null })
       .eq('id', quinielaId)
-    if (!error) await loadUsers()
+    if (error) loadUsers()
   }
 
   async function saveResult(matchId, hs, as_, winner) {
