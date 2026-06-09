@@ -246,6 +246,18 @@ export default function LeaderboardPage() {
     <div style={{ padding:'20px 12px', fontFamily:'-apple-system,"DM Sans",sans-serif' }}>
       <div style={{ maxWidth:1500, margin:'0 auto' }}>
 
+        {/* Botones exportar — siempre visibles arriba */}
+        <div style={{ display:'flex', gap:8, marginBottom:12, justifyContent:'flex-end' }}>
+          <button onClick={exportPDF}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', background:'#0071e3', color:'#fff', border:'none', borderRadius:10, fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 2px 8px rgba(0,113,227,.3)' }}>
+            🖨️ Exportar PDF
+          </button>
+          <button onClick={exportImage}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', background:'#fff', color:'#1d1d1f', border:'1px solid rgba(0,0,0,.15)', borderRadius:10, fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'inherit' }}>
+            📷 Guardar imagen
+          </button>
+        </div>
+
         {/* Prize pool banner */}
         <div style={{ background:'linear-gradient(135deg,#ffd60a,#ff9f0a)', borderRadius:14, padding:'14px 20px', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:10, boxShadow:'0 4px 16px rgba(255,214,10,.25)' }}>
           <div>
@@ -264,21 +276,9 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Header */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4, flexWrap:'wrap', gap:8 }}>
-          <div style={{ display:'flex', alignItems:'baseline', gap:12 }}>
-            <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-.4px' }}>Tabla de Posiciones</h1>
-            <span style={{ fontSize:12, color:'#ff453a', fontWeight:600 }}>● En vivo</span>
-          </div>
-          <div style={{ display:'flex', gap:8 }}>
-            <button onClick={exportPDF}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:'#0071e3', color:'#fff', border:'none', borderRadius:8, fontWeight:700, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>
-              🖨️ PDF
-            </button>
-            <button onClick={exportImage}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', background:'#fff', color:'#1d1d1f', border:'0.5px solid rgba(0,0,0,.15)', borderRadius:8, fontWeight:700, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>
-              📷 Imagen
-            </button>
-          </div>
+        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:4 }}>
+          <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-.4px' }}>Tabla de Posiciones</h1>
+          <span style={{ fontSize:12, color:'#ff453a', fontWeight:600 }}>● En vivo</span>
         </div>
         <p style={{ color:'#6e6e73', fontSize:12, marginBottom:10 }}>
           {enriched.length} quinielas · {new Date() >= LOCK_DATE ? 'click en cualquier fila para ver la quiniela completa' : 'Las quinielas de otros serán visibles al iniciar el Mundial'}
