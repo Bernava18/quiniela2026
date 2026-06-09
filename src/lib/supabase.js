@@ -100,7 +100,7 @@ export async function getLeaderboard() {
   const { data, error } = await supabase
     .from('quinielas')
     .select(`
-      id, name, user_id,
+      id, name, user_id, seq_num, payment_status,
       profiles ( id, username, full_name ),
       scores ( quiniela_id, grp_pts, clasif_pts, elim_pts, final_pts, total_pts, updated_at )
     `)
