@@ -128,7 +128,7 @@ export default function LeaderboardPage() {
     }, '*')
   }
 
-  const myRow = enriched.find(r => r.quinielas?.profiles?.username === profile?.username)
+  const myRows = enriched.filter(r => r.quinielas?.profiles?.username === profile?.username)
 
   const th = (label, color='#fff', minW=44) => (
     <th style={{ padding:'10px 6px', fontWeight:700, color, textAlign:'center',
@@ -258,21 +258,32 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {/* Mi posición */}
-        {myRow && (
-          <div style={{ background:'rgba(0,113,227,.06)', border:'1px solid rgba(0,113,227,.2)', borderRadius:10, padding:'10px 16px', marginBottom:12, display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-            <span style={{ fontWeight:900, fontSize:20, color:'#0071e3' }}>#{myRow.rank}</span>
-            <div style={{ flex:1 }}>
-              <span style={{ fontWeight:700 }}>{myRow.quinielas?.profiles?.username}</span>
-              <span style={{ fontSize:12, color:'#6e6e73', marginLeft:8 }}>{myRow.quinielas?.name}</span>
-            </div>
-            <div style={{ display:'flex', gap:16, fontSize:12, color:'#6e6e73', flexWrap:'wrap' }}>
-              <span>Grupos: <strong style={{color:'#1d1d1f'}}>{myRow.grpTotal}</strong></span>
-              <span>Clasif: <strong style={{color:'#1d1d1f'}}>{myRow.clasifPts}</strong></span>
-              <span>Elim: <strong style={{color:'#1d1d1f'}}>{myRow.elimPts}</strong></span>
-              <span>Orden Final: <strong style={{color:'#1d1d1f'}}>{myRow.finalPts}</strong></span>
-            </div>
-            <span style={{ fontSize:24, fontWeight:900, color:'#0071e3' }}>{myRow.total} pts</span>
+        {/* Mis quinielas — todas */}
+        {myRows.length > 0 && (
+          <div style={{ marginBottom:12, display:'flex', flexDirection:'column', gap:6 }}>
+            {myRows.map(r => (
+              <div key={r.quiniela_id} style={{ background:'rgba(0,113,227,.06)', border:'1px solid rgba(0,113,227,.2)', borderRadius:10, padding:'10px 16px', display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+                <span style={{ fontWeight:900, fontSize:18, color:'#0071e3', minWidth:40 }}>#{r.rank}</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    {r.quinielas?.seq_num && (
+                      <span style={{ fontSize:9, fontWeight:800, color:'#fff', borderRadius:4, padding:'1px 5px',
+                        background: r.quinielas?.payment_status==='paid'?'#0071e3':r.quinielas?.payment_status==='committed'?'#ff9f0a':'#aeaeb2' }}>
+                        Q{String(r.quinielas.seq_num).padStart(2,'0')}
+                      </span>
+                    )}
+                    <span style={{ fontWeight:700, fontSize:13 }}>{r.quinielas?.name}</span>
+                    <span style={{ fontSize:9, background:'rgba(0,113,227,.12)', color:'#0071e3', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>TÚ</span>
+                  </div>
+                </div>
+                <div style={{ display:'flex', gap:12, fontSize:11, color:'#6e6e73', flexWrap:'wrap' }}>
+                  <span>Grupos: <strong style={{color:'#1d1d1f'}}>{r.grpTotal}</strong></span>
+                  <span>Elim: <strong style={{color:'#1d1d1f'}}>{r.elimPts}</strong></span>
+                  <span>Final: <strong style={{color:'#1d1d1f'}}>{r.finalPts}</strong></span>
+                </div>
+                <span style={{ fontSize:20, fontWeight:900, color:'#0071e3' }}>{r.total} pts</span>
+              </div>
+            ))}
           </div>
         )}
 
