@@ -25,14 +25,16 @@ export default function AdminPage() {
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [printing, setPrinting] = useState(false)
   const [printProgress, setPrintProgress] = useState('')
-  const [overrides, setOverrides] = useState({}) // { quinielaId: { payment_status, payment_method, payment_ref } }
+  // Mapa plano de quinielas por id para updates instantáneos sin recargar
+  const [quinielasMap, setQuinielasMap] = useState({})
 
-  function applyOverride(quinielaId, patch) {
-    setOverrides(prev => ({ ...prev, [quinielaId]: { ...(prev[quinielaId] || {}), ...patch } }))
+  function patchQ(id, patch) {
+    setQuinielasMap(prev => ({ ...prev, [id]: { ...(prev[id] || {}), ...patch } }))
   }
 
   function getQ(q) {
-    return overrides[q.id] ? { ...q, ...overrides[q.id] } : q
+    const ov = quinielasMap[q.id]
+    return ov ? { ...q, ...ov } : q
   }
 
   useEffect(() => { loadUsers(); loadResults() }, [])
@@ -50,6 +52,9 @@ export default function AdminPage() {
         )
       `)
       .order('username')
+    const qmap = {}
+    ;(data || []).forEach(u => (u.quinielas||[]).forEach(q => { qmap[q.id] = q }))
+    setQuinielasMap(qmap)
     setUsers(data || [])
     setLoadingUsers(false)
   }
@@ -63,7 +68,7 @@ export default function AdminPage() {
 
   async function changePaymentStatus(quinielaId, newStatus) {
     // Override PRIMERO — antes de cualquier setState que cause re-render
-    applyOverride(quinielaId, { payment_status: newStatus })
+    patchQ(quinielaId, { payment_status: newStatus })
     const { error } = await supabase
       .from('quinielas')
       .update({
@@ -73,7 +78,7 @@ export default function AdminPage() {
       })
       .eq('id', quinielaId)
     if (error) {
-      applyOverride(quinielaId, { payment_status: null })
+      patchQ(quinielaId, { payment_status: null })
     } else {
       const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
       setMsg(msgs[newStatus])
@@ -82,12 +87,12 @@ export default function AdminPage() {
   }
 
   async function changePaymentMethod(quinielaId, method) {
-    applyOverride(quinielaId, { payment_method: method })
+    patchQ(quinielaId, { payment_method: method })
     await supabase.from('quinielas').update({ payment_method: method }).eq('id', quinielaId)
   }
 
   async function changePaymentRef(quinielaId, ref) {
-    applyOverride(quinielaId, { payment_ref: ref })
+    patchQ(quinielaId, { payment_ref: ref })
     await supabase.from('quinielas').update({ payment_ref: ref }).eq('id', quinielaId)
   }
 
@@ -120,7 +125,7 @@ export default function AdminPage() {
   }
 
   // ── PAYMENT STATS — usa overrides para que los contadores se actualicen en vivo
-  const allQuinielas          = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, ...overrides[q.id], userId: u.id })))
+  const allQuinielas          = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, ...(quinielasMap[q.id]||{}), userId: u.id })))
   const confirmedAndCommitted = allQuinielas.filter(q => q.payment_status === 'paid' || q.payment_status === 'committed')
   const unpaidUsers           = users.filter(u => !u.has_paid)
   const totalPaid             = confirmedAndCommitted.length * ENTRY_FEE
