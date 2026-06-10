@@ -15,13 +15,13 @@ const ENTRY_FEE = 15
 
 export default function AdminPage() {
   const { profile: adminProfile } = useAuth()
-  const [tab, setTab]         = useState('payments') // payments | results
-  const [users, setUsers]     = useState([])
-  const [results, setResults] = useState({})
-  const [phase, setPhase]     = useState(0)
-  const [saving, setSaving]   = useState(null)
-  const [syncing, setSyncing] = useState(false)
-  const [msg, setMsg]         = useState('')
+  const [tab, setTab]           = useState('payments')
+  const [users, setUsers]       = useState([])
+  const [results, setResults]   = useState({})
+  const [phase, setPhase]       = useState(0)
+  const [saving, setSaving]     = useState(null)
+  const [syncing, setSyncing]   = useState(false)
+  const [msg, setMsg]           = useState('')
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [printing, setPrinting] = useState(false)
   const [printProgress, setPrintProgress] = useState('')
@@ -52,29 +52,17 @@ export default function AdminPage() {
     setResults(map)
   }
 
-  async function togglePayment(quinielaId, currentStatus) {
-    setSaving(quinielaId)
-    // Cycle: unpaid → committed → paid → unpaid
-    const next = currentStatus === 'unpaid' ? 'committed'
-               : currentStatus === 'committed' ? 'paid' : 'unpaid'
-    const { error } = await supabase
-      .from('quinielas')
-      .update({
-        payment_status: next,
-        has_paid: next === 'paid',
-        paid_at: next === 'paid' ? new Date().toISOString() : null,
-      })
-      .eq('id', quinielaId)
-    if (!error) {
-      const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
-      setMsg(msgs[next])
-      loadUsers()
-    }
-    setSaving(null)
-    setTimeout(() => setMsg(''), 2500)
+  // Actualiza un campo localmente sin recargar la página ni perder la posición
+  function patchQuiniela(quinielaId, patch) {
+    setUsers(prev => prev.map(u => ({
+      ...u,
+      quinielas: (u.quinielas || []).map(q =>
+        q.id === quinielaId ? { ...q, ...patch } : q
+      )
+    })))
   }
 
-  async function togglePaymentTo(quinielaId, newStatus) {
+  async function changePaymentStatus(quinielaId, newStatus) {
     setSaving(quinielaId)
     const { error } = await supabase
       .from('quinielas')
@@ -85,17 +73,30 @@ export default function AdminPage() {
       })
       .eq('id', quinielaId)
     if (!error) {
+      patchQuiniela(quinielaId, { payment_status: newStatus })
       const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
       setMsg(msgs[newStatus])
-      loadUsers()
+      setTimeout(() => setMsg(''), 2500)
     }
     setSaving(null)
-    setTimeout(() => setMsg(''), 2500)
   }
 
-  async function savePaymentRef(quinielaId, ref) {
-    await supabase.from('quinielas').update({ payment_ref: ref }).eq('id', quinielaId)
-    loadUsers()
+  async function changePaymentMethod(quinielaId, method) {
+    setSaving(quinielaId)
+    const { error } = await supabase
+      .from('quinielas')
+      .update({ payment_method: method })
+      .eq('id', quinielaId)
+    if (!error) patchQuiniela(quinielaId, { payment_method: method })
+    setSaving(null)
+  }
+
+  async function changePaymentRef(quinielaId, ref) {
+    const { error } = await supabase
+      .from('quinielas')
+      .update({ payment_ref: ref })
+      .eq('id', quinielaId)
+    if (!error) patchQuiniela(quinielaId, { payment_ref: ref })
   }
 
   async function saveResult(matchId, hs, as_, winner) {
@@ -127,20 +128,16 @@ export default function AdminPage() {
   }
 
   // ── PAYMENT STATS ─────────────────────────────────────────────
-  // Contar quinielas — pagadas + comprometidas suman al premio
-  const allQuinielas       = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, userId: u.id })))
-  const paidQuinielas      = allQuinielas.filter(q => q.payment_status === 'paid')
-  const committedQuinielas = allQuinielas.filter(q => q.payment_status === 'committed')
+  const allQuinielas          = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, userId: u.id })))
   const confirmedAndCommitted = allQuinielas.filter(q => q.payment_status === 'paid' || q.payment_status === 'committed')
-  const paidUsers          = users.filter(u => u.has_paid)
-  const unpaidUsers        = users.filter(u => !u.has_paid)
-  const totalPaid          = confirmedAndCommitted.length * ENTRY_FEE
-  const prize1st       = Math.floor(totalPaid * 0.60)
-  const prize2nd       = Math.floor(totalPaid * 0.20)
-  const prize3rd       = Math.floor(totalPaid * 0.10)
-  const prizeOrg       = Math.floor(totalPaid * 0.10)
+  const unpaidUsers           = users.filter(u => !u.has_paid)
+  const totalPaid             = confirmedAndCommitted.length * ENTRY_FEE
+  const prize1st  = Math.floor(totalPaid * 0.60)
+  const prize2nd  = Math.floor(totalPaid * 0.20)
+  const prize3rd  = Math.floor(totalPaid * 0.10)
+  const prizeOrg  = Math.floor(totalPaid * 0.10)
 
-  // ── Imprimir todas las quinielas ──────────────────────────────
+  // ── Imprimir todas ──────────────────────────────────────────
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
@@ -167,14 +164,9 @@ export default function AdminPage() {
       for (let i = 0; i < allQ.length; i++) {
         const q = allQ[i]
         setPrintProgress(`Capturando ${i+1}/${allQ.length}: ${q.username} · ${q.name}`)
-
-        // Abrir /print/:id en iframe oculto y capturar
         const captured = await captureQuinielaPrint(q.id)
         if (!captured) continue
-
         const { grupos, bracket } = captured
-
-        // Página grupos — portrait
         const pW1 = 210, pH1 = Math.round((grupos.height/grupos.width)*pW1)
         if (!pdf) {
           pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:[pW1,pH1] })
@@ -182,8 +174,6 @@ export default function AdminPage() {
           pdf.addPage([pW1,pH1],'portrait')
         }
         pdf.addImage(grupos.img,'JPEG',0,0,pW1,pH1)
-
-        // Página bracket — landscape
         const pW2 = Math.max(297, Math.round(bracket.width/3.78))
         const pH2 = Math.round((bracket.height/bracket.width)*pW2)
         pdf.addPage([pW2,pH2], pW2>pH2?'landscape':'portrait')
@@ -211,21 +201,17 @@ export default function AdminPage() {
       iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1200px;height:4000px;border:none;opacity:0;pointer-events:none;z-index:-1'
       document.body.appendChild(iframe)
       const timeout = setTimeout(() => { document.body.removeChild(iframe); resolve(null) }, 20000)
-
       iframe.onload = async () => {
         try {
-          await new Promise(r => setTimeout(r, 2000)) // wait for React render
+          await new Promise(r => setTimeout(r, 2000))
           const iDoc = iframe.contentDocument
           if (!iDoc) { clearTimeout(timeout); document.body.removeChild(iframe); resolve(null); return }
-
           const sections = iDoc.querySelectorAll('[data-section]')
           const grupEl  = sections[0] || iDoc.body
           const brackEl = sections[1] || iDoc.body
-
           const opts = { scale:1.8, useCORS:true, backgroundColor:'#ffffff', logging:false, allowTaint:true }
           const c1 = await window.html2canvas(grupEl,  { ...opts, windowWidth:1200 })
           const c2 = await window.html2canvas(brackEl, { ...opts, windowWidth: brackEl.scrollWidth+40 })
-
           clearTimeout(timeout)
           document.body.removeChild(iframe)
           resolve({
@@ -280,12 +266,14 @@ export default function AdminPage() {
           {/* Prize summary */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:10, marginBottom:20 }}>
             {[
-              ['📋 Pagadas + Comprometidas', `${confirmedAndCommitted.length} / ${allQuinielas.length}`, '#30d158'],
-              ['💰 Recaudado',  `$${totalPaid}`,                        '#0071e3'],
-              ['🥇 1er lugar',  `$${prize1st} (60%)`,                   '#ffd60a'],
-              ['🥈 2do lugar',  `$${prize2nd} (20%)`,                   '#aeaeb2'],
-              ['🥉 3er lugar',  `$${prize3rd} (10%)`,                   '#ff9f0a'],
-              ['🏛️ Organiz.',   `$${prizeOrg} (10%)`,                   '#6e6e73'],
+              ['✅ Pagadas',       `${allQuinielas.filter(q=>q.payment_status==='paid').length} quinielas`,       '#30d158'],
+              ['🤝 Comprometidas', `${allQuinielas.filter(q=>q.payment_status==='committed').length} quinielas`,  '#ff9f0a'],
+              ['💵 Recaudado real',`$${allQuinielas.filter(q=>q.payment_status==='paid').length * ENTRY_FEE}`,    '#0071e3'],
+              ['🏆 Base del premio',`$${totalPaid}`,                                                              '#0071e3'],
+              ['🥇 1er lugar',    `$${prize1st} (60%)`,                                                          '#ffd60a'],
+              ['🥈 2do lugar',    `$${prize2nd} (20%)`,                                                          '#aeaeb2'],
+              ['🥉 3er lugar',    `$${prize3rd} (10%)`,                                                          '#ff9f0a'],
+              ['🏛️ Organiz.',     `$${prizeOrg} (10%)`,                                                          '#6e6e73'],
             ].map(([label, val, color]) => (
               <div key={label} style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:12, padding:'12px 14px', boxShadow:'0 1px 3px rgba(0,0,0,.04)' }}>
                 <div style={{ fontSize:11, color:'#6e6e73', fontWeight:600, marginBottom:4 }}>{label}</div>
@@ -301,10 +289,10 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Users table — grouped, numbered */}
+          {/* Users table */}
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             {/* Header */}
-            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 160px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
               {['#','Quiniela','Picks','Puntos','PDF','Método','Ref / Datos pago','Estado pago'].map((h,i) => (
                 <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#aeaeb2', textAlign: i===0?'center':'left' }}>{h}</span>
               ))}
@@ -332,16 +320,19 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Quiniela rows — sorted by name */}
+                {/* Quiniela rows */}
                 {(u.quinielas||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map((q, qi) => {
                   const qPicks = q.picks?.filter(p=>p.goals_home!=null).length || 0
                   const qPts   = q.scores?.[0]?.total_pts || 0
                   const isLast = qi === (u.quinielas.length-1)
                   return (
-                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 160px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px', padding:'9px 16px', gap:8, alignItems:'center', background:'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+
+                      {/* Indent */}
                       <div style={{ display:'flex', justifyContent:'center' }}>
                         <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
                       </div>
+
                       {/* Name + ID */}
                       <div>
                         <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:2 }}>
@@ -358,15 +349,18 @@ export default function AdminPage() {
                           <div style={{ fontSize:10, color:'#ff9f0a', fontWeight:600 }}>🤝 Pago comprometido</div>
                         )}
                       </div>
+
                       {/* Picks */}
                       <div style={{ textAlign:'center' }}>
                         <span style={{ fontSize:12, fontWeight:700, color:qPicks===104?'#30d158':qPicks>0?'#ff9f0a':'#aeaeb2' }}>{qPicks}</span>
                         <span style={{ fontSize:10, color:'#aeaeb2' }}>/104</span>
                       </div>
+
                       {/* Points */}
                       <div style={{ textAlign:'center' }}>
                         <span style={{ fontSize:13, fontWeight:800, color:'#0071e3' }}>{qPts} pts</span>
                       </div>
+
                       {/* Print */}
                       <div style={{ textAlign:'center' }}>
                         <button onClick={() => window.open(`/print/${q.id}`, '_blank')} title="Imprimir"
@@ -374,13 +368,12 @@ export default function AdminPage() {
                           🖨️
                         </button>
                       </div>
-                      {/* Method */}
+
+                      {/* Método — guarda sin recargar */}
                       <div>
-                        <select value={q.payment_method||''} onChange={async e => {
-                            const method = e.target.value
-                            await supabase.from('quinielas').update({ payment_method: method }).eq('id', q.id)
-                            q.payment_method = method  // update local ref silently, no reload
-                          }}
+                        <select
+                          value={q.payment_method || ''}
+                          onChange={e => changePaymentMethod(q.id, e.target.value)}
                           style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 5px', background:'#fff', cursor:'pointer', width:'100%' }}>
                           <option value="">— Método —</option>
                           <option value="zelle">🏦 Zelle</option>
@@ -389,28 +382,40 @@ export default function AdminPage() {
                           <option value="cash_usd">💵 $ Efectivo</option>
                         </select>
                       </div>
-                      {/* Ref / Payment data */}
+
+                      {/* Ref — guarda al salir del campo, sin recargar */}
                       <div>
                         <input
-                          defaultValue={q.payment_ref||''}
-                          onBlur={e=>{ if(e.target.value !== (q.payment_ref||'')) savePaymentRef(q.id, e.target.value) }}
+                          key={q.id + '_ref'}
+                          defaultValue={q.payment_ref || ''}
+                          onBlur={e => {
+                            const val = e.target.value.trim()
+                            if (val !== (q.payment_ref || '').trim()) {
+                              changePaymentRef(q.id, val)
+                            }
+                          }}
                           placeholder="Ref., nombre, confirmación..."
                           style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 7px', outline:'none', width:'100%', color:'#1d1d1f', boxSizing:'border-box',
                             background: q.payment_ref ? 'rgba(48,209,88,.06)' : '#fff' }}
                         />
                       </div>
-                      {/* Payment status dropdown */}
+
+                      {/* Estado pago — dropdown directo, guarda sin recargar */}
                       <div>
-                        <select value={q.payment_status||'unpaid'} disabled={saving===q.id}
-                          onChange={e => togglePaymentTo(q.id, e.target.value)}
-                          style={{ fontSize:11, fontFamily:'inherit', fontWeight:700, border:'none', borderRadius:8, padding:'6px 10px', cursor:'pointer', width:'100%', opacity:saving===q.id?.5:1,
-                            background: q.payment_status==='paid'?'rgba(48,209,88,.18)':q.payment_status==='committed'?'rgba(255,159,10,.18)':'rgba(255,69,58,.08)',
+                        <select
+                          value={q.payment_status || 'unpaid'}
+                          disabled={saving === q.id}
+                          onChange={e => changePaymentStatus(q.id, e.target.value)}
+                          style={{ fontSize:11, fontFamily:'inherit', fontWeight:700, border:'1px solid rgba(0,0,0,.1)', borderRadius:8, padding:'6px 8px', cursor:'pointer', width:'100%',
+                            opacity: saving===q.id ? .5 : 1,
+                            background: q.payment_status==='paid'?'rgba(48,209,88,.15)':q.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
                             color: q.payment_status==='paid'?'#1a7a38':q.payment_status==='committed'?'#b06000':'#c0392b' }}>
                           <option value="unpaid">⬜ Sin pagar</option>
                           <option value="committed">🤝 Comprometido</option>
                           <option value="paid">✅ Pagado</option>
                         </select>
                       </div>
+
                     </div>
                   )
                 })}
@@ -419,7 +424,7 @@ export default function AdminPage() {
           </div>
 
           <div style={{ marginTop:12, fontSize:12, color:'#6e6e73', textAlign:'center' }}>
-            Click en el botón de pago para confirmar o revertir · Solo visible para administradores
+            Los cambios se guardan automáticamente · Solo visible para administradores
           </div>
         </div>
       )}
@@ -427,7 +432,6 @@ export default function AdminPage() {
       {/* ══ TAB: RESULTADOS ══ */}
       {tab === 'results' && (
         <div>
-          {/* Phase tabs */}
           <div style={{ display:'flex', background:'#f2f2f4', borderRadius:10, padding:3, gap:2, marginBottom:16 }}>
             {PHASES.map((p, i) => (
               <button key={i} onClick={() => setPhase(i)}
