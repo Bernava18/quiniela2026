@@ -290,8 +290,8 @@ export default function AdminPage() {
           {/* Users table — grouped, numbered */}
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             {/* Header */}
-            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
-              {['#','Quiniela','Picks','Puntos','PDF','Método','Estado pago'].map((h,i) => (
+            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 160px 130px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
+              {['#','Quiniela','Picks','Puntos','PDF','Método','Ref / Datos pago','Estado pago'].map((h,i) => (
                 <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#aeaeb2', textAlign: i===0?'center':'left' }}>{h}</span>
               ))}
             </div>
@@ -324,7 +324,7 @@ export default function AdminPage() {
                   const qPts   = q.scores?.[0]?.total_pts || 0
                   const isLast = qi === (u.quinielas.length-1)
                   return (
-                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 120px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 160px 130px', padding:'9px 16px', gap:8, alignItems:'center', background: u.has_paid?'rgba(48,209,88,.02)':'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
                       <div style={{ display:'flex', justifyContent:'center' }}>
                         <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
                       </div>
@@ -361,20 +361,24 @@ export default function AdminPage() {
                         </button>
                       </div>
                       {/* Method */}
-                      <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                      <div>
                         <select value={q.payment_method||''} onChange={e=>savePaymentMethod(q.id, e.target.value)}
-                          style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'3px 5px', background:'#fff', cursor:'pointer', width:'100%' }}>
+                          style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 5px', background:'#fff', cursor:'pointer', width:'100%' }}>
                           <option value="">— Método —</option>
                           <option value="zelle">🏦 Zelle</option>
                           <option value="transfer_usd">💱 Transfer $</option>
                           <option value="transfer_bs">🇻🇪 Transfer Bs</option>
                           <option value="cash_usd">💵 $ Efectivo</option>
                         </select>
+                      </div>
+                      {/* Ref / Payment data */}
+                      <div>
                         <input
                           defaultValue={q.payment_ref||''}
                           onBlur={e=>{ if(e.target.value !== (q.payment_ref||'')) savePaymentRef(q.id, e.target.value) }}
-                          placeholder="Ref. pago"
-                          style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'3px 5px', outline:'none', width:'100%', color:'#1d1d1f' }}
+                          placeholder="Ref., nombre, confirmación..."
+                          style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 7px', outline:'none', width:'100%', color:'#1d1d1f', boxSizing:'border-box',
+                            background: q.payment_ref ? 'rgba(48,209,88,.06)' : '#fff' }}
                         />
                       </div>
                       {/* Payment cycle button */}
