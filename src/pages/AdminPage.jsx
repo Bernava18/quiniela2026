@@ -403,10 +403,11 @@ export default function AdminPage() {
                         />
                       </div>
 
-                      {/* Estado pago — dropdown directo, guarda sin recargar */}
+                      {/* Estado pago — no-controlado con key para re-montar cuando cambia */}
                       <div>
                         <select
-                          value={gq.payment_status || 'unpaid'}
+                          key={q.id + '_st_' + (gq.payment_status || 'unpaid')}
+                          defaultValue={gq.payment_status || 'unpaid'}
                           onChange={e => changePaymentStatus(q.id, e.target.value)}
                           style={{ fontSize:11, fontFamily:'inherit', fontWeight:700, border:'1px solid rgba(0,0,0,.1)', borderRadius:8, padding:'6px 8px', cursor:'pointer', width:'100%',
                             background: gq.payment_status==='paid'?'rgba(48,209,88,.15)':gq.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
