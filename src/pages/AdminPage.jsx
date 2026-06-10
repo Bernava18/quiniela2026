@@ -93,11 +93,6 @@ export default function AdminPage() {
     setTimeout(() => setMsg(''), 2500)
   }
 
-
-    await supabase.from('quinielas').update({ payment_method: method }).eq('id', quinielaId)
-    loadUsers()
-  }
-
   async function savePaymentRef(quinielaId, ref) {
     await supabase.from('quinielas').update({ payment_ref: ref }).eq('id', quinielaId)
     loadUsers()
