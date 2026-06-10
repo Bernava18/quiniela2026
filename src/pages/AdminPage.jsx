@@ -67,9 +67,9 @@ export default function AdminPage() {
   }
 
   async function changePaymentStatus(quinielaId, newStatus) {
-    // Override PRIMERO — antes de cualquier setState que cause re-render
     patchQ(quinielaId, { payment_status: newStatus })
-    const { error } = await supabase
+    console.log('changePaymentStatus', quinielaId, newStatus)
+    const { data, error } = await supabase
       .from('quinielas')
       .update({
         payment_status: newStatus,
@@ -77,8 +77,13 @@ export default function AdminPage() {
         paid_at: newStatus === 'paid' ? new Date().toISOString() : null,
       })
       .eq('id', quinielaId)
+      .select()
+    console.log('result:', { data, error })
     if (error) {
+      console.error('Supabase error:', error)
+      setMsg('❌ Error: ' + error.message)
       patchQ(quinielaId, { payment_status: null })
+      setTimeout(() => setMsg(''), 4000)
     } else {
       const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
       setMsg(msgs[newStatus])
