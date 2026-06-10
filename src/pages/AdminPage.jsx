@@ -74,7 +74,26 @@ export default function AdminPage() {
     setTimeout(() => setMsg(''), 2500)
   }
 
-  async function savePaymentMethod(quinielaId, method) {
+  async function togglePaymentTo(quinielaId, newStatus) {
+    setSaving(quinielaId)
+    const { error } = await supabase
+      .from('quinielas')
+      .update({
+        payment_status: newStatus,
+        has_paid: newStatus === 'paid',
+        paid_at: newStatus === 'paid' ? new Date().toISOString() : null,
+      })
+      .eq('id', quinielaId)
+    if (!error) {
+      const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
+      setMsg(msgs[newStatus])
+      loadUsers()
+    }
+    setSaving(null)
+    setTimeout(() => setMsg(''), 2500)
+  }
+
+
     await supabase.from('quinielas').update({ payment_method: method }).eq('id', quinielaId)
     loadUsers()
   }
@@ -362,7 +381,11 @@ export default function AdminPage() {
                       </div>
                       {/* Method */}
                       <div>
-                        <select value={q.payment_method||''} onChange={e=>savePaymentMethod(q.id, e.target.value)}
+                        <select value={q.payment_method||''} onChange={async e => {
+                            const method = e.target.value
+                            await supabase.from('quinielas').update({ payment_method: method }).eq('id', q.id)
+                            q.payment_method = method  // update local ref silently, no reload
+                          }}
                           style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 5px', background:'#fff', cursor:'pointer', width:'100%' }}>
                           <option value="">— Método —</option>
                           <option value="zelle">🏦 Zelle</option>
@@ -381,14 +404,17 @@ export default function AdminPage() {
                             background: q.payment_ref ? 'rgba(48,209,88,.06)' : '#fff' }}
                         />
                       </div>
-                      {/* Payment cycle button */}
-                      <div style={{ textAlign:'center' }}>
-                        <button onClick={() => togglePayment(q.id, q.payment_status||'unpaid')} disabled={saving===q.id}
-                          style={{ padding:'6px 12px', border:'none', borderRadius:8, fontWeight:700, cursor:'pointer', fontSize:11, fontFamily:'inherit', opacity:saving===q.id?.5:1,
-                            background: q.payment_status==='paid'?'rgba(48,209,88,.15)':q.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
+                      {/* Payment status dropdown */}
+                      <div>
+                        <select value={q.payment_status||'unpaid'} disabled={saving===q.id}
+                          onChange={e => togglePaymentTo(q.id, e.target.value)}
+                          style={{ fontSize:11, fontFamily:'inherit', fontWeight:700, border:'none', borderRadius:8, padding:'6px 10px', cursor:'pointer', width:'100%', opacity:saving===q.id?.5:1,
+                            background: q.payment_status==='paid'?'rgba(48,209,88,.18)':q.payment_status==='committed'?'rgba(255,159,10,.18)':'rgba(255,69,58,.08)',
                             color: q.payment_status==='paid'?'#1a7a38':q.payment_status==='committed'?'#b06000':'#c0392b' }}>
-                          {saving===q.id?'...':q.payment_status==='paid'?'✅ Pagado':q.payment_status==='committed'?'🤝 Comprometido':'⬜ Sin pagar'}
-                        </button>
+                          <option value="unpaid">⬜ Sin pagar</option>
+                          <option value="committed">🤝 Comprometido</option>
+                          <option value="paid">✅ Pagado</option>
+                        </select>
                       </div>
                     </div>
                   )
