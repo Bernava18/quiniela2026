@@ -25,6 +25,15 @@ export default function AdminPage() {
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [printing, setPrinting] = useState(false)
   const [printProgress, setPrintProgress] = useState('')
+  const [overrides, setOverrides] = useState({}) // { quinielaId: { payment_status, payment_method, payment_ref } }
+
+  function applyOverride(quinielaId, patch) {
+    setOverrides(prev => ({ ...prev, [quinielaId]: { ...(prev[quinielaId] || {}), ...patch } }))
+  }
+
+  function getQ(q) {
+    return overrides[q.id] ? { ...q, ...overrides[q.id] } : q
+  }
 
   useEffect(() => { loadUsers(); loadResults() }, [])
 
@@ -52,17 +61,9 @@ export default function AdminPage() {
     setResults(map)
   }
 
-  // Actualiza un campo localmente sin recargar la página ni perder la posición
-  function patchQuiniela(quinielaId, patch) {
-    setUsers(prev => prev.map(u => ({
-      ...u,
-      quinielas: (u.quinielas || []).map(q =>
-        q.id === quinielaId ? { ...q, ...patch } : q
-      )
-    })))
-  }
-
   async function changePaymentStatus(quinielaId, newStatus) {
+    // Aplica override inmediatamente para que el select no rebote
+    applyOverride(quinielaId, { payment_status: newStatus })
     setSaving(quinielaId)
     const { error } = await supabase
       .from('quinielas')
@@ -72,8 +73,10 @@ export default function AdminPage() {
         paid_at: newStatus === 'paid' ? new Date().toISOString() : null,
       })
       .eq('id', quinielaId)
-    if (!error) {
-      patchQuiniela(quinielaId, { payment_status: newStatus })
+    if (error) {
+      // Revertir si falló
+      applyOverride(quinielaId, { payment_status: undefined })
+    } else {
       const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
       setMsg(msgs[newStatus])
       setTimeout(() => setMsg(''), 2500)
@@ -82,21 +85,13 @@ export default function AdminPage() {
   }
 
   async function changePaymentMethod(quinielaId, method) {
-    setSaving(quinielaId)
-    const { error } = await supabase
-      .from('quinielas')
-      .update({ payment_method: method })
-      .eq('id', quinielaId)
-    if (!error) patchQuiniela(quinielaId, { payment_method: method })
-    setSaving(null)
+    applyOverride(quinielaId, { payment_method: method })
+    await supabase.from('quinielas').update({ payment_method: method }).eq('id', quinielaId)
   }
 
   async function changePaymentRef(quinielaId, ref) {
-    const { error } = await supabase
-      .from('quinielas')
-      .update({ payment_ref: ref })
-      .eq('id', quinielaId)
-    if (!error) patchQuiniela(quinielaId, { payment_ref: ref })
+    applyOverride(quinielaId, { payment_ref: ref })
+    await supabase.from('quinielas').update({ payment_ref: ref }).eq('id', quinielaId)
   }
 
   async function saveResult(matchId, hs, as_, winner) {
@@ -322,6 +317,7 @@ export default function AdminPage() {
 
                 {/* Quiniela rows */}
                 {(u.quinielas||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map((q, qi) => {
+                  const gq     = getQ(q)  // mezcla datos BD + overrides locales
                   const qPicks = q.picks?.filter(p=>p.goals_home!=null).length || 0
                   const qPts   = q.scores?.[0]?.total_pts || 0
                   const isLast = qi === (u.quinielas.length-1)
@@ -337,15 +333,15 @@ export default function AdminPage() {
                       <div>
                         <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:2 }}>
                           <span style={{ fontSize:10, fontWeight:800, color:'#fff', borderRadius:5, padding:'1px 6px', letterSpacing:'.3px',
-                            background: q.payment_status==='paid'?'#0071e3':q.payment_status==='committed'?'#ff9f0a':'#aeaeb2' }}>
+                            background: gq.payment_status==='paid'?'#0071e3':gq.payment_status==='committed'?'#ff9f0a':'#aeaeb2' }}>
                             Q{String(q.seq_num||0).padStart(2,'0')}
                           </span>
                           <span style={{ fontSize:12.5, fontWeight:700, color:'#1d1d1f' }}>📋 {q.name}</span>
                         </div>
-                        {q.payment_status==='paid' && u.paid_at && (
+                        {gq.payment_status==='paid' && u.paid_at && (
                           <div style={{ fontSize:10, color:'#30d158', fontWeight:600 }}>✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</div>
                         )}
-                        {q.payment_status==='committed' && (
+                        {gq.payment_status==='committed' && (
                           <div style={{ fontSize:10, color:'#ff9f0a', fontWeight:600 }}>🤝 Pago comprometido</div>
                         )}
                       </div>
@@ -372,7 +368,7 @@ export default function AdminPage() {
                       {/* Método — guarda sin recargar */}
                       <div>
                         <select
-                          value={q.payment_method || ''}
+                          value={gq.payment_method || ''}
                           onChange={e => changePaymentMethod(q.id, e.target.value)}
                           style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 5px', background:'#fff', cursor:'pointer', width:'100%' }}>
                           <option value="">— Método —</option>
@@ -386,8 +382,8 @@ export default function AdminPage() {
                       {/* Ref — guarda al salir del campo, sin recargar */}
                       <div>
                         <input
-                          key={q.id + '_ref'}
-                          defaultValue={q.payment_ref || ''}
+                          key={q.id + '_ref_' + (gq.payment_ref||'').length}
+                          defaultValue={gq.payment_ref || ''}
                           onBlur={e => {
                             const val = e.target.value.trim()
                             if (val !== (q.payment_ref || '').trim()) {
@@ -396,20 +392,20 @@ export default function AdminPage() {
                           }}
                           placeholder="Ref., nombre, confirmación..."
                           style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 7px', outline:'none', width:'100%', color:'#1d1d1f', boxSizing:'border-box',
-                            background: q.payment_ref ? 'rgba(48,209,88,.06)' : '#fff' }}
+                            background: gq.payment_ref ? 'rgba(48,209,88,.06)' : '#fff' }}
                         />
                       </div>
 
                       {/* Estado pago — dropdown directo, guarda sin recargar */}
                       <div>
                         <select
-                          value={q.payment_status || 'unpaid'}
+                          value={gq.payment_status || 'unpaid'}
                           disabled={saving === q.id}
                           onChange={e => changePaymentStatus(q.id, e.target.value)}
                           style={{ fontSize:11, fontFamily:'inherit', fontWeight:700, border:'1px solid rgba(0,0,0,.1)', borderRadius:8, padding:'6px 8px', cursor:'pointer', width:'100%',
                             opacity: saving===q.id ? .5 : 1,
-                            background: q.payment_status==='paid'?'rgba(48,209,88,.15)':q.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
-                            color: q.payment_status==='paid'?'#1a7a38':q.payment_status==='committed'?'#b06000':'#c0392b' }}>
+                            background: gq.payment_status==='paid'?'rgba(48,209,88,.15)':gq.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
+                            color: gq.payment_status==='paid'?'#1a7a38':gq.payment_status==='committed'?'#b06000':'#c0392b' }}>
                           <option value="unpaid">⬜ Sin pagar</option>
                           <option value="committed">🤝 Comprometido</option>
                           <option value="paid">✅ Pagado</option>
