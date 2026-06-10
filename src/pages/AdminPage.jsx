@@ -62,9 +62,8 @@ export default function AdminPage() {
   }
 
   async function changePaymentStatus(quinielaId, newStatus) {
-    // Aplica override inmediatamente para que el select no rebote
+    // Override PRIMERO — antes de cualquier setState que cause re-render
     applyOverride(quinielaId, { payment_status: newStatus })
-    setSaving(quinielaId)
     const { error } = await supabase
       .from('quinielas')
       .update({
@@ -74,14 +73,12 @@ export default function AdminPage() {
       })
       .eq('id', quinielaId)
     if (error) {
-      // Revertir si falló
-      applyOverride(quinielaId, { payment_status: undefined })
+      applyOverride(quinielaId, { payment_status: null })
     } else {
       const msgs = { committed:'🤝 Comprometido', paid:'✅ Pago confirmado', unpaid:'⬜ Pago removido' }
       setMsg(msgs[newStatus])
       setTimeout(() => setMsg(''), 2500)
     }
-    setSaving(null)
   }
 
   async function changePaymentMethod(quinielaId, method) {
@@ -122,8 +119,8 @@ export default function AdminPage() {
     setTimeout(() => setMsg(''), 4000)
   }
 
-  // ── PAYMENT STATS ─────────────────────────────────────────────
-  const allQuinielas          = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, userId: u.id })))
+  // ── PAYMENT STATS — usa overrides para que los contadores se actualicen en vivo
+  const allQuinielas          = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, ...overrides[q.id], userId: u.id })))
   const confirmedAndCommitted = allQuinielas.filter(q => q.payment_status === 'paid' || q.payment_status === 'committed')
   const unpaidUsers           = users.filter(u => !u.has_paid)
   const totalPaid             = confirmedAndCommitted.length * ENTRY_FEE
@@ -400,10 +397,8 @@ export default function AdminPage() {
                       <div>
                         <select
                           value={gq.payment_status || 'unpaid'}
-                          disabled={saving === q.id}
                           onChange={e => changePaymentStatus(q.id, e.target.value)}
                           style={{ fontSize:11, fontFamily:'inherit', fontWeight:700, border:'1px solid rgba(0,0,0,.1)', borderRadius:8, padding:'6px 8px', cursor:'pointer', width:'100%',
-                            opacity: saving===q.id ? .5 : 1,
                             background: gq.payment_status==='paid'?'rgba(48,209,88,.15)':gq.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
                             color: gq.payment_status==='paid'?'#1a7a38':gq.payment_status==='committed'?'#b06000':'#c0392b' }}>
                           <option value="unpaid">⬜ Sin pagar</option>
