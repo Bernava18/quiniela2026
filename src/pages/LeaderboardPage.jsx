@@ -206,40 +206,7 @@ export default function LeaderboardPage() {
   }
 
   // ── PAYMENT WALL ─────────────────────────────────────────────
-  if (!hasPaid) {
-    return (
-      <div style={{ maxWidth:600, margin:'60px auto', padding:'0 16px', textAlign:'center', fontFamily:'-apple-system,"DM Sans",sans-serif' }}>
-        <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:20, padding:'48px 36px', boxShadow:'0 4px 24px rgba(0,0,0,.08)' }}>
-          <div style={{ fontSize:56, marginBottom:16 }}>🔒</div>
-          <h2 style={{ fontSize:24, fontWeight:800, marginBottom:8, letterSpacing:'-.4px' }}>Tabla bloqueada</h2>
-          <p style={{ color:'#6e6e73', fontSize:15, lineHeight:1.6, marginBottom:24 }}>
-            Para ver la tabla de posiciones y competir por los premios, necesitas completar tu pago de inscripción.
-          </p>
-          <div style={{ background:'linear-gradient(135deg,#ffd60a22,#ff9f0a11)', border:'1px solid rgba(255,214,10,.3)', borderRadius:14, padding:'20px', marginBottom:24 }}>
-            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', color:'#b06000', marginBottom:12 }}>Premio acumulado</div>
-            <div style={{ fontSize:36, fontWeight:900, color:'#7a5900', marginBottom:4 }}>${prizePool.total}</div>
-            <div style={{ display:'flex', justifyContent:'center', gap:16, fontSize:13, color:'#b06000' }}>
-              <span>🥇 ${prizePool.p1}</span>
-              <span>🥈 ${prizePool.p2}</span>
-              <span>🥉 ${prizePool.p3}</span>
-            </div>
-          </div>
-          <div style={{ background:'#f9f9fb', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:12, padding:'16px', marginBottom:24, textAlign:'left' }}>
-            <div style={{ fontWeight:700, marginBottom:8, fontSize:14 }}>📋 Cómo pagar:</div>
-            <div style={{ fontSize:13, color:'#6e6e73', lineHeight:1.7 }}>
-              1. Contacta al organizador de la quiniela<br/>
-              2. Realiza el pago de <strong>$15 USD</strong><br/>
-              3. El organizador confirmará tu pago<br/>
-              4. La tabla se desbloqueará automáticamente
-            </div>
-          </div>
-          <p style={{ fontSize:12, color:'#aeaeb2' }}>
-            Puedes seguir editando tu quiniela mientras tanto.
-          </p>
-        </div>
-      </div>
-    )
-  }
+
 
   // ── TABLA ────────────────────────────────────────────────────
   return (
