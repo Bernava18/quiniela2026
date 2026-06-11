@@ -100,9 +100,10 @@ export async function getLeaderboard() {
   const { data, error } = await supabase
     .from('quinielas')
     .select(`
-      id, name, user_id, seq_num, payment_status,
+      id, name, user_id, seq_num, payment_status, hidden_from_table,
       profiles ( id, username, full_name ),
-      scores ( quiniela_id, grp_pts, clasif_pts, elim_pts, final_pts, total_pts, updated_at )
+      scores ( quiniela_id, grp_pts, clasif_pts, elim_pts, final_pts, total_pts, updated_at ),
+      picks ( match_id, goals_home )
     `)
     .order('name')
     .limit(200)
@@ -120,11 +121,13 @@ export async function getLeaderboard() {
       final_pts: s.final_pts || 0,
       total_pts: s.total_pts || 0,
       updated_at: s.updated_at,
+      picks_count: (q.picks || []).filter(p => p.goals_home != null).length,
       quinielas: {
         id: q.id,
         name: q.name,
         seq_num: q.seq_num,
         payment_status: q.payment_status,
+        hidden_from_table: q.hidden_from_table,
         user_id: q.user_id,
         profiles: q.profiles
       }
