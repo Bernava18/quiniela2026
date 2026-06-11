@@ -41,19 +41,22 @@ export default function LeaderboardPage() {
     if (!el) return
     const { default: html2canvas } = await import('html2canvas')
     const { default: jsPDF } = await import('jspdf')
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#fff' })
-    const imgData = canvas.toDataURL('image/png')
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-    const pageW = pdf.internal.pageSize.getWidth()
-    const pageH = pdf.internal.pageSize.getHeight()
-    const ratio = canvas.width / canvas.height
-    const imgH = pageW / ratio
-    let y = 0
-    while (y < imgH) {
-      if (y > 0) pdf.addPage()
-      pdf.addImage(imgData, 'PNG', 0, -y, pageW, imgH)
-      y += pageH
-    }
+    // Captura a escala alta para buena calidad
+    const canvas = await html2canvas(el, {
+      scale: 2, useCORS: true, backgroundColor: '#fff',
+      windowWidth: el.scrollWidth, scrollX: 0, scrollY: 0,
+      width: el.scrollWidth, height: el.scrollHeight,
+    })
+    const imgData = canvas.toDataURL('image/jpeg', 0.92)
+    // Página custom del mismo tamaño que el contenido (en mm)
+    const mmW = Math.round(canvas.width * 0.264583)  // px → mm a 96dpi
+    const mmH = Math.round(canvas.height * 0.264583)
+    const pdf = new jsPDF({
+      orientation: mmW > mmH ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: [mmW, mmH],
+    })
+    pdf.addImage(imgData, 'JPEG', 0, 0, mmW, mmH)
     pdf.save(`tabla-posiciones-${new Date().toLocaleDateString('es-ES').replace(/\//g,'-')}.pdf`)
   }
 

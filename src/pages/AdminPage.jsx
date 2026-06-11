@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [printing, setPrinting] = useState(false)
   const [printProgress, setPrintProgress] = useState('')
+  const adminTableRef = useRef(null)
   // Mapa plano de quinielas por id para updates instantáneos sin recargar
   const [quinielasMap, setQuinielasMap] = useState({})
 
@@ -142,6 +143,38 @@ export default function AdminPage() {
   const prize3rd  = Math.floor(totalPaid * 0.10)
   const prizeOrg  = Math.floor(totalPaid * 0.10)
 
+  async function exportAdminPDF() {
+    const el = adminTableRef.current
+    if (!el) return
+    setPrinting(true)
+    setPrintProgress('Generando PDF...')
+    try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      const { jsPDF } = window.jspdf
+      const canvas = await window.html2canvas(el, {
+        scale: 1.5, useCORS: true, backgroundColor: '#fff',
+        windowWidth: el.scrollWidth, scrollX: 0, scrollY: 0,
+        width: el.scrollWidth, height: el.scrollHeight,
+      })
+      const imgData = canvas.toDataURL('image/jpeg', 0.92)
+      const mmW = Math.round(canvas.width * 0.264583)
+      const mmH = Math.round(canvas.height * 0.264583)
+      const pdf = new jsPDF({
+        orientation: mmW > mmH ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: [mmW, mmH],
+      })
+      pdf.addImage(imgData, 'JPEG', 0, 0, mmW, mmH)
+      const fecha = new Date().toLocaleDateString('es-ES').replace(/\//g, '-')
+      pdf.save(`admin-pagos-${fecha}.pdf`)
+    } catch(e) {
+      alert('Error generando PDF: ' + e.message)
+    }
+    setPrinting(false)
+    setPrintProgress('')
+  }
+
   // ── Imprimir todas ──────────────────────────────────────────
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -245,10 +278,16 @@ export default function AdminPage() {
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
           {msg && <span style={{ fontSize:13, color:'#30d158', fontWeight:600 }}>{msg}</span>}
           {tab==='payments' && (
-            <button onClick={printAllQuinielas} disabled={printing}
-              style={{ padding:'8px 16px', background:'#6e6e73', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:printing?.5:1, display:'flex', alignItems:'center', gap:6 }}>
-              {printing ? `⏳ ${printProgress||'Procesando...'}` : '🖨️ Imprimir todas'}
-            </button>
+            <>
+              <button onClick={exportAdminPDF} disabled={printing}
+                style={{ padding:'8px 16px', background:'#0071e3', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:printing?.5:1, display:'flex', alignItems:'center', gap:6 }}>
+                {printing ? `⏳ ${printProgress||'Procesando...'}` : '📄 PDF tabla pagos'}
+              </button>
+              <button onClick={printAllQuinielas} disabled={printing}
+                style={{ padding:'8px 16px', background:'#6e6e73', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:printing?.5:1, display:'flex', alignItems:'center', gap:6 }}>
+                {printing ? `⏳ ${printProgress||'Procesando...'}` : '🖨️ Imprimir todas'}
+              </button>
+            </>
           )}
           {tab==='results' && (
             <button onClick={triggerSync} disabled={syncing}
@@ -267,7 +306,7 @@ export default function AdminPage() {
 
       {/* ══ TAB: PAGOS ══ */}
       {tab === 'payments' && (
-        <div>
+        <div ref={adminTableRef}>
           {/* Prize summary */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:10, marginBottom:20 }}>
             {[
