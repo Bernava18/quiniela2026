@@ -11,5 +11,8 @@
 [functions]
   node_bundler = "esbuild"
 
+[functions."sync-results"]
+  schedule = "*/2 * * * *"
+
 [context.production.environment]
   SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
