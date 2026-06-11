@@ -4,7 +4,6 @@ import { supabase, savePick, getQuinielaPicks, getAllResults } from '../lib/supa
 import { useAuth } from '../context/AuthContext'
 
 const QUINIELA_HTML_URL = '/quiniela2026_fixed.html'
-const LOCK_DATE = new Date('2026-06-11T18:00:00Z')
 
 export default function QuinielaPage() {
   const { id: quinielaId } = useParams()
@@ -19,7 +18,6 @@ export default function QuinielaPage() {
   const [totalPts, setTotalPts]       = useState(0)
   const [filledPicks, setFilledPicks] = useState(0)
 
-  const isLocked = new Date() >= LOCK_DATE
 
   useEffect(() => { if (user) load() }, [quinielaId, user])
 
@@ -70,7 +68,7 @@ export default function QuinielaPage() {
     setFilledPicks(filled)
     iframeRef.current?.contentWindow?.postMessage({
       type: 'INIT',
-      data: { quinielaId, isLocked: quiniela?.is_locked || isLocked, username: profile?.username, picks, results }
+      data: { quinielaId, isLocked: quiniela?.is_locked || false, username: profile?.username, picks, results }
     }, '*')
   }
 
