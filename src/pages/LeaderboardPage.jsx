@@ -369,7 +369,7 @@ export default function LeaderboardPage() {
                         <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
                           <span style={{ fontSize:10, color:'#aeaeb2' }}>{r.quinielas?.profiles?.username}</span>
                           {(() => {
-                            const filled = Object.values(allPicks[r.quiniela_id] || {}).filter(p => p?.h != null).length
+                            const filled = r.picks_count ?? 0
                             const complete = filled >= 104
                             return (
                               <span style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4,
