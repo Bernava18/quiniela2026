@@ -71,11 +71,7 @@ export default function AdminPage() {
     console.log('changePaymentStatus', quinielaId, newStatus)
     const { data, error } = await supabase
       .from('quinielas')
-      .update({
-        payment_status: newStatus,
-        has_paid: newStatus === 'paid',
-        paid_at: newStatus === 'paid' ? new Date().toISOString() : null,
-      })
+      .update({ payment_status: newStatus })
       .eq('id', quinielaId)
       .select()
     console.log('result:', { data, error })
