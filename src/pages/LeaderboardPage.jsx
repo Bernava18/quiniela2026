@@ -116,7 +116,9 @@ export default function LeaderboardPage() {
   }
 
   function buildEnriched() {
-    const built = rows.map(r => {
+    const built = rows
+    .filter(r => !r.quinielas?.hidden_from_table)
+    .map(r => {
       const picks = allPicks[r.quiniela_id] || {}
       const groupPts = {}
       let grpTotal = 0
@@ -364,7 +366,20 @@ export default function LeaderboardPage() {
                           )}
                           {isMe && <span style={{ fontSize:9, background:'rgba(0,113,227,.12)', color:'#0071e3', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>TÚ</span>}
                         </div>
-                        <div style={{ fontSize:10, color:'#aeaeb2', marginTop:1 }}>{r.quinielas?.profiles?.username}</div>
+                        <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
+                          <span style={{ fontSize:10, color:'#aeaeb2' }}>{r.quinielas?.profiles?.username}</span>
+                          {(() => {
+                            const filled = Object.values(allPicks[r.quiniela_id] || {}).filter(p => p?.h != null).length
+                            const complete = filled >= 104
+                            return (
+                              <span style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4,
+                                background: complete ? 'rgba(48,209,88,.15)' : 'rgba(255,69,58,.1)',
+                                color: complete ? '#1a7a38' : '#c0392b' }}>
+                                {complete ? '✓ Completada' : `Incompleta ${filled}/104`}
+                              </span>
+                            )
+                          })()}
+                        </div>
                       </td>
 
                       {/* Grupos A-L */}

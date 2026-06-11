@@ -46,7 +46,7 @@ export default function AdminPage() {
       .select(`
         id, username, full_name, phone, email, has_paid, paid_at,
         quinielas (
-          id, name, seq_num, is_locked, payment_status, payment_method, payment_ref,
+          id, name, seq_num, is_locked, payment_status, payment_method, payment_ref, hidden_from_table,
           picks (match_id, goals_home),
           scores (total_pts)
         )
@@ -95,6 +95,13 @@ export default function AdminPage() {
   async function changePaymentRef(quinielaId, ref) {
     patchQ(quinielaId, { payment_ref: ref })
     await supabase.from('quinielas').update({ payment_ref: ref }).eq('id', quinielaId)
+  }
+
+  async function changeHidden(quinielaId, hidden) {
+    patchQ(quinielaId, { hidden_from_table: hidden })
+    await supabase.from('quinielas').update({ hidden_from_table: hidden }).eq('id', quinielaId)
+    setMsg(hidden ? '🙈 Oculta de la tabla' : '👁️ Visible en la tabla')
+    setTimeout(() => setMsg(''), 2500)
   }
 
   async function saveResult(matchId, hs, as_, winner) {
@@ -290,8 +297,8 @@ export default function AdminPage() {
           {/* Users table */}
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             {/* Header */}
-            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
-              {['#','Quiniela','Picks','Puntos','PDF','Método','Ref / Datos pago','Estado pago'].map((h,i) => (
+            <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px 44px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
+              {['#','Quiniela','Picks','Puntos','PDF','Método','Ref / Datos pago','Estado pago','Tabla'].map((h,i) => (
                 <span key={h} style={{ fontSize:9.5, fontWeight:700, textTransform:'uppercase', letterSpacing:'.4px', color:'#aeaeb2', textAlign: i===0?'center':'left' }}>{h}</span>
               ))}
             </div>
@@ -325,7 +332,7 @@ export default function AdminPage() {
                   const qPts   = q.scores?.[0]?.total_pts || 0
                   const isLast = qi === (u.quinielas.length-1)
                   return (
-                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px', padding:'9px 16px', gap:8, alignItems:'center', background:'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px 44px', padding:'9px 16px', gap:8, alignItems:'center', background:'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
 
                       {/* Indent */}
                       <div style={{ display:'flex', justifyContent:'center' }}>
@@ -412,6 +419,17 @@ export default function AdminPage() {
                           <option value="committed">🤝 Comprometido</option>
                           <option value="paid">✅ Pagado</option>
                         </select>
+                      </div>
+
+                      {/* Ocultar de tabla */}
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <input
+                          type="checkbox"
+                          title={gq.hidden_from_table ? 'Oculta de la tabla' : 'Visible en la tabla'}
+                          checked={!!gq.hidden_from_table}
+                          onChange={e => changeHidden(q.id, e.target.checked)}
+                          style={{ width:16, height:16, cursor:'pointer', accentColor:'#ff3b30' }}
+                        />
                       </div>
 
                     </div>
