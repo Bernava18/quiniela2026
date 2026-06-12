@@ -2,6 +2,34 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
+// Equipos fijos de fase de grupos (conocidos desde el sorteo)
+const GROUP_FIXTURE = {
+  A1:['México','Sudáfrica'], A2:['Rep. de Corea','Rep. Checa'], A3:['México','Rep. de Corea'],
+  A4:['Rep. Checa','Sudáfrica'], A5:['Rep. Checa','México'], A6:['Sudáfrica','Rep. de Corea'],
+  B1:['Canadá','Bosnia'], B2:['Catar','Suiza'], B3:['Canadá','Catar'],
+  B4:['Suiza','Bosnia'], B5:['Suiza','Canadá'], B6:['Bosnia','Catar'],
+  C1:['Brasil','Marruecos'], C2:['Haití','Escocia'], C3:['Brasil','Haití'],
+  C4:['Escocia','Marruecos'], C5:['Escocia','Brasil'], C6:['Marruecos','Haití'],
+  D1:['EE. UU.','Paraguay'], D2:['Australia','Turquía'], D3:['EE. UU.','Australia'],
+  D4:['Turquía','Paraguay'], D5:['Turquía','EE. UU.'], D6:['Paraguay','Australia'],
+  E1:['Alemania','Curazao'], E2:['Costa de Marfil','Ecuador'], E3:['Alemania','Costa de Marfil'],
+  E4:['Ecuador','Curazao'], E5:['Ecuador','Alemania'], E6:['Curazao','Costa de Marfil'],
+  F1:['Países Bajos','Japón'], F2:['Suecia','Túnez'], F3:['Países Bajos','Suecia'],
+  F4:['Túnez','Japón'], F5:['Túnez','Países Bajos'], F6:['Japón','Suecia'],
+  G1:['Bélgica','Egipto'], G2:['RI de Irán','Nueva Zelanda'], G3:['Bélgica','RI de Irán'],
+  G4:['Nueva Zelanda','Egipto'], G5:['Nueva Zelanda','Bélgica'], G6:['Egipto','RI de Irán'],
+  H1:['España','Islas de Cabo Verde'], H2:['Arabia Saudí','Uruguay'], H3:['España','Arabia Saudí'],
+  H4:['Uruguay','Islas de Cabo Verde'], H5:['Uruguay','España'], H6:['Islas de Cabo Verde','Arabia Saudí'],
+  I1:['Francia','Senegal'], I2:['Irak','Noruega'], I3:['Francia','Irak'],
+  I4:['Noruega','Senegal'], I5:['Noruega','Francia'], I6:['Senegal','Irak'],
+  J1:['Argentina','Argelia'], J2:['Austria','Jordania'], J3:['Argentina','Austria'],
+  J4:['Jordania','Argelia'], J5:['Jordania','Argentina'], J6:['Argelia','Austria'],
+  K1:['Portugal','RD Congo'], K2:['Uzbekistán','Colombia'], K3:['Portugal','Uzbekistán'],
+  K4:['Colombia','RD Congo'], K5:['Colombia','Portugal'], K6:['RD Congo','Uzbekistán'],
+  L1:['Inglaterra','Croacia'], L2:['Ghana','Panamá'], L3:['Inglaterra','Ghana'],
+  L4:['Panamá','Croacia'], L5:['Panamá','Inglaterra'], L6:['Croacia','Ghana'],
+}
+
 const PHASES = [
   { label:'Grupos',      matches: Array.from({length:72},(_,i)=>{const g=String.fromCharCode(65+Math.floor(i/6));return `${g}${i%6+1}`}) },
   { label:'R32',         matches: Array.from({length:16},(_,i)=>`M${73+i}`) },
@@ -603,10 +631,13 @@ export default function AdminPage() {
                 {PHASES[phase].matches.map(mid => {
                   const r = results[mid] || {}
                   const hasResult = r.goals_home != null
+                  const fixture = GROUP_FIXTURE[mid]
+                  const hName = r.h_team || fixture?.[0] || '–'
+                  const aName = r.a_team || fixture?.[1] || '–'
                   return (
                     <tr key={mid} style={{ borderBottom:'0.5px solid rgba(0,0,0,.05)' }}>
                       <td style={{ padding:'8px 12px', fontWeight:700, color:'#0071e3' }}>{mid}</td>
-                      <td style={{ padding:'8px 12px', color:'#6e6e73', fontSize:12 }}>{r.h_team || '–'}</td>
+                      <td style={{ padding:'8px 12px', color:'#1d1d1f', fontSize:12, fontWeight:600 }}>{hName}</td>
                       <td style={{ padding:'8px 12px' }}>
                         <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                           <input type="number" min={0} max={20} id={`h-${mid}`}
@@ -618,7 +649,7 @@ export default function AdminPage() {
                             style={{ width:38, height:32, border:'1px solid rgba(0,0,0,.14)', borderRadius:7, textAlign:'center', fontSize:14, fontWeight:700, fontFamily:'inherit' }}/>
                         </div>
                       </td>
-                      <td style={{ padding:'8px 12px', color:'#6e6e73', fontSize:12 }}>{r.a_team || '–'}</td>
+                      <td style={{ padding:'8px 12px', color:'#1d1d1f', fontSize:12, fontWeight:600 }}>{aName}</td>
                       <td style={{ padding:'8px 12px' }}>
                         {!/^[A-L][1-6]$/.test(mid) && (
                           <input defaultValue={r.winner || ''} id={`w-${mid}`}
