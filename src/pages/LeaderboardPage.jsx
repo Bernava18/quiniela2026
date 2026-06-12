@@ -486,7 +486,7 @@ export default function LeaderboardPage() {
                       onMouseOut={e => e.currentTarget.style.background = bgRow}>
 
                       <td style={{ padding:'9px 8px', textAlign:'center', fontWeight:800, fontSize:14, position:'sticky', left:0, background: bgRow, borderRight:'0.5px solid #e5e5ea' }}>
-                        {i < 3 ? MEDALS[i] : <span style={{ color:'#6e6e73', fontSize:12 }}>{r.rank}</span>}
+                        {r.rank <= 3 ? MEDALS[r.rank - 1] : <span style={{ color:'#6e6e73', fontSize:12 }}>{r.rank}</span>}
                       </td>
 
                       <td style={{ padding:'9px 14px', borderRight:'1px solid #e5e5ea' }}>
