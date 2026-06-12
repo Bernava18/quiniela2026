@@ -12,7 +12,7 @@ const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
 // Fechas de cada partido de grupos (Jornada 1, 2, 3) — calendario oficial FIFA 2026
 const MATCH_DATES = {
   // Jornada 1
-  A1:'2026-06-11', B1:'2026-06-12', D1:'2026-06-12', A2:'2026-06-12',
+  A1:'2026-06-11', A2:'2026-06-11', B1:'2026-06-12', D1:'2026-06-12',
   B2:'2026-06-13', C1:'2026-06-13',
   C2:'2026-06-14', D2:'2026-06-14', E1:'2026-06-14', F1:'2026-06-14',
   G1:'2026-06-15', H1:'2026-06-15',
@@ -305,26 +305,23 @@ export default function LeaderboardPage() {
             const mids = matchesFor(dateStr)
             if (!mids.length) return null
             return (
-              <div key={dateStr}>
-                <div style={{ fontSize:11, fontWeight:700, color:'#6e6e73', textTransform:'uppercase', letterSpacing:'.4px', marginBottom:6 }}>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:10, fontWeight:700, color:'#aeaeb2', textTransform:'uppercase', letterSpacing:'.4px', marginBottom:6 }}>
                   {label} · {new Date(dateStr+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,260px))', gap:10 }}>
+                <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
                   {mids.map(mid => {
                     const r = results[mid]
                     const [home, away] = TEAM_NAMES[mid] || ['?','?']
                     const played = r && r.hs != null
                     return (
-                      <div key={mid} style={{ background:'#f9f9fb', borderRadius:10, padding:'8px 12px', border:'0.5px solid rgba(0,0,0,.06)' }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#aeaeb2', marginBottom:4 }}>
-                          <span style={{ color: played ? '#30d158' : '#aeaeb2', fontWeight:700 }}>{played ? 'Finalizado' : 'Pendiente'}</span>
-                          <span>Grupo {mid[0]}</span>
-                        </div>
-                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13, fontWeight:700 }}>
-                          <span>{home}</span>
-                          <span style={{ color: played ? '#1d1d1f' : '#c7c7cc' }}>{played ? `${r.hs} – ${r.as}` : '– – –'}</span>
-                          <span>{away}</span>
-                        </div>
+                      <div key={mid} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11.5, padding:'4px 8px', background:'#f9f9fb', borderRadius:7 }}>
+                        <span style={{ fontSize:9, color:'#aeaeb2', minWidth:34, fontWeight:700 }}>GR.{mid[0]}</span>
+                        <span style={{ flex:1, textAlign:'right', fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{home}</span>
+                        <span style={{ fontWeight:800, color: played ? '#1d1d1f' : '#c7c7cc', minWidth:44, textAlign:'center' }}>
+                          {played ? `${r.hs}–${r.as}` : '–:–'}
+                        </span>
+                        <span style={{ flex:1, fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{away}</span>
                       </div>
                     )
                   })}
@@ -338,7 +335,7 @@ export default function LeaderboardPage() {
           if (!yWidget && !tWidget) return null
 
           return (
-            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, padding:'16px 20px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)', display:'flex', flexDirection:'column', gap:14 }}>
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, padding:'14px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)', display:'flex', gap:20, flexWrap:'wrap' }}>
               {yWidget}
               {tWidget}
             </div>
