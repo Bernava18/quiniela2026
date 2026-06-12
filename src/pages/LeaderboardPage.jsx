@@ -518,19 +518,25 @@ export default function LeaderboardPage() {
                                   const pk = picks[mid]
                                   const res = results[mid]
                                   const has = pk && pk.h != null && pk.a != null
-                                  const correct = has && res && pk.h === res.hs && pk.a === res.as
                                   const [home, away] = TEAM_NAMES[mid] || ['?','?']
                                   const hasResult = res && res.hs != null
                                   const hOk = has && hasResult && pk.h === res.hs
                                   const aOk = has && hasResult && pk.a === res.as
+                                  const bothOk = hOk && aOk
+                                  const anyOk = hOk || aOk
                                   const numStyle = (ok) => ({
                                     fontWeight:800,
                                     color: !has || !hasResult ? 'inherit' : ok ? '#1a7a38' : '#c0392b'
                                   })
+                                  let bg, color
+                                  if (!has) { bg = 'rgba(255,69,58,.1)'; color = '#c0392b' }
+                                  else if (!hasResult) { bg = 'rgba(0,113,227,.08)'; color = '#0055b3' }
+                                  else if (bothOk) { bg = 'rgba(48,209,88,.15)'; color = '#1a7a38' }
+                                  else if (anyOk) { bg = 'rgba(255,214,10,.18)'; color = '#7a5900' }
+                                  else { bg = 'rgba(255,69,58,.1)'; color = '#c0392b' }
                                   return (
                                     <span key={mid} style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4,
-                                      background: !has ? 'rgba(255,69,58,.1)' : correct ? 'rgba(48,209,88,.15)' : 'rgba(0,113,227,.08)',
-                                      color: !has ? '#c0392b' : correct ? '#1a7a38' : '#0055b3' }}>
+                                      background: bg, color: color }}>
                                       {home} <span style={numStyle(hOk)}>{has ? pk.h : '–'}</span>-<span style={numStyle(aOk)}>{has ? pk.a : '–'}</span> {away}
                                     </span>
                                   )
