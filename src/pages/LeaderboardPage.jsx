@@ -9,6 +9,62 @@ const LOCK_DATE = new Date('2026-06-11T18:00:00Z') // Inicio del Mundial
 const MEDALS = ['🥇','🥈','🥉']
 const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
 
+// Fechas de cada partido de grupos (Jornada 1, 2, 3) — calendario oficial FIFA 2026
+const MATCH_DATES = {
+  // Jornada 1
+  A1:'2026-06-11', B1:'2026-06-12', D1:'2026-06-12', A2:'2026-06-12',
+  B2:'2026-06-13', C1:'2026-06-13',
+  C2:'2026-06-14', D2:'2026-06-14', E1:'2026-06-14', F1:'2026-06-14',
+  G1:'2026-06-15', H1:'2026-06-15',
+  E2:'2026-06-16', F2:'2026-06-16', I1:'2026-06-16',
+  G2:'2026-06-17', H2:'2026-06-17', I2:'2026-06-17',
+  J1:'2026-06-17', K1:'2026-06-17', L1:'2026-06-18',
+  J2:'2026-06-18', K2:'2026-06-18', L2:'2026-06-18',
+  // Jornada 2
+  A3:'2026-06-18', A4:'2026-06-18',
+  B3:'2026-06-19', B4:'2026-06-19', C3:'2026-06-19', C4:'2026-06-19',
+  D3:'2026-06-19', D4:'2026-06-20', E3:'2026-06-20', E4:'2026-06-20',
+  F3:'2026-06-20', F4:'2026-06-21', G3:'2026-06-21', G4:'2026-06-21',
+  H3:'2026-06-21', H4:'2026-06-22', I3:'2026-06-22', I4:'2026-06-22',
+  J3:'2026-06-22', J4:'2026-06-23', K3:'2026-06-23', K4:'2026-06-23',
+  L3:'2026-06-23', L4:'2026-06-24',
+  // Jornada 3
+  A5:'2026-06-24', A6:'2026-06-24',
+  B5:'2026-06-24', B6:'2026-06-24', C5:'2026-06-24', C6:'2026-06-24',
+  D5:'2026-06-25', D6:'2026-06-25', E5:'2026-06-25', E6:'2026-06-25',
+  F5:'2026-06-25', F6:'2026-06-25', G6:'2026-06-26', G5:'2026-06-26',
+  H5:'2026-06-26', H6:'2026-06-26', I5:'2026-06-26', I6:'2026-06-26',
+  J5:'2026-06-27', J6:'2026-06-27', K5:'2026-06-27', K6:'2026-06-27',
+  L5:'2026-06-27', L6:'2026-06-27',
+}
+
+const TEAM_NAMES = {
+  A1:['México','Sudáfrica'], A2:['Rep. de Corea','Rep. Checa'], A3:['México','Rep. de Corea'],
+  A4:['Rep. Checa','Sudáfrica'], A5:['Rep. Checa','México'], A6:['Sudáfrica','Rep. de Corea'],
+  B1:['Canadá','Bosnia'], B2:['Catar','Suiza'], B3:['Canadá','Catar'],
+  B4:['Suiza','Bosnia'], B5:['Suiza','Canadá'], B6:['Bosnia','Catar'],
+  C1:['Brasil','Marruecos'], C2:['Haití','Escocia'], C3:['Brasil','Haití'],
+  C4:['Escocia','Marruecos'], C5:['Escocia','Brasil'], C6:['Marruecos','Haití'],
+  D1:['EE. UU.','Paraguay'], D2:['Australia','Turquía'], D3:['EE. UU.','Australia'],
+  D4:['Turquía','Paraguay'], D5:['Turquía','EE. UU.'], D6:['Paraguay','Australia'],
+  E1:['Alemania','Curazao'], E2:['Costa de Marfil','Ecuador'], E3:['Alemania','Costa de Marfil'],
+  E4:['Ecuador','Curazao'], E5:['Ecuador','Alemania'], E6:['Curazao','Costa de Marfil'],
+  F1:['Países Bajos','Japón'], F2:['Suecia','Túnez'], F3:['Países Bajos','Suecia'],
+  F4:['Túnez','Japón'], F5:['Túnez','Países Bajos'], F6:['Japón','Suecia'],
+  G1:['Bélgica','Egipto'], G2:['RI de Irán','Nueva Zelanda'], G3:['Bélgica','RI de Irán'],
+  G4:['Nueva Zelanda','Egipto'], G5:['Nueva Zelanda','Bélgica'], G6:['Egipto','RI de Irán'],
+  H1:['España','Islas de Cabo Verde'], H2:['Arabia Saudí','Uruguay'], H3:['España','Arabia Saudí'],
+  H4:['Uruguay','Islas de Cabo Verde'], H5:['Uruguay','España'], H6:['Islas de Cabo Verde','Arabia Saudí'],
+  I1:['Francia','Senegal'], I2:['Irak','Noruega'], I3:['Francia','Irak'],
+  I4:['Noruega','Senegal'], I5:['Noruega','Francia'], I6:['Senegal','Irak'],
+  J1:['Argentina','Argelia'], J2:['Austria','Jordania'], J3:['Argentina','Austria'],
+  J4:['Jordania','Argelia'], J5:['Jordania','Argentina'], J6:['Argelia','Austria'],
+  K1:['Portugal','RD Congo'], K2:['Uzbekistán','Colombia'], K3:['Portugal','Uzbekistán'],
+  K4:['Colombia','RD Congo'], K5:['Colombia','Portugal'], K6:['RD Congo','Uzbekistán'],
+  L1:['Inglaterra','Croacia'], L2:['Ghana','Panamá'], L3:['Inglaterra','Ghana'],
+  L4:['Panamá','Croacia'], L5:['Panamá','Inglaterra'], L6:['Croacia','Ghana'],
+}
+
 function calcGroupPts(picks, results, group) {
   let pts = 0
   for (let i = 1; i <= 6; i++) {
@@ -233,6 +289,61 @@ export default function LeaderboardPage() {
   return (
     <div style={{ padding:'20px 12px', fontFamily:'-apple-system,"DM Sans",sans-serif' }}>
       <div style={{ maxWidth:1500, margin:'0 auto' }}>
+
+        {/* Widget: partidos de ayer y hoy */}
+        {(() => {
+          const todayStr = new Date().toISOString().slice(0,10)
+          const yesterday = new Date()
+          yesterday.setDate(yesterday.getDate() - 1)
+          const yesterdayStr = yesterday.toISOString().slice(0,10)
+
+          const matchesFor = (dateStr) => Object.entries(MATCH_DATES)
+            .filter(([, d]) => d === dateStr)
+            .map(([mid]) => mid)
+
+          const renderDay = (label, dateStr) => {
+            const mids = matchesFor(dateStr)
+            if (!mids.length) return null
+            return (
+              <div key={dateStr} style={{ marginBottom:10 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:'#6e6e73', textTransform:'uppercase', letterSpacing:'.4px', marginBottom:6 }}>
+                  {label} · {new Date(dateStr+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:8 }}>
+                  {mids.map(mid => {
+                    const r = results[mid]
+                    const [home, away] = TEAM_NAMES[mid] || ['?','?']
+                    const played = r && r.hs != null
+                    return (
+                      <div key={mid} style={{ background:'#f9f9fb', borderRadius:10, padding:'8px 12px', border:'0.5px solid rgba(0,0,0,.06)' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#aeaeb2', marginBottom:4 }}>
+                          <span style={{ color: played ? '#30d158' : '#aeaeb2', fontWeight:700 }}>{played ? 'Finalizado' : 'Pendiente'}</span>
+                          <span>Grupo {mid[0]}</span>
+                        </div>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13, fontWeight:700 }}>
+                          <span>{home}</span>
+                          <span style={{ color: played ? '#1d1d1f' : '#c7c7cc' }}>{played ? `${r.hs} – ${r.as}` : '– – –'}</span>
+                          <span>{away}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          }
+
+          const yWidget = renderDay('Ayer', yesterdayStr)
+          const tWidget = renderDay('Hoy', todayStr)
+          if (!yWidget && !tWidget) return null
+
+          return (
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, padding:'14px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)' }}>
+              {yWidget}
+              {tWidget}
+            </div>
+          )
+        })()}
 
         {/* Botones exportar — siempre visibles arriba */}
         <div style={{ display:'flex', gap:8, marginBottom:12, justifyContent:'flex-end' }}>
