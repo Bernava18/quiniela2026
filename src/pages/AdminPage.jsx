@@ -382,6 +382,7 @@ export default function AdminPage() {
       const { jsPDF } = window.jspdf
 
       const allQ = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, username: u.username, userEmail: u.email })))
+        .sort((a,b) => (a.seq_num||0) - (b.seq_num||0))
       if (!allQ.length) { alert('No hay quinielas.'); setPrinting(false); return }
 
       let pdf = null
@@ -389,7 +390,8 @@ export default function AdminPage() {
 
       for (let i = 0; i < allQ.length; i++) {
         const q = allQ[i]
-        setPrintProgress(`Capturando ${i+1}/${allQ.length}: ${q.username} · ${q.name}`)
+        const label = `Q${String(q.seq_num||0).padStart(2,'0')} · ${q.name} · ${q.username}`
+        setPrintProgress(`Capturando ${i+1}/${allQ.length}: ${label}`)
         const captured = await captureQuinielaPrint(q.id)
         if (!captured) continue
         const { grupos, bracket } = captured
@@ -399,10 +401,19 @@ export default function AdminPage() {
         } else {
           pdf.addPage([pW1,pH1],'portrait')
         }
+        // Marcador (bookmark) en el panel de navegación del PDF para ubicar la quiniela
+        pdf.outline.add(null, label, { pageNumber: pdf.internal.getNumberOfPages() })
+        // Texto invisible para que el buscador (Ctrl+F) encuentre el nombre/Qxx
+        pdf.setTextColor(255,255,255)
+        pdf.setFontSize(8)
+        pdf.text(label, 2, 4)
         pdf.addImage(grupos.img,'JPEG',0,0,pW1,pH1)
         const pW2 = Math.max(297, Math.round(bracket.width/3.78))
         const pH2 = Math.round((bracket.height/bracket.width)*pW2)
         pdf.addPage([pW2,pH2], pW2>pH2?'landscape':'portrait')
+        pdf.setTextColor(255,255,255)
+        pdf.setFontSize(8)
+        pdf.text(label, 2, 4)
         pdf.addImage(bracket.img,'JPEG',0,0,pW2,pH2)
       }
 
