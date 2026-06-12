@@ -305,11 +305,11 @@ export default function LeaderboardPage() {
             const mids = matchesFor(dateStr)
             if (!mids.length) return null
             return (
-              <div key={dateStr} style={{ marginBottom:10 }}>
+              <div key={dateStr}>
                 <div style={{ fontSize:11, fontWeight:700, color:'#6e6e73', textTransform:'uppercase', letterSpacing:'.4px', marginBottom:6 }}>
                   {label} · {new Date(dateStr+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:8 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,260px))', gap:10 }}>
                   {mids.map(mid => {
                     const r = results[mid]
                     const [home, away] = TEAM_NAMES[mid] || ['?','?']
@@ -338,7 +338,7 @@ export default function LeaderboardPage() {
           if (!yWidget && !tWidget) return null
 
           return (
-            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, padding:'14px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)' }}>
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, padding:'16px 20px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)', display:'flex', flexDirection:'column', gap:14 }}>
               {yWidget}
               {tWidget}
             </div>
