@@ -53,6 +53,12 @@ export default function AdminPage() {
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [printing, setPrinting] = useState(false)
   const [printProgress, setPrintProgress] = useState('')
+
+  // Editor de picks (corrección manual por quiniela bloqueada)
+  const [pickQuery, setPickQuery] = useState('')
+  const [pickQuiniela, setPickQuiniela] = useState(null)
+  const [pickValues, setPickValues] = useState({})
+  const [savingPicks, setSavingPicks] = useState(false)
   const adminTableRef = useRef(null)
   // Mapa plano de quinielas por id para updates instantáneos sin recargar
   const [quinielasMap, setQuinielasMap] = useState({})
@@ -88,7 +94,39 @@ export default function AdminPage() {
     setLoadingUsers(false)
   }
 
-  async function loadResults() {
+  async function selectPickQuiniela(q) {
+    const { data } = await supabase.from('picks').select('match_id, goals_home, goals_away, winner').eq('quiniela_id', q.id)
+    const vals = {}
+    ;(data || []).forEach(p => { vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner } })
+    setPickQuiniela(q)
+    setPickValues(vals)
+  }
+
+  function updatePickValue(matchId, field, value) {
+    setPickValues(prev => ({
+      ...prev,
+      [matchId]: { ...(prev[matchId] || {}), [field]: value === '' ? null : (field === 'win' ? value : parseInt(value)) }
+    }))
+  }
+
+  async function savePickEdits() {
+    if (!pickQuiniela) return
+    setSavingPicks(true)
+    const rows = Object.entries(pickValues).map(([match_id, v]) => ({
+      quiniela_id: pickQuiniela.id,
+      match_id,
+      goals_home: v.h ?? null,
+      goals_away: v.a ?? null,
+      winner: v.win ?? null,
+    }))
+    await supabase.from('picks').upsert(rows, { onConflict: 'quiniela_id,match_id' })
+    await recalcAllQuinielas()
+    setMsg('✓ Picks actualizados y recalculado')
+    setTimeout(() => setMsg(''), 3000)
+    setSavingPicks(false)
+  }
+
+
     const { data } = await supabase.from('match_results').select('*')
     const map = {}
     data?.forEach(r => { map[r.match_id] = r })
@@ -422,6 +460,7 @@ export default function AdminPage() {
       <div style={{ display:'flex', gap:6, marginBottom:20 }}>
         <button style={tabStyle('payments')} onClick={() => setTab('payments')}>💰 Pagos</button>
         <button style={tabStyle('results')}  onClick={() => setTab('results')}>⚽ Resultados</button>
+        <button style={tabStyle('picks')}    onClick={() => setTab('picks')}>📝 Picks</button>
       </div>
 
       {/* ══ TAB: PAGOS ══ */}
@@ -677,6 +716,100 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+      {/* ══ TAB: PICKS (corrección manual) ══ */}
+      {tab === 'picks' && (
+        <div>
+          <div style={{ marginBottom:12, fontSize:12, color:'#6e6e73' }}>
+            Corrige picks individuales de una quiniela ya bloqueada (ej: usuarios que dejaron "0" por defecto sin querer). Esto NO desbloquea la quiniela.
+          </div>
+
+          <input
+            value={pickQuery}
+            onChange={e => setPickQuery(e.target.value)}
+            placeholder="Buscar quiniela por nombre, jugador o Q##..."
+            style={{ width:'100%', maxWidth:400, padding:'8px 12px', border:'1px solid rgba(0,0,0,.14)', borderRadius:9, fontSize:13, fontFamily:'inherit', marginBottom:12 }}
+          />
+
+          {pickQuery && !pickQuiniela && (
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:10, overflow:'hidden', maxHeight:240, overflowY:'auto', marginBottom:16 }}>
+              {users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, username: u.username })))
+                .filter(q => {
+                  const s = pickQuery.toLowerCase()
+                  return q.name?.toLowerCase().includes(s) || q.username?.toLowerCase().includes(s) || `q${q.seq_num}`.includes(s)
+                })
+                .slice(0, 20)
+                .map(q => (
+                  <div key={q.id} onClick={() => selectPickQuiniela(q)}
+                    style={{ padding:'8px 12px', cursor:'pointer', borderBottom:'0.5px solid rgba(0,0,0,.05)', fontSize:13 }}
+                    onMouseOver={e => e.currentTarget.style.background='#f2f2f4'}
+                    onMouseOut={e => e.currentTarget.style.background='transparent'}>
+                    <strong>Q{String(q.seq_num).padStart(2,'0')}</strong> {q.name} <span style={{ color:'#aeaeb2', fontSize:11 }}>· {q.username}</span>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {pickQuiniela && (
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,.06)' }}>
+              <div style={{ padding:'10px 14px', background:'#f2f2f4', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <strong style={{ fontSize:13 }}>Q{String(pickQuiniela.seq_num).padStart(2,'0')} · {pickQuiniela.name}</strong>
+                <button onClick={() => { setPickQuiniela(null); setPickValues({}); setPickQuery('') }}
+                  style={{ padding:'4px 10px', background:'#f2f2f4', border:'1px solid rgba(0,0,0,.1)', borderRadius:7, fontSize:12, cursor:'pointer' }}>
+                  ✕ Cerrar
+                </button>
+              </div>
+
+              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+                <thead>
+                  <tr style={{ background:'#f2f2f4' }}>
+                    {['Partido','Local','Pick','Visitante'].map(h => (
+                      <th key={h} style={{ padding:'6px 12px', fontWeight:600, fontSize:11, textTransform:'uppercase', letterSpacing:'.3px', color:'#6e6e73', textAlign:'left', borderBottom:'0.5px solid rgba(0,0,0,.08)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(GROUP_FIXTURE || {}).length > 0 ? Object.keys(GROUP_FIXTURE).map(mid => {
+                    const fixture = GROUP_FIXTURE[mid]
+                    const v = pickValues[mid] || {}
+                    return (
+                      <tr key={mid} style={{ borderBottom:'0.5px solid rgba(0,0,0,.05)' }}>
+                        <td style={{ padding:'6px 12px', fontWeight:700, color:'#0071e3' }}>{mid}</td>
+                        <td style={{ padding:'6px 12px', fontSize:12 }}>{fixture?.[0] || '–'}</td>
+                        <td style={{ padding:'6px 12px' }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                            <input type="number" min={0} max={20}
+                              value={v.h ?? ''}
+                              onChange={e => updatePickValue(mid, 'h', e.target.value)}
+                              style={{ width:38, height:30, border:'1px solid rgba(0,0,0,.14)', borderRadius:7, textAlign:'center', fontSize:13, fontWeight:700, fontFamily:'inherit' }}/>
+                            <span style={{ color:'#aeaeb2', fontWeight:700 }}>–</span>
+                            <input type="number" min={0} max={20}
+                              value={v.a ?? ''}
+                              onChange={e => updatePickValue(mid, 'a', e.target.value)}
+                              style={{ width:38, height:30, border:'1px solid rgba(0,0,0,.14)', borderRadius:7, textAlign:'center', fontSize:13, fontWeight:700, fontFamily:'inherit' }}/>
+                          </div>
+                        </td>
+                        <td style={{ padding:'6px 12px', fontSize:12 }}>{fixture?.[1] || '–'}</td>
+                      </tr>
+                    )
+                  }) : (
+                    <tr><td colSpan={4} style={{ padding:16, textAlign:'center', color:'#aeaeb2' }}>No hay catálogo de partidos disponible</td></tr>
+                  )}
+                </tbody>
+              </table>
+
+              <div style={{ padding:12, display:'flex', justifyContent:'flex-end' }}>
+                <button onClick={savePickEdits} disabled={savingPicks}
+                  style={{ padding:'8px 16px', background:'#0071e3', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:savingPicks?.5:1 }}>
+                  {savingPicks ? '⏳ Guardando...' : '💾 Guardar y recalcular'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+
+
     </div>
   )
 }
