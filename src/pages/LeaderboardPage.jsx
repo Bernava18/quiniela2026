@@ -290,58 +290,6 @@ export default function LeaderboardPage() {
     <div style={{ padding:'20px 12px', fontFamily:'-apple-system,"DM Sans",sans-serif' }}>
       <div style={{ maxWidth:1500, margin:'0 auto' }}>
 
-        {/* Widget: partidos de ayer y hoy */}
-        {(() => {
-          const todayStr = new Date().toISOString().slice(0,10)
-          const yesterday = new Date()
-          yesterday.setDate(yesterday.getDate() - 1)
-          const yesterdayStr = yesterday.toISOString().slice(0,10)
-
-          const matchesFor = (dateStr) => Object.entries(MATCH_DATES)
-            .filter(([, d]) => d === dateStr)
-            .map(([mid]) => mid)
-
-          const renderDay = (label, dateStr) => {
-            const mids = matchesFor(dateStr)
-            if (!mids.length) return null
-            return (
-              <div style={{ flex:'1 1 260px', minWidth:0 }}>
-                <div style={{ fontSize:9, color:'#c7c7cc', fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', marginBottom:4 }}>
-                  {label} · {new Date(dateStr+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
-                </div>
-                <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-                  {mids.map(mid => {
-                    const r = results[mid]
-                    const [home, away] = TEAM_NAMES[mid] || ['?','?']
-                    const played = r && r.hs != null
-                    return (
-                      <div key={mid} style={{ display:'flex', alignItems:'center', gap:4, fontSize:9.5, padding:'2px 6px', background:'#f9f9fb', borderRadius:5, lineHeight:1.4 }}>
-                        <span style={{ fontSize:7.5, color:'#c7c7cc', fontWeight:700, minWidth:22 }}>GR.{mid[0]}</span>
-                        <span style={{ fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{home}</span>
-                        <span style={{ fontWeight:800, color: played ? '#1d1d1f' : '#c7c7cc', marginLeft:'auto', paddingLeft:4 }}>
-                          {played ? `${r.hs}–${r.as}` : '–:–'}
-                        </span>
-                        <span style={{ fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{away}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          }
-
-          const yWidget = renderDay('Ayer', yesterdayStr)
-          const tWidget = renderDay('Hoy', todayStr)
-          if (!yWidget && !tWidget) return null
-
-          return (
-            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:12, padding:'10px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)', display:'flex', gap:24, flexWrap:'wrap' }}>
-              {yWidget}
-              {tWidget}
-            </div>
-          )
-        })()}
-
         {/* Botones exportar — siempre visibles arriba */}
         <div style={{ display:'flex', gap:8, marginBottom:12, justifyContent:'flex-end' }}>
           <button onClick={exportPDF}
@@ -370,6 +318,59 @@ export default function LeaderboardPage() {
             ))}
           </div>
         </div>
+
+        {/* Widget: partidos de ayer y hoy */}
+        {(() => {
+          const todayStr = new Date().toISOString().slice(0,10)
+          const yesterday = new Date()
+          yesterday.setDate(yesterday.getDate() - 1)
+          const yesterdayStr = yesterday.toISOString().slice(0,10)
+
+          const matchesFor = (dateStr) => Object.entries(MATCH_DATES)
+            .filter(([, d]) => d === dateStr)
+            .map(([mid]) => mid)
+
+          const renderDay = (label, dateStr) => {
+            const mids = matchesFor(dateStr)
+            if (!mids.length) return null
+            return (
+              <div style={{ flex:'1 1 260px', minWidth:0 }}>
+                <div style={{ fontSize:9, color:'#c7c7cc', fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', marginBottom:4 }}>
+                  {label} · {new Date(dateStr+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                  {mids.map(mid => {
+                    const r = results[mid]
+                    const [home, away] = TEAM_NAMES[mid] || ['?','?']
+                    const played = r && r.hs != null
+                    return (
+                      <div key={mid} style={{ display:'flex', alignItems:'center', gap:4, fontSize:9.5, padding:'2px 6px', background:'#f9f9fb', borderRadius:5, lineHeight:1.4 }}>
+                        <span style={{ fontSize:7.5, color:'#c7c7cc', fontWeight:700, minWidth:22 }}>GR.{mid[0]}</span>
+                        <span style={{ flex:1, textAlign:'right', fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{home}</span>
+                        <span style={{ fontWeight:800, color: played ? '#1d1d1f' : '#c7c7cc', minWidth:30, textAlign:'center', flexShrink:0 }}>
+                          {played ? `${r.hs}–${r.as}` : '–:–'}
+                        </span>
+                        <span style={{ flex:1, fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{away}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          }
+
+          const yWidget = renderDay('Ayer', yesterdayStr)
+          const tWidget = renderDay('Hoy', todayStr)
+          if (!yWidget && !tWidget) return null
+
+          return (
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:12, padding:'10px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)', display:'flex', gap:24, flexWrap:'wrap' }}>
+              {yWidget}
+              {tWidget}
+            </div>
+          )
+        })()}
+
 
         {/* Header */}
         <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:4 }}>
