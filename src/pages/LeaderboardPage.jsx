@@ -305,23 +305,23 @@ export default function LeaderboardPage() {
             const mids = matchesFor(dateStr)
             if (!mids.length) return null
             return (
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:10, fontWeight:700, color:'#aeaeb2', textTransform:'uppercase', letterSpacing:'.4px', marginBottom:6 }}>
+              <div style={{ flex:'1 1 260px', minWidth:0 }}>
+                <div style={{ fontSize:9, color:'#c7c7cc', fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', marginBottom:4 }}>
                   {label} · {new Date(dateStr+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'})}
                 </div>
-                <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
                   {mids.map(mid => {
                     const r = results[mid]
                     const [home, away] = TEAM_NAMES[mid] || ['?','?']
                     const played = r && r.hs != null
                     return (
-                      <div key={mid} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11.5, padding:'4px 8px', background:'#f9f9fb', borderRadius:7 }}>
-                        <span style={{ fontSize:9, color:'#aeaeb2', minWidth:34, fontWeight:700 }}>GR.{mid[0]}</span>
-                        <span style={{ flex:1, textAlign:'right', fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{home}</span>
-                        <span style={{ fontWeight:800, color: played ? '#1d1d1f' : '#c7c7cc', minWidth:44, textAlign:'center' }}>
+                      <div key={mid} style={{ display:'flex', alignItems:'center', gap:4, fontSize:9.5, padding:'2px 6px', background:'#f9f9fb', borderRadius:5, lineHeight:1.4 }}>
+                        <span style={{ fontSize:7.5, color:'#c7c7cc', fontWeight:700, minWidth:22 }}>GR.{mid[0]}</span>
+                        <span style={{ fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{home}</span>
+                        <span style={{ fontWeight:800, color: played ? '#1d1d1f' : '#c7c7cc', marginLeft:'auto', paddingLeft:4 }}>
                           {played ? `${r.hs}–${r.as}` : '–:–'}
                         </span>
-                        <span style={{ flex:1, fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{away}</span>
+                        <span style={{ fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{away}</span>
                       </div>
                     )
                   })}
@@ -335,7 +335,7 @@ export default function LeaderboardPage() {
           if (!yWidget && !tWidget) return null
 
           return (
-            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, padding:'14px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)', display:'flex', gap:20, flexWrap:'wrap' }}>
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:12, padding:'10px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)', display:'flex', gap:24, flexWrap:'wrap' }}>
               {yWidget}
               {tWidget}
             </div>
