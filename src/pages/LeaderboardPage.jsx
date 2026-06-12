@@ -519,11 +519,12 @@ export default function LeaderboardPage() {
                                   const res = results[mid]
                                   const has = pk && pk.h != null && pk.a != null
                                   const correct = has && res && pk.h === res.hs && pk.a === res.as
+                                  const [home, away] = TEAM_NAMES[mid] || ['?','?']
                                   return (
                                     <span key={mid} style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4,
                                       background: !has ? 'rgba(255,69,58,.1)' : correct ? 'rgba(48,209,88,.15)' : 'rgba(0,113,227,.08)',
                                       color: !has ? '#c0392b' : correct ? '#1a7a38' : '#0055b3' }}>
-                                      {mid} {has ? `${pk.h}-${pk.a}` : '–'}
+                                      {home} {has ? pk.h : '–'}-{has ? pk.a : '–'} {away}
                                     </span>
                                   )
                                 })}
