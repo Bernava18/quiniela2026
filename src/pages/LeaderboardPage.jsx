@@ -506,13 +506,27 @@ export default function LeaderboardPage() {
                         <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
                           <span style={{ fontSize:10, color:'#aeaeb2' }}>{r.quinielas?.profiles?.username}</span>
                           {(() => {
-                            const filled = r.picks_count ?? 0
-                            const complete = filled >= 104
+                            const todayStr = new Date().toISOString().slice(0,10)
+                            const picks = allPicks[r.quiniela_id] || {}
+                            const todayMatches = Object.entries(MATCH_DATES)
+                              .filter(([, d]) => d === todayStr)
+                              .map(([mid]) => mid)
+                            if (todayMatches.length === 0) return null
                             return (
-                              <span style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4,
-                                background: complete ? 'rgba(48,209,88,.15)' : 'rgba(255,69,58,.1)',
-                                color: complete ? '#1a7a38' : '#c0392b' }}>
-                                {complete ? '✓ Completada' : `Incompleta ${filled}/104`}
+                              <span style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                                {todayMatches.map(mid => {
+                                  const pk = picks[mid]
+                                  const res = results[mid]
+                                  const has = pk && pk.h != null && pk.a != null
+                                  const correct = has && res && pk.h === res.hs && pk.a === res.as
+                                  return (
+                                    <span key={mid} style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4,
+                                      background: !has ? 'rgba(255,69,58,.1)' : correct ? 'rgba(48,209,88,.15)' : 'rgba(0,113,227,.08)',
+                                      color: !has ? '#c0392b' : correct ? '#1a7a38' : '#0055b3' }}>
+                                      {mid} {has ? `${pk.h}-${pk.a}` : '–'}
+                                    </span>
+                                  )
+                                })}
                               </span>
                             )
                           })()}
