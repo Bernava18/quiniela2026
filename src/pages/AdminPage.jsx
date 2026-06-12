@@ -108,18 +108,110 @@ export default function AdminPage() {
   async function saveResult(matchId, hs, as_, winner) {
     if (hs === '' || as_ === '') return
     setSaving(matchId)
+
+    const isGroup = /^[A-L][1-6]$/.test(matchId)
+    // Para eliminatorias necesitamos h_team/a_team — los tomamos de un pick existente con ese match_id
+    let hTeam = null, aTeam = null
+    if (!isGroup) {
+      const { data: anyPick } = await supabase
+        .from('picks').select('h_team, a_team')
+        .eq('match_id', matchId).not('h_team', 'is', null).limit(1).maybeSingle()
+      hTeam = anyPick?.h_team || null
+      aTeam = anyPick?.a_team || null
+    }
+
     await supabase.from('match_results').upsert({
       match_id: matchId,
       goals_home: parseInt(hs),
       goals_away: parseInt(as_),
       winner: winner || null,
+      h_team: hTeam,
+      a_team: aTeam,
       status: 'finished',
       updated_at: new Date().toISOString(),
     }, { onConflict: 'match_id' })
-    setMsg(`✓ ${matchId} guardado`)
+
+    setMsg(`⏳ Recalculando todas las quinielas...`)
+    await recalcAllQuinielas()
+
+    setMsg(`✓ ${matchId} guardado y tabla actualizada`)
     loadResults()
     setSaving(null)
-    setTimeout(() => setMsg(''), 2000)
+    setTimeout(() => setMsg(''), 3000)
+  }
+
+  // Recalcula scores de TODAS las quinielas en base a match_results actual
+  async function recalcAllQuinielas() {
+    const { data: results } = await supabase.from('match_results').select('*')
+    const resultsMap = {}
+    results?.forEach(r => { resultsMap[r.match_id] = r })
+
+    const { data: allQ } = await supabase.from('quinielas').select('id')
+    if (!allQ) return
+
+    for (const q of allQ) {
+      const { data: picks } = await supabase.from('picks').select('*').eq('quiniela_id', q.id)
+      if (!picks) continue
+
+      let grpPts = 0, elimPts = 0, finalPtsCalc = 0
+
+      picks.forEach(pick => {
+        const result = resultsMap[pick.match_id]
+        if (!result || result.goals_home == null || pick.goals_home == null) return
+        const isGrp = /^[A-L][1-6]$/.test(pick.match_id)
+
+        if (!isGrp) {
+          // Eliminatorias: equipos deben coincidir exactamente en posición
+          const pH = (pick.h_team||'').trim(), pA = (pick.a_team||'').trim()
+          const rH = (result.h_team||'').trim(), rA = (result.a_team||'').trim()
+          if (!rH || !rA || pH !== rH || pA !== rA) return
+        }
+
+        const rR = result.goals_home > result.goals_away ? 'H' : result.goals_home < result.goals_away ? 'A' : 'D'
+        const pR = pick.goals_home > pick.goals_away ? 'H' : pick.goals_home < pick.goals_away ? 'A' : 'D'
+        const hOk = pick.goals_home === result.goals_home
+        const aOk = pick.goals_away === result.goals_away
+        const resOk = isGrp ? rR === pR : pick.winner === result.winner
+        const bonus = hOk && aOk && resOk
+        let pts = 0
+        if (hOk) pts += 1
+        if (aOk) pts += 1
+        if (resOk) pts += 2
+        if (bonus) pts += 1
+
+        if (isGrp) grpPts += pts
+        else if (pick.match_id !== 'M103' && pick.match_id !== 'M104') elimPts += pts
+        else elimPts += pts
+      })
+
+      // Orden final (M103/M104)
+      const finPick = picks.find(p => p.match_id === 'M104')
+      const t3Pick  = picks.find(p => p.match_id === 'M103')
+      const finRes  = resultsMap['M104']
+      const t3Res   = resultsMap['M103']
+      if (finRes?.goals_home != null && finPick?.winner) {
+        const champion = finRes.goals_home > finRes.goals_away ? finRes.h_team : finRes.a_team
+        const runner   = champion === finRes.h_team ? finRes.a_team : finRes.h_team
+        if (finPick.winner === champion) finalPtsCalc += 20
+        const pickRun = finPick.winner === finPick.h_team ? finPick.a_team : finPick.h_team
+        if (pickRun === runner) finalPtsCalc += 10
+      }
+      if (t3Res?.goals_home != null && t3Pick?.winner) {
+        const third  = t3Res.goals_home > t3Res.goals_away ? t3Res.h_team : t3Res.a_team
+        const fourth = third === t3Res.h_team ? t3Res.a_team : t3Res.h_team
+        if (t3Pick.winner === third)  finalPtsCalc += 5
+        const pickFourth = t3Pick.winner === t3Pick.h_team ? t3Pick.a_team : t3Pick.h_team
+        if (pickFourth === fourth) finalPtsCalc += 3
+      }
+
+      const total = grpPts + elimPts + finalPtsCalc
+      await supabase.from('scores').upsert({
+        quiniela_id: q.id,
+        grp_pts: grpPts, clasif_pts: 0, elim_pts: elimPts,
+        final_pts: finalPtsCalc, total_pts: total,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'quiniela_id' })
+    }
   }
 
   async function triggerSync() {
