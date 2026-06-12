@@ -120,13 +120,12 @@ export default function AdminPage() {
       winner: v.win ?? null,
     }))
     await supabase.from('picks').upsert(rows, { onConflict: 'quiniela_id,match_id' })
-    await recalcAllQuinielas()
-    setMsg('✓ Picks actualizados y recalculado')
+    setMsg('✓ Picks guardados (tabla de posiciones sin cambios)')
     setTimeout(() => setMsg(''), 3000)
     setSavingPicks(false)
   }
 
-
+  async function loadResults() {
     const { data } = await supabase.from('match_results').select('*')
     const map = {}
     data?.forEach(r => { map[r.match_id] = r })
@@ -720,7 +719,7 @@ export default function AdminPage() {
       {tab === 'picks' && (
         <div>
           <div style={{ marginBottom:12, fontSize:12, color:'#6e6e73' }}>
-            Corrige picks individuales de una quiniela ya bloqueada (ej: usuarios que dejaron "0" por defecto sin querer). Esto NO desbloquea la quiniela.
+            Corrige picks individuales de una quiniela ya bloqueada (ej: usuarios que dejaron "0" por defecto sin querer). Esto solo guarda el pick en la base de datos — NO recalcula puntajes ni afecta la tabla de posiciones. Para que el cambio se refleje en la tabla, usa "Resultados → Actualizar" o el botón de recalcular cuando estés listo.
           </div>
 
           <input
@@ -800,7 +799,7 @@ export default function AdminPage() {
               <div style={{ padding:12, display:'flex', justifyContent:'flex-end' }}>
                 <button onClick={savePickEdits} disabled={savingPicks}
                   style={{ padding:'8px 16px', background:'#0071e3', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:savingPicks?.5:1 }}>
-                  {savingPicks ? '⏳ Guardando...' : '💾 Guardar y recalcular'}
+                  {savingPicks ? '⏳ Guardando...' : '💾 Guardar pick (sin recalcular)'}
                 </button>
               </div>
             </div>
