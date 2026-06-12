@@ -137,7 +137,8 @@ export default function LeaderboardPage() {
         clasifPts: r.clasif_pts || 0,      // posición exacta en grupos
         elimPts:   r.elim_pts   || 0,      // R32+Oct+QF+SF+3ro+Final
         finalPts:  r.final_pts  || 0,      // orden final 20/10/5/3
-        total:     r.total_pts  || 0,
+        // TOTAL calculado en vivo: grupos (en tiempo real) + resto (de BD)
+        total: grpTotal + (r.clasif_pts || 0) + (r.elim_pts || 0) + (r.final_pts || 0),
       }
     }).sort((a, b) => b.total - a.total)
     .map((r, i) => ({ ...r, rank: i + 1, prevRank: i + 1 }))
