@@ -83,7 +83,7 @@ export default function AdminPage() {
         id, username, full_name, phone, email, has_paid, paid_at,
         quinielas (
           id, name, seq_num, is_locked, payment_status, payment_method, payment_ref, hidden_from_table,
-          picks (match_id, goals_home),
+          picks (match_id, goals_home, goals_away),
           scores (total_pts)
         )
       `)
@@ -309,7 +309,20 @@ export default function AdminPage() {
   }
 
   // ── PAYMENT STATS — usa overrides para que los contadores se actualicen en vivo
-  const allQuinielas          = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, ...(quinielasMap[q.id]||{}), userId: u.id })))
+  const allQuinielas          = users.flatMap(u => (u.quinielas||[]).map(q => ({ ...q, ...(quinielasMap[q.id]||{}), userId: u.id, username: u.username })))
+
+  // ── PICKS INCOMPLETOS: partidos de grupo con goals_home o goals_away en null
+  const incompleteQuinielas = allQuinielas.map(q => {
+    const picks = q.picks || []
+    const missing = Object.keys(GROUP_FIXTURE).filter(mid => {
+      const p = picks.find(pp => pp.match_id === mid)
+      if (!p) return true
+      return p.goals_home == null || p.goals_away == null
+    })
+    return { ...q, missing }
+  }).filter(q => q.missing.length > 0)
+    .sort((a, b) => (a.seq_num||0) - (b.seq_num||0))
+
   const confirmedAndCommitted = allQuinielas.filter(q => q.payment_status === 'paid' || q.payment_status === 'committed')
   const unpaidUsers           = users.filter(u => !u.has_paid)
   const totalPaid             = confirmedAndCommitted.length * ENTRY_FEE
@@ -739,6 +752,25 @@ export default function AdminPage() {
           <div style={{ marginBottom:12, fontSize:12, color:'#6e6e73' }}>
             Corrige picks individuales de una quiniela ya bloqueada (ej: usuarios que dejaron "0" por defecto sin querer). Esto solo guarda el pick en la base de datos — NO recalcula puntajes ni afecta la tabla de posiciones. Para que el cambio se refleje en la tabla, usa "Resultados → Actualizar" o el botón de recalcular cuando estés listo.
           </div>
+
+          {incompleteQuinielas.length > 0 && (
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:10, overflow:'hidden', marginBottom:16, maxHeight:260, overflowY:'auto' }}>
+              <div style={{ padding:'8px 12px', background:'#fff8e6', fontWeight:700, fontSize:12, color:'#7a5900', borderBottom:'0.5px solid rgba(0,0,0,.06)' }}>
+                ⚠️ {incompleteQuinielas.length} quiniela(s) con picks de grupos incompletos
+              </div>
+              {incompleteQuinielas.map(q => (
+                <div key={q.id} onClick={() => { setPickQuery(''); selectPickQuiniela(q) }}
+                  style={{ padding:'8px 12px', cursor:'pointer', borderBottom:'0.5px solid rgba(0,0,0,.05)', fontSize:12 }}
+                  onMouseOver={e => e.currentTarget.style.background='#f2f2f4'}
+                  onMouseOut={e => e.currentTarget.style.background='transparent'}>
+                  <strong>Q{String(q.seq_num).padStart(2,'0')}</strong> {q.name} <span style={{ color:'#aeaeb2' }}>· {q.username}</span>
+                  <div style={{ marginTop:2, color:'#c0392b' }}>
+                    {q.missing.join(', ')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <input
             value={pickQuery}
