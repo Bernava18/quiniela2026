@@ -212,8 +212,17 @@ export default function LeaderboardPage() {
         total: grpTotal + (r.clasif_pts || 0) + (r.elim_pts || 0) + (r.final_pts || 0),
       }
     }).sort((a, b) => b.total - a.total)
-    .map((r, i) => ({ ...r, rank: i + 1, prevRank: i + 1 }))
-    setEnriched(built)
+
+    // Ranking "dense": empates comparten puesto, el siguiente NO salta (1,1,1,2,2,3,4...)
+    let currentRank = 1
+    const ranked = built.map((r, i) => {
+      if (i > 0 && r.total !== built[i-1].total) {
+        currentRank += 1
+      }
+      return { ...r, rank: currentRank, prevRank: currentRank }
+    })
+
+    setEnriched(ranked)
   }
 
   async function openViewer(row) {
