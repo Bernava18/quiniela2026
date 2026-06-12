@@ -58,6 +58,7 @@ export default function AdminPage() {
   const [pickQuery, setPickQuery] = useState('')
   const [pickQuiniela, setPickQuiniela] = useState(null)
   const [pickValues, setPickValues] = useState({})
+  const [editedMatches, setEditedMatches] = useState({})
   const [savingPicks, setSavingPicks] = useState(false)
   const adminTableRef = useRef(null)
   // Mapa plano de quinielas por id para updates instantáneos sin recargar
@@ -95,11 +96,13 @@ export default function AdminPage() {
   }
 
   async function selectPickQuiniela(q) {
-    const { data } = await supabase.from('picks').select('match_id, goals_home, goals_away, winner').eq('quiniela_id', q.id)
+    const { data, error } = await supabase.from('picks').select('match_id, goals_home, goals_away, winner, h_team, a_team').eq('quiniela_id', q.id)
+    if (error) { setMsg('Error cargando picks: ' + error.message); return }
     const vals = {}
-    ;(data || []).forEach(p => { vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner } })
+    ;(data || []).forEach(p => { vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner, hTeam: p.h_team, aTeam: p.a_team } })
     setPickQuiniela(q)
     setPickValues(vals)
+    setEditedMatches({})
   }
 
   function updatePickValue(matchId, field, value) {
@@ -107,21 +110,36 @@ export default function AdminPage() {
       ...prev,
       [matchId]: { ...(prev[matchId] || {}), [field]: value === '' ? null : (field === 'win' ? value : parseInt(value)) }
     }))
+    setEditedMatches(prev => ({ ...prev, [matchId]: true }))
   }
 
   async function savePickEdits() {
     if (!pickQuiniela) return
+    const matchIds = Object.keys(editedMatches)
+    if (matchIds.length === 0) { setMsg('No hay cambios para guardar'); setTimeout(() => setMsg(''), 2000); return }
     setSavingPicks(true)
-    const rows = Object.entries(pickValues).map(([match_id, v]) => ({
-      quiniela_id: pickQuiniela.id,
-      match_id,
-      goals_home: v.h ?? null,
-      goals_away: v.a ?? null,
-      winner: v.win ?? null,
-    }))
-    await supabase.from('picks').upsert(rows, { onConflict: 'quiniela_id,match_id' })
-    setMsg('✓ Picks guardados (tabla de posiciones sin cambios)')
-    setTimeout(() => setMsg(''), 3000)
+    const rows = matchIds.map(match_id => {
+      const v = pickValues[match_id] || {}
+      const fixture = GROUP_FIXTURE[match_id]
+      return {
+        quiniela_id: pickQuiniela.id,
+        match_id,
+        goals_home: v.h ?? null,
+        goals_away: v.a ?? null,
+        winner: v.win ?? null,
+        h_team: v.hTeam ?? fixture?.[0] ?? null,
+        a_team: v.aTeam ?? fixture?.[1] ?? null,
+        updated_at: new Date().toISOString(),
+      }
+    })
+    const { error } = await supabase.from('picks').upsert(rows, { onConflict: 'quiniela_id,match_id' })
+    if (error) {
+      setMsg('❌ Error: ' + error.message)
+    } else {
+      setMsg('✓ Picks guardados (tabla de posiciones sin cambios)')
+      setEditedMatches({})
+    }
+    setTimeout(() => setMsg(''), 4000)
     setSavingPicks(false)
   }
 
@@ -752,7 +770,7 @@ export default function AdminPage() {
             <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,.06)' }}>
               <div style={{ padding:'10px 14px', background:'#f2f2f4', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <strong style={{ fontSize:13 }}>Q{String(pickQuiniela.seq_num).padStart(2,'0')} · {pickQuiniela.name}</strong>
-                <button onClick={() => { setPickQuiniela(null); setPickValues({}); setPickQuery('') }}
+                <button onClick={() => { setPickQuiniela(null); setPickValues({}); setPickQuery(''); setEditedMatches({}) }}
                   style={{ padding:'4px 10px', background:'#f2f2f4', border:'1px solid rgba(0,0,0,.1)', borderRadius:7, fontSize:12, cursor:'pointer' }}>
                   ✕ Cerrar
                 </button>
