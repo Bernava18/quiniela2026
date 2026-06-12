@@ -106,7 +106,7 @@ export async function getLeaderboard() {
       picks ( match_id, goals_home )
     `)
     .order('name')
-    .limit(200)
+    .limit(500)
 
   if (!data) return { data: [], error }
 
