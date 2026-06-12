@@ -520,11 +520,18 @@ export default function LeaderboardPage() {
                                   const has = pk && pk.h != null && pk.a != null
                                   const correct = has && res && pk.h === res.hs && pk.a === res.as
                                   const [home, away] = TEAM_NAMES[mid] || ['?','?']
+                                  const hasResult = res && res.hs != null
+                                  const hOk = has && hasResult && pk.h === res.hs
+                                  const aOk = has && hasResult && pk.a === res.as
+                                  const numStyle = (ok) => ({
+                                    fontWeight:800,
+                                    color: !has || !hasResult ? 'inherit' : ok ? '#1a7a38' : '#c0392b'
+                                  })
                                   return (
                                     <span key={mid} style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4,
                                       background: !has ? 'rgba(255,69,58,.1)' : correct ? 'rgba(48,209,88,.15)' : 'rgba(0,113,227,.08)',
                                       color: !has ? '#c0392b' : correct ? '#1a7a38' : '#0055b3' }}>
-                                      {home} {has ? pk.h : '–'}-{has ? pk.a : '–'} {away}
+                                      {home} <span style={numStyle(hOk)}>{has ? pk.h : '–'}</span>-<span style={numStyle(aOk)}>{has ? pk.a : '–'}</span> {away}
                                     </span>
                                   )
                                 })}
