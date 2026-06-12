@@ -109,9 +109,24 @@ export default function LeaderboardPage() {
 
   async function loadAllPicks() {
     const qids = rows.map(r => r.quiniela_id)
-    const { data } = await supabase.from('picks').select('*').in('quiniela_id', qids)
+    // Supabase limita a 1000 filas por defecto — con 87 quinielas x 104 picks
+    // superamos eso, así que paginamos
+    let allData = []
+    let from = 0
+    const pageSize = 1000
+    while (true) {
+      const { data, error } = await supabase
+        .from('picks')
+        .select('quiniela_id, match_id, goals_home, goals_away, winner')
+        .in('quiniela_id', qids)
+        .range(from, from + pageSize - 1)
+      if (error || !data?.length) break
+      allData = allData.concat(data)
+      if (data.length < pageSize) break
+      from += pageSize
+    }
     const map = {}
-    data?.forEach(p => {
+    allData.forEach(p => {
       if (!map[p.quiniela_id]) map[p.quiniela_id] = {}
       map[p.quiniela_id][p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner }
     })
