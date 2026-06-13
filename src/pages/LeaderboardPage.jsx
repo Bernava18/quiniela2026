@@ -88,6 +88,7 @@ export default function LeaderboardPage() {
   const [viewing, setViewing] = useState(null)
   const [iframeReady, setIframeReady] = useState(false)
   const [enriched, setEnriched]   = useState([])
+  const [tableSearch, setTableSearch] = useState('')
   const [hasPaid, setHasPaid]     = useState(false)
   const [prizePool, setPrizePool] = useState({ total:0, p1:0, p2:0, p3:0, committedCount:0 })
   const tableRef = useRef(null)
@@ -438,6 +439,16 @@ export default function LeaderboardPage() {
           </div>
         )}
 
+        {/* Buscador */}
+        <div style={{ marginBottom:10 }}>
+          <input
+            value={tableSearch}
+            onChange={e => setTableSearch(e.target.value)}
+            placeholder="🔍 Buscar por nombre o Q##..."
+            style={{ width:'100%', maxWidth:320, padding:'8px 12px', border:'1px solid rgba(0,0,0,.12)', borderRadius:9, fontSize:13, fontFamily:'inherit' }}
+          />
+        </div>
+
         {/* Tabla */}
         <div ref={tableRef} style={{ background:'#fff', borderRadius:14, border:'0.5px solid rgba(0,0,0,.08)', boxShadow:'0 2px 12px rgba(0,0,0,.06)', overflow:'hidden' }}>
           <div style={{ overflowX:'auto' }}>
@@ -472,11 +483,17 @@ export default function LeaderboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Cargando...</td></tr>
-                ) : enriched.length === 0 ? (
-                  <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Sin datos aún</td></tr>
-                ) : enriched.map((r, i) => {
+                {(() => {
+                  const s = tableSearch.trim().toLowerCase()
+                  const filtered = !s ? enriched : enriched.filter(r => {
+                    const name = r.quinielas?.name?.toLowerCase() || ''
+                    const username = r.quinielas?.profiles?.username?.toLowerCase() || ''
+                    const seq = `q${String(r.quinielas?.seq_num||0).padStart(2,'0')}`
+                    return name.includes(s) || username.includes(s) || seq.includes(s)
+                  })
+                  if (loading) return <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Cargando...</td></tr>
+                  if (filtered.length === 0) return <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>{enriched.length === 0 ? 'Sin datos aún' : 'Sin resultados para tu búsqueda'}</td></tr>
+                  return filtered.map((r, i) => {
                   const isMe = r.quinielas?.profiles?.username === profile?.username
                   const bgRow = isMe ? 'rgba(0,113,227,.10)' : i % 2 === 0 ? '#fff' : '#fafafa'
                   return (
@@ -590,7 +607,8 @@ export default function LeaderboardPage() {
 
                     </tr>
                   )
-                })}
+                })
+                })()}
               </tbody>
             </table>
           </div>
