@@ -130,7 +130,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => { loadResults(); checkPayment() }, [])
   useEffect(() => { if (rows.length > 0) loadAllPicks() }, [rows])
-  useEffect(() => { if (rows.length >= 0) buildEnriched() }, [rows, allPicks, results])
+  useEffect(() => { if (rows.length >= 0) buildEnriched() }, [rows, allPicks, results, prizePool])
 
   async function checkPayment() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -223,8 +223,19 @@ export default function LeaderboardPage() {
       return { ...r, rank: currentRank, prevRank: currentRank }
     })
 
-    setEnriched(ranked)
+    // Premio por fila: si hay empate en una posición premiada (1,2,3), se divide entre los empatados
+    const rankCounts = {}
+    ranked.forEach(r => { rankCounts[r.rank] = (rankCounts[r.rank]||0) + 1 })
+    const prizeByRank = { 1: prizePool.p1, 2: prizePool.p2, 3: prizePool.p3 }
+    const rankedWithPrize = ranked.map(r => {
+      const base = prizeByRank[r.rank]
+      const prize = base != null ? base / rankCounts[r.rank] : null
+      return { ...r, prize }
+    })
+
+    setEnriched(rankedWithPrize)
   }
+
 
   async function openViewer(row) {
     const worldCupStarted = new Date() >= LOCK_DATE
@@ -519,6 +530,11 @@ export default function LeaderboardPage() {
                             <span style={{ fontSize:9, background:'rgba(255,159,10,.15)', color:'#b06000', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>🤝</span>
                           )}
                           {isMe && <span style={{ fontSize:9, background:'rgba(0,113,227,.12)', color:'#0071e3', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>TÚ</span>}
+                          {r.prize != null && r.prize > 0 && (
+                            <span style={{ fontSize:9, background:'rgba(48,209,88,.15)', color:'#1a7a38', padding:'1px 6px', borderRadius:4, fontWeight:700 }}>
+                              🏆 Estás ganando ${Math.round(r.prize)}
+                            </span>
+                          )}
                         </div>
                         <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
                           <span style={{ fontSize:10, color:'#aeaeb2' }}>{r.quinielas?.profiles?.username}</span>
