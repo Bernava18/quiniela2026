@@ -354,10 +354,10 @@ export default function LeaderboardPage() {
                     const [home, away] = TEAM_NAMES[mid] || ['?','?']
                     const played = r && r.hs != null
                     return (
-                      <div key={mid} style={{ display:'flex', alignItems:'center', gap:4, fontSize:9.5, padding:'2px 6px', background:'#f9f9fb', borderRadius:5, lineHeight:1.4 }}>
-                        <span style={{ fontSize:7.5, color:'#c7c7cc', fontWeight:700, minWidth:22 }}>GR.{mid[0]}</span>
+                      <div key={mid} style={{ display:'flex', alignItems:'center', gap:4, fontSize:12, padding:'3px 6px', background:'#f9f9fb', borderRadius:5, lineHeight:1.4 }}>
+                        <span style={{ fontSize:9, color:'#c7c7cc', fontWeight:700, minWidth:24 }}>GR.{mid[0]}</span>
                         <span style={{ flex:1, textAlign:'right', fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{home}</span>
-                        <span style={{ fontWeight:800, color: played ? '#1d1d1f' : '#c7c7cc', minWidth:30, textAlign:'center', flexShrink:0 }}>
+                        <span style={{ fontWeight:800, fontSize:13, color: played ? '#1d1d1f' : '#c7c7cc', minWidth:34, textAlign:'center', flexShrink:0 }}>
                           {played ? `${r.hs}–${r.as}` : '–:–'}
                         </span>
                         <span style={{ flex:1, fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{away}</span>
@@ -479,10 +479,10 @@ export default function LeaderboardPage() {
                   <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Sin datos aún</td></tr>
                 ) : enriched.map((r, i) => {
                   const isMe = r.quinielas?.profiles?.username === profile?.username
-                  const bgRow = isMe ? 'rgba(0,113,227,.04)' : i % 2 === 0 ? '#fff' : '#fafafa'
+                  const bgRow = isMe ? 'rgba(0,113,227,.10)' : i % 2 === 0 ? '#fff' : '#fafafa'
                   return (
                     <tr key={r.quiniela_id} onClick={() => openViewer(r)}
-                      style={{ background: bgRow, cursor: (new Date() >= LOCK_DATE || r.quinielas?.profiles?.username === profile?.username) ? 'pointer' : 'default', borderBottom:'0.5px solid rgba(0,0,0,.04)', transition:'background .1s' }}
+                      style={{ background: bgRow, cursor: (new Date() >= LOCK_DATE || r.quinielas?.profiles?.username === profile?.username) ? 'pointer' : 'default', borderBottom:'0.5px solid rgba(0,0,0,.04)', borderLeft: isMe ? '3px solid #0071e3' : '3px solid transparent', transition:'background .1s' }}
                       onMouseOver={e => e.currentTarget.style.background = '#eef3ff'}
                       onMouseOut={e => e.currentTarget.style.background = bgRow}>
 
