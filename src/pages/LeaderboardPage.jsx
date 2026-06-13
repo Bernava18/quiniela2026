@@ -330,8 +330,9 @@ export default function LeaderboardPage() {
 
         {/* Widget: partidos de ayer y hoy */}
         {(() => {
-          const todayStr = new Date().toISOString().slice(0,10)
-          const yesterday = new Date()
+          const vetNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Caracas' }))
+          const todayStr = vetNow.toISOString().slice(0,10)
+          const yesterday = new Date(vetNow)
           yesterday.setDate(yesterday.getDate() - 1)
           const yesterdayStr = yesterday.toISOString().slice(0,10)
 
@@ -506,7 +507,7 @@ export default function LeaderboardPage() {
                         <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:2 }}>
                           <span style={{ fontSize:10, color:'#aeaeb2' }}>{r.quinielas?.profiles?.username}</span>
                           {(() => {
-                            const todayStr = new Date().toISOString().slice(0,10)
+                            const todayStr = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Caracas' })).toISOString().slice(0,10)
                             const picks = allPicks[r.quiniela_id] || {}
                             const todayMatches = Object.entries(MATCH_DATES)
                               .filter(([, d]) => d === todayStr)
