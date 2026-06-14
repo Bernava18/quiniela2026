@@ -61,6 +61,7 @@ export default function AdminPage() {
   const [editedMatches, setEditedMatches] = useState({})
   const [paymentSearch, setPaymentSearch] = useState('')
   const [groupBy, setGroupBy] = useState('')
+  const [groupBy2, setGroupBy2] = useState('')
   const [savingPicks, setSavingPicks] = useState(false)
   const adminTableRef = useRef(null)
   // Mapa plano de quinielas por id para updates instantáneos sin recargar
@@ -698,12 +699,22 @@ export default function AdminPage() {
             />
             <select
               value={groupBy}
-              onChange={e => setGroupBy(e.target.value)}
+              onChange={e => { setGroupBy(e.target.value); if (!e.target.value) setGroupBy2('') }}
               style={{ padding:'8px 12px', border:'1px solid rgba(0,0,0,.12)', borderRadius:9, fontSize:13, fontFamily:'inherit', background:'#fff', cursor:'pointer' }}>
               <option value="">Sin agrupar</option>
               <option value="payment_status">Agrupar por: Estado de pago</option>
               <option value="payment_method">Agrupar por: Método de pago</option>
             </select>
+            {groupBy && (
+              <select
+                value={groupBy2}
+                onChange={e => setGroupBy2(e.target.value)}
+                style={{ padding:'8px 12px', border:'1px solid rgba(0,0,0,.12)', borderRadius:9, fontSize:13, fontFamily:'inherit', background:'#fff', cursor:'pointer' }}>
+                <option value="">Sin subagrupar</option>
+                {groupBy !== 'payment_status' && <option value="payment_status">Luego por: Estado de pago</option>}
+                {groupBy !== 'payment_method' && <option value="payment_method">Luego por: Método de pago</option>}
+              </select>
+            )}
           </div>
 
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
@@ -753,18 +764,57 @@ export default function AdminPage() {
                 const order = groupBy === 'payment_status'
                   ? ['paid','committed','unpaid']
                   : ['zelle','transfer_usd','transfer_bs','cash_usd','']
-                return order.filter(k => groups[k]?.length).map(key => (
-                  <div key={key}>
-                    <div style={{ padding:'8px 16px', background:'#eef2f7', fontWeight:800, fontSize:12, color:'#3a3a3c', borderBottom:'0.5px solid rgba(0,0,0,.06)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                      <span>{labels[groupBy][key] ?? key} · {groups[key].length} quiniela{groups[key].length!==1?'s':''}</span>
-                      <span style={{ color:'#0071e3', fontWeight:800 }}>${groups[key].length * ENTRY_FEE}</span>
+                const order2 = groupBy2 === 'payment_status'
+                  ? ['paid','committed','unpaid']
+                  : ['zelle','transfer_usd','transfer_bs','cash_usd','']
+                const getKey = (gq, field) => {
+                  let k = gq[field]
+                  return field === 'payment_status' ? (k || 'unpaid') : (k || '')
+                }
+                return order.filter(k => groups[k]?.length).map(key => {
+                  const items = groups[key]
+                  if (!groupBy2) {
+                    return (
+                      <div key={key}>
+                        <div style={{ padding:'8px 16px', background:'#eef2f7', fontWeight:800, fontSize:12, color:'#3a3a3c', borderBottom:'0.5px solid rgba(0,0,0,.06)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                          <span>{labels[groupBy][key] ?? key} · {items.length} quiniela{items.length!==1?'s':''}</span>
+                          <span style={{ color:'#0071e3', fontWeight:800 }}>${items.length * ENTRY_FEE}</span>
+                        </div>
+                        {items.slice().sort((a,b)=>a.q.name.localeCompare(b.q.name))
+                          .map(({u,q}, i) => renderQRow(u, q, i === items.length-1, true))}
+                      </div>
+                    )
+                  }
+                  // Subagrupación
+                  const subgroups = {}
+                  items.forEach(({u,q}) => {
+                    const gq = getQ(q)
+                    const k2 = getKey(gq, groupBy2)
+                    if (!subgroups[k2]) subgroups[k2] = []
+                    subgroups[k2].push({ u, q })
+                  })
+                  return (
+                    <div key={key}>
+                      <div style={{ padding:'8px 16px', background:'#eef2f7', fontWeight:800, fontSize:12, color:'#3a3a3c', borderBottom:'0.5px solid rgba(0,0,0,.06)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <span>{labels[groupBy][key] ?? key} · {items.length} quiniela{items.length!==1?'s':''}</span>
+                        <span style={{ color:'#0071e3', fontWeight:800 }}>${items.length * ENTRY_FEE}</span>
+                      </div>
+                      {order2.filter(k2 => subgroups[k2]?.length).map(k2 => {
+                        const subItems = subgroups[k2]
+                        return (
+                          <div key={key+'_'+k2}>
+                            <div style={{ padding:'6px 16px 6px 32px', background:'#f5f7fa', fontWeight:700, fontSize:11, color:'#6e6e73', borderBottom:'0.5px solid rgba(0,0,0,.04)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                              <span>↳ {labels[groupBy2][k2] ?? k2} · {subItems.length} quiniela{subItems.length!==1?'s':''}</span>
+                              <span style={{ color:'#0071e3', fontWeight:800 }}>${subItems.length * ENTRY_FEE}</span>
+                            </div>
+                            {subItems.slice().sort((a,b)=>a.q.name.localeCompare(b.q.name))
+                              .map(({u,q}, i) => renderQRow(u, q, i === subItems.length-1, true))}
+                          </div>
+                        )
+                      })}
                     </div>
-                    {groups[key]
-                      .slice()
-                      .sort((a,b)=>a.q.name.localeCompare(b.q.name))
-                      .map(({u,q}, i) => renderQRow(u, q, i === groups[key].length-1, true))}
-                  </div>
-                ))
+                  )
+                })
               }
 
               // ── Vista normal agrupada por usuario ──
