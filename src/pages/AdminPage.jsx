@@ -60,6 +60,7 @@ export default function AdminPage() {
   const [pickValues, setPickValues] = useState({})
   const [editedMatches, setEditedMatches] = useState({})
   const [paymentSearch, setPaymentSearch] = useState('')
+  const [groupBy, setGroupBy] = useState('')
   const [savingPicks, setSavingPicks] = useState(false)
   const adminTableRef = useRef(null)
   // Mapa plano de quinielas por id para updates instantáneos sin recargar
@@ -72,6 +73,116 @@ export default function AdminPage() {
   function getQ(q) {
     const ov = quinielasMap[q.id]
     return ov ? { ...q, ...ov } : q
+  }
+
+  function renderQRow(u, q, isLast, showUsername) {
+    const gq     = getQ(q)
+    const qPicks = q.picks?.filter(p=>p.goals_home!=null).length || 0
+    const qPts   = q.scores?.[0]?.total_pts || 0
+    return (
+      <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px 44px', padding:'9px 16px', gap:8, alignItems:'center', background:'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
+
+        {/* Indent */}
+        <div style={{ display:'flex', justifyContent:'center' }}>
+          <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
+        </div>
+
+        {/* Name + ID */}
+        <div>
+          <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:2, flexWrap:'wrap' }}>
+            <span style={{ fontSize:10, fontWeight:800, color:'#fff', borderRadius:5, padding:'1px 6px', letterSpacing:'.3px',
+              background: gq.payment_status==='paid'?'#0071e3':gq.payment_status==='committed'?'#ff9f0a':'#aeaeb2' }}>
+              Q{String(q.seq_num||0).padStart(2,'0')}
+            </span>
+            <span style={{ fontSize:12.5, fontWeight:700, color:'#1d1d1f' }}>📋 {q.name}</span>
+            {showUsername && <span style={{ fontSize:10, color:'#aeaeb2' }}>· {u.username}</span>}
+          </div>
+          {gq.payment_status==='paid' && u.paid_at && (
+            <div style={{ fontSize:10, color:'#30d158', fontWeight:600 }}>✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</div>
+          )}
+          {gq.payment_status==='committed' && (
+            <div style={{ fontSize:10, color:'#ff9f0a', fontWeight:600 }}>🤝 Pago comprometido</div>
+          )}
+        </div>
+
+        {/* Picks */}
+        <div style={{ textAlign:'center' }}>
+          <span style={{ fontSize:12, fontWeight:700, color:qPicks===104?'#30d158':qPicks>0?'#ff9f0a':'#aeaeb2' }}>{qPicks}</span>
+          <span style={{ fontSize:10, color:'#aeaeb2' }}>/104</span>
+        </div>
+
+        {/* Points */}
+        <div style={{ textAlign:'center' }}>
+          <span style={{ fontSize:13, fontWeight:800, color:'#0071e3' }}>{qPts} pts</span>
+        </div>
+
+        {/* Print */}
+        <div style={{ textAlign:'center' }}>
+          <button onClick={() => window.open(`/print/${q.id}`, '_blank')} title="Imprimir"
+            style={{ padding:'6px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
+            🖨️
+          </button>
+        </div>
+
+        {/* Método — guarda sin recargar */}
+        <div>
+          <select
+            value={gq.payment_method || ''}
+            onChange={e => changePaymentMethod(q.id, e.target.value)}
+            style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 5px', background:'#fff', cursor:'pointer', width:'100%' }}>
+            <option value="">— Método —</option>
+            <option value="zelle">🏦 Zelle</option>
+            <option value="transfer_usd">💱 Transfer $</option>
+            <option value="transfer_bs">🇻🇪 Transfer Bs</option>
+            <option value="cash_usd">💵 $ Efectivo</option>
+          </select>
+        </div>
+
+        {/* Ref — guarda al salir del campo, sin recargar */}
+        <div>
+          <input
+            key={q.id + '_ref_' + (gq.payment_ref||'').length}
+            defaultValue={gq.payment_ref || ''}
+            onBlur={e => {
+              const val = e.target.value.trim()
+              if (val !== (q.payment_ref || '').trim()) {
+                changePaymentRef(q.id, val)
+              }
+            }}
+            placeholder="Ref., nombre, confirmación..."
+            style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 7px', outline:'none', width:'100%', color:'#1d1d1f', boxSizing:'border-box',
+              background: gq.payment_ref ? 'rgba(48,209,88,.06)' : '#fff' }}
+          />
+        </div>
+
+        {/* Estado pago — no-controlado con key para re-montar cuando cambia */}
+        <div>
+          <select
+            key={q.id + '_st_' + (gq.payment_status || 'unpaid')}
+            defaultValue={gq.payment_status || 'unpaid'}
+            onChange={e => changePaymentStatus(q.id, e.target.value)}
+            style={{ fontSize:11, fontFamily:'inherit', fontWeight:700, border:'1px solid rgba(0,0,0,.1)', borderRadius:8, padding:'6px 8px', cursor:'pointer', width:'100%',
+              background: gq.payment_status==='paid'?'rgba(48,209,88,.15)':gq.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
+              color: gq.payment_status==='paid'?'#1a7a38':gq.payment_status==='committed'?'#b06000':'#c0392b' }}>
+            <option value="unpaid">⬜ Sin pagar</option>
+            <option value="committed">🤝 Comprometido</option>
+            <option value="paid">✅ Pagado</option>
+          </select>
+        </div>
+
+        {/* Ocultar de tabla */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <input
+            type="checkbox"
+            title={gq.hidden_from_table ? 'Oculta de la tabla' : 'Visible en la tabla'}
+            checked={!!gq.hidden_from_table}
+            onChange={e => changeHidden(q.id, e.target.checked)}
+            style={{ width:16, height:16, cursor:'pointer', accentColor:'#ff3b30' }}
+          />
+        </div>
+
+      </div>
+    )
   }
 
   useEffect(() => { loadUsers(); loadResults() }, [])
@@ -578,13 +689,21 @@ export default function AdminPage() {
           )}
 
           {/* Users table */}
-          <div style={{ marginBottom:12 }}>
+          <div style={{ marginBottom:12, display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
             <input
               value={paymentSearch}
               onChange={e => setPaymentSearch(e.target.value)}
               placeholder="🔍 Buscar por nombre de quiniela, jugador o Q##..."
               style={{ width:'100%', maxWidth:360, padding:'8px 12px', border:'1px solid rgba(0,0,0,.12)', borderRadius:9, fontSize:13, fontFamily:'inherit' }}
             />
+            <select
+              value={groupBy}
+              onChange={e => setGroupBy(e.target.value)}
+              style={{ padding:'8px 12px', border:'1px solid rgba(0,0,0,.12)', borderRadius:9, fontSize:13, fontFamily:'inherit', background:'#fff', cursor:'pointer' }}>
+              <option value="">Sin agrupar</option>
+              <option value="payment_status">Agrupar por: Estado de pago</option>
+              <option value="payment_method">Agrupar por: Método de pago</option>
+            </select>
           </div>
 
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
@@ -613,6 +732,41 @@ export default function AdminPage() {
               if (filteredUsers.length === 0) {
                 return <div style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Sin resultados para "{paymentSearch}"</div>
               }
+
+              // ── Vista agrupada por Estado de pago o Método de pago ──
+              if (groupBy) {
+                const labels = {
+                  payment_status: { paid:'✅ Pagado', committed:'🤝 Comprometido', unpaid:'⬜ Sin pagar' },
+                  payment_method: { zelle:'🏦 Zelle', transfer_usd:'💱 Transfer $', transfer_bs:'🇻🇪 Transfer Bs', cash_usd:'💵 $ Efectivo', '':'— Sin método —' },
+                }
+                const groups = {}
+                filteredUsers.forEach(u => {
+                  ;(u.quinielas||[]).forEach(q => {
+                    const gq = getQ(q)
+                    let key = gq[groupBy]
+                    if (groupBy === 'payment_status') key = key || 'unpaid'
+                    else key = key || ''
+                    if (!groups[key]) groups[key] = []
+                    groups[key].push({ u, q })
+                  })
+                })
+                const order = groupBy === 'payment_status'
+                  ? ['paid','committed','unpaid']
+                  : ['zelle','transfer_usd','transfer_bs','cash_usd','']
+                return order.filter(k => groups[k]?.length).map(key => (
+                  <div key={key}>
+                    <div style={{ padding:'8px 16px', background:'#eef2f7', fontWeight:800, fontSize:12, color:'#3a3a3c', borderBottom:'0.5px solid rgba(0,0,0,.06)' }}>
+                      {labels[groupBy][key] ?? key} · {groups[key].length} quiniela{groups[key].length!==1?'s':''}
+                    </div>
+                    {groups[key]
+                      .slice()
+                      .sort((a,b)=>a.q.name.localeCompare(b.q.name))
+                      .map(({u,q}, i) => renderQRow(u, q, i === groups[key].length-1, true))}
+                  </div>
+                ))
+              }
+
+              // ── Vista normal agrupada por usuario ──
               return filteredUsers.map((u, ui) => (
               <div key={u.id} style={{ borderBottom:'1.5px solid rgba(0,0,0,.06)' }}>
                 {/* User header */}
@@ -634,115 +788,9 @@ export default function AdminPage() {
                 </div>
 
                 {/* Quiniela rows */}
-                {(u.quinielas||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map((q, qi) => {
-                  const gq     = getQ(q)  // mezcla datos BD + overrides locales
-                  const qPicks = q.picks?.filter(p=>p.goals_home!=null).length || 0
-                  const qPts   = q.scores?.[0]?.total_pts || 0
-                  const isLast = qi === (u.quinielas.length-1)
-                  return (
-                    <div key={q.id} style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px 44px', padding:'9px 16px', gap:8, alignItems:'center', background:'#fff', borderBottom: isLast?'none':`0.5px solid rgba(0,0,0,.04)` }}>
-
-                      {/* Indent */}
-                      <div style={{ display:'flex', justifyContent:'center' }}>
-                        <div style={{ width:14, height:14, borderLeft:'1.5px solid #d1d1d6', borderBottom:'1.5px solid #d1d1d6', borderRadius:'0 0 0 5px', marginTop:-6 }}/>
-                      </div>
-
-                      {/* Name + ID */}
-                      <div>
-                        <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:2 }}>
-                          <span style={{ fontSize:10, fontWeight:800, color:'#fff', borderRadius:5, padding:'1px 6px', letterSpacing:'.3px',
-                            background: gq.payment_status==='paid'?'#0071e3':gq.payment_status==='committed'?'#ff9f0a':'#aeaeb2' }}>
-                            Q{String(q.seq_num||0).padStart(2,'0')}
-                          </span>
-                          <span style={{ fontSize:12.5, fontWeight:700, color:'#1d1d1f' }}>📋 {q.name}</span>
-                        </div>
-                        {gq.payment_status==='paid' && u.paid_at && (
-                          <div style={{ fontSize:10, color:'#30d158', fontWeight:600 }}>✓ Pagado el {new Date(u.paid_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</div>
-                        )}
-                        {gq.payment_status==='committed' && (
-                          <div style={{ fontSize:10, color:'#ff9f0a', fontWeight:600 }}>🤝 Pago comprometido</div>
-                        )}
-                      </div>
-
-                      {/* Picks */}
-                      <div style={{ textAlign:'center' }}>
-                        <span style={{ fontSize:12, fontWeight:700, color:qPicks===104?'#30d158':qPicks>0?'#ff9f0a':'#aeaeb2' }}>{qPicks}</span>
-                        <span style={{ fontSize:10, color:'#aeaeb2' }}>/104</span>
-                      </div>
-
-                      {/* Points */}
-                      <div style={{ textAlign:'center' }}>
-                        <span style={{ fontSize:13, fontWeight:800, color:'#0071e3' }}>{qPts} pts</span>
-                      </div>
-
-                      {/* Print */}
-                      <div style={{ textAlign:'center' }}>
-                        <button onClick={() => window.open(`/print/${q.id}`, '_blank')} title="Imprimir"
-                          style={{ padding:'6px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
-                          🖨️
-                        </button>
-                      </div>
-
-                      {/* Método — guarda sin recargar */}
-                      <div>
-                        <select
-                          value={gq.payment_method || ''}
-                          onChange={e => changePaymentMethod(q.id, e.target.value)}
-                          style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 5px', background:'#fff', cursor:'pointer', width:'100%' }}>
-                          <option value="">— Método —</option>
-                          <option value="zelle">🏦 Zelle</option>
-                          <option value="transfer_usd">💱 Transfer $</option>
-                          <option value="transfer_bs">🇻🇪 Transfer Bs</option>
-                          <option value="cash_usd">💵 $ Efectivo</option>
-                        </select>
-                      </div>
-
-                      {/* Ref — guarda al salir del campo, sin recargar */}
-                      <div>
-                        <input
-                          key={q.id + '_ref_' + (gq.payment_ref||'').length}
-                          defaultValue={gq.payment_ref || ''}
-                          onBlur={e => {
-                            const val = e.target.value.trim()
-                            if (val !== (q.payment_ref || '').trim()) {
-                              changePaymentRef(q.id, val)
-                            }
-                          }}
-                          placeholder="Ref., nombre, confirmación..."
-                          style={{ fontSize:10, fontFamily:'inherit', border:'0.5px solid #d1d1d6', borderRadius:6, padding:'4px 7px', outline:'none', width:'100%', color:'#1d1d1f', boxSizing:'border-box',
-                            background: gq.payment_ref ? 'rgba(48,209,88,.06)' : '#fff' }}
-                        />
-                      </div>
-
-                      {/* Estado pago — no-controlado con key para re-montar cuando cambia */}
-                      <div>
-                        <select
-                          key={q.id + '_st_' + (gq.payment_status || 'unpaid')}
-                          defaultValue={gq.payment_status || 'unpaid'}
-                          onChange={e => changePaymentStatus(q.id, e.target.value)}
-                          style={{ fontSize:11, fontFamily:'inherit', fontWeight:700, border:'1px solid rgba(0,0,0,.1)', borderRadius:8, padding:'6px 8px', cursor:'pointer', width:'100%',
-                            background: gq.payment_status==='paid'?'rgba(48,209,88,.15)':gq.payment_status==='committed'?'rgba(255,159,10,.15)':'rgba(255,69,58,.08)',
-                            color: gq.payment_status==='paid'?'#1a7a38':gq.payment_status==='committed'?'#b06000':'#c0392b' }}>
-                          <option value="unpaid">⬜ Sin pagar</option>
-                          <option value="committed">🤝 Comprometido</option>
-                          <option value="paid">✅ Pagado</option>
-                        </select>
-                      </div>
-
-                      {/* Ocultar de tabla */}
-                      <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
-                        <input
-                          type="checkbox"
-                          title={gq.hidden_from_table ? 'Oculta de la tabla' : 'Visible en la tabla'}
-                          checked={!!gq.hidden_from_table}
-                          onChange={e => changeHidden(q.id, e.target.checked)}
-                          style={{ width:16, height:16, cursor:'pointer', accentColor:'#ff3b30' }}
-                        />
-                      </div>
-
-                    </div>
-                  )
-                })}
+                {(u.quinielas||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map((q, qi) =>
+                  renderQRow(u, q, qi === (u.quinielas.length-1), false)
+                )}
               </div>
             ))
             })()}
