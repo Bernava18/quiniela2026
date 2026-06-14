@@ -331,6 +331,45 @@ export default function AdminPage() {
   const prize3rd  = Math.floor(totalPaid * 0.10)
   const prizeOrg  = Math.floor(totalPaid * 0.10)
 
+  async function exportPaymentsCSV() {
+    const headers = ['#','Quiniela','Usuario','Email','Teléfono','Picks','Puntos','Monto','Método','Ref/Datos pago','Estado','Tabla']
+    const statusLabel = { paid:'Pagado', committed:'Comprometido', unpaid:'Sin pagar', '':'Sin pagar', null:'Sin pagar', undefined:'Sin pagar' }
+    let i = 0
+    const rows = users.flatMap(u => (u.quinielas||[]).map(q => {
+      const ov = quinielasMap[q.id] || {}
+      const merged = { ...q, ...ov }
+      i++
+      const filled = (merged.picks || []).filter(p => p.goals_home != null).length
+      return [
+        i,
+        merged.name || '',
+        u.username || '',
+        u.email || '',
+        u.phone || '',
+        `${filled}/104`,
+        merged.scores?.[0]?.total_pts || 0,
+        ENTRY_FEE,
+        merged.payment_method || '',
+        merged.payment_ref || '',
+        statusLabel[merged.payment_status] ?? merged.payment_status ?? 'Sin pagar',
+        merged.hidden_from_table ? 'Oculta' : 'Visible',
+      ]
+    }))
+
+    const esc = (v) => {
+      const s = String(v ?? '')
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s
+    }
+    const csv = [headers, ...rows].map(r => r.map(esc).join(';')).join('\r\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pagos_quiniela_${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   async function exportAdminPDF() {
     const el = adminTableRef.current
     if (!el) return
@@ -478,6 +517,10 @@ export default function AdminPage() {
           {msg && <span style={{ fontSize:13, color:'#30d158', fontWeight:600 }}>{msg}</span>}
           {tab==='payments' && (
             <>
+              <button onClick={exportPaymentsCSV}
+                style={{ padding:'8px 16px', background:'#1a7a38', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6 }}>
+                📊 Exportar CSV
+              </button>
               <button onClick={exportAdminPDF} disabled={printing}
                 style={{ padding:'8px 16px', background:'#0071e3', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:printing?.5:1, display:'flex', alignItems:'center', gap:6 }}>
                 {printing ? `⏳ ${printProgress||'Procesando...'}` : '📄 PDF tabla pagos'}
