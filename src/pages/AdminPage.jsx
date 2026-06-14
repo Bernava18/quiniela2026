@@ -59,6 +59,7 @@ export default function AdminPage() {
   const [pickQuiniela, setPickQuiniela] = useState(null)
   const [pickValues, setPickValues] = useState({})
   const [editedMatches, setEditedMatches] = useState({})
+  const [paymentSearch, setPaymentSearch] = useState('')
   const [savingPicks, setSavingPicks] = useState(false)
   const adminTableRef = useRef(null)
   // Mapa plano de quinielas por id para updates instantáneos sin recargar
@@ -577,6 +578,15 @@ export default function AdminPage() {
           )}
 
           {/* Users table */}
+          <div style={{ marginBottom:12 }}>
+            <input
+              value={paymentSearch}
+              onChange={e => setPaymentSearch(e.target.value)}
+              placeholder="🔍 Buscar por nombre de quiniela, jugador o Q##..."
+              style={{ width:'100%', maxWidth:360, padding:'8px 12px', border:'1px solid rgba(0,0,0,.12)', borderRadius:9, fontSize:13, fontFamily:'inherit' }}
+            />
+          </div>
+
           <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:14, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,.06)' }}>
             {/* Header */}
             <div style={{ display:'grid', gridTemplateColumns:'36px 1fr 90px 90px 44px 110px 170px 140px 44px', padding:'8px 16px', background:'#f9f9fb', borderBottom:'0.5px solid rgba(0,0,0,.08)', gap:8 }}>
@@ -587,7 +597,23 @@ export default function AdminPage() {
 
             {loadingUsers ? (
               <div style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Cargando...</div>
-            ) : users.map((u, ui) => (
+            ) : (() => {
+              const s = paymentSearch.trim().toLowerCase()
+              const filteredUsers = !s ? users : users
+                .map(u => {
+                  const userMatches = u.username?.toLowerCase().includes(s) || u.full_name?.toLowerCase().includes(s)
+                  const qs = (u.quinielas||[]).filter(q => {
+                    const seq = `q${String(q.seq_num||0).padStart(2,'0')}`
+                    return userMatches || q.name?.toLowerCase().includes(s) || seq.includes(s) || `${q.seq_num}`.includes(s)
+                  })
+                  return { ...u, quinielas: qs }
+                })
+                .filter(u => u.quinielas?.length > 0)
+
+              if (filteredUsers.length === 0) {
+                return <div style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Sin resultados para "{paymentSearch}"</div>
+              }
+              return filteredUsers.map((u, ui) => (
               <div key={u.id} style={{ borderBottom:'1.5px solid rgba(0,0,0,.06)' }}>
                 {/* User header */}
                 <div style={{ display:'grid', gridTemplateColumns:'36px 1fr', padding:'9px 16px', gap:8, alignItems:'center', background:'#f5f5f7', borderBottom:'0.5px solid rgba(0,0,0,.05)' }}>
@@ -718,7 +744,8 @@ export default function AdminPage() {
                   )
                 })}
               </div>
-            ))}
+            ))
+            })()}
           </div>
 
           <div style={{ marginTop:12, fontSize:12, color:'#6e6e73', textAlign:'center' }}>
