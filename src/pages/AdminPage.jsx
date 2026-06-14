@@ -755,8 +755,9 @@ export default function AdminPage() {
                   : ['zelle','transfer_usd','transfer_bs','cash_usd','']
                 return order.filter(k => groups[k]?.length).map(key => (
                   <div key={key}>
-                    <div style={{ padding:'8px 16px', background:'#eef2f7', fontWeight:800, fontSize:12, color:'#3a3a3c', borderBottom:'0.5px solid rgba(0,0,0,.06)' }}>
-                      {labels[groupBy][key] ?? key} · {groups[key].length} quiniela{groups[key].length!==1?'s':''}
+                    <div style={{ padding:'8px 16px', background:'#eef2f7', fontWeight:800, fontSize:12, color:'#3a3a3c', borderBottom:'0.5px solid rgba(0,0,0,.06)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                      <span>{labels[groupBy][key] ?? key} · {groups[key].length} quiniela{groups[key].length!==1?'s':''}</span>
+                      <span style={{ color:'#0071e3', fontWeight:800 }}>${groups[key].length * ENTRY_FEE}</span>
                     </div>
                     {groups[key]
                       .slice()
