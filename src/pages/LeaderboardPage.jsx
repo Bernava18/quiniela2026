@@ -180,6 +180,25 @@ export default function LeaderboardPage() {
   }
 
   function buildEnriched() {
+    const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Caracas', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date())
+    const todayMatchIds = Object.entries(MATCH_DATES).filter(([, d]) => d === todayStr).map(([mid]) => mid)
+    const outcome = (h,a) => h>a ? 'H' : h<a ? 'A' : 'D'
+    const calcDayPts = (picks) => {
+      let total = 0
+      todayMatchIds.forEach(mid => {
+        const pk = picks[mid]
+        const res = results[mid]
+        if (!pk || pk.h == null || pk.a == null || !res || res.hs == null) return
+        const hOk = pk.h === res.hs, aOk = pk.a === res.as
+        const winOk = outcome(pk.h,pk.a) === outcome(res.hs,res.as)
+        if (hOk) total += 1
+        if (aOk) total += 1
+        if (winOk) total += 2
+        if (hOk && aOk && winOk) total += 1
+      })
+      return total
+    }
+
     const built = rows
     .filter(r => !r.quinielas?.hidden_from_table)
     .map(r => {
@@ -200,6 +219,7 @@ export default function LeaderboardPage() {
         finalPts:  r.final_pts  || 0,      // orden final 20/10/5/3
         // TOTAL calculado en vivo: grupos (en tiempo real) + resto (de BD)
         total: grpTotal + (r.clasif_pts || 0) + (r.elim_pts || 0) + (r.final_pts || 0),
+        dayPts: calcDayPts(picks),
       }
     }).sort((a, b) => b.total - a.total)
 
@@ -439,6 +459,33 @@ export default function LeaderboardPage() {
           </div>
         )}
 
+        {/* Mejor(es) quiniela(s) del día */}
+        {(() => {
+          const maxDay = Math.max(0, ...enriched.map(r => r.dayPts || 0))
+          if (maxDay === 0) return null
+          const best = enriched.filter(r => r.dayPts === maxDay)
+          return (
+            <div style={{ background:'rgba(255,214,10,.10)', border:'1px solid rgba(255,159,10,.25)', borderRadius:10, padding:'10px 16px', marginBottom:12, display:'flex', flexDirection:'column', gap:6 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#7a5900' }}>
+                🔥 {best.length > 1 ? 'Mejores quinielas del día' : 'Mejor quiniela del día'} · {maxDay} pts
+              </div>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                {best.map(r => (
+                  <div key={r.quiniela_id} style={{ display:'flex', alignItems:'center', gap:6, background:'#fff', borderRadius:8, padding:'4px 10px', fontSize:12 }}>
+                    {r.quinielas?.seq_num && (
+                      <span style={{ fontSize:9, fontWeight:800, color:'#fff', borderRadius:4, padding:'1px 5px', background:'#0071e3' }}>
+                        Q{String(r.quinielas.seq_num).padStart(2,'0')}
+                      </span>
+                    )}
+                    <span style={{ fontWeight:700 }}>{r.quinielas?.name}</span>
+                    <span style={{ color:'#aeaeb2', fontSize:10 }}>{r.quinielas?.profiles?.username}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Buscador */}
         <div style={{ marginBottom:10 }}>
           <input
@@ -534,9 +581,8 @@ export default function LeaderboardPage() {
                               .filter(([, d]) => d === todayStr)
                               .map(([mid]) => mid)
                             if (todayMatches.length === 0) return null
-                            return (
-                              <span style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                                {todayMatches.map(mid => {
+                            let dayTotal = 0
+                            const chips = todayMatches.map(mid => {
                                   const pk = picks[mid]
                                   const res = results[mid]
                                   const has = pk && pk.h != null && pk.a != null
@@ -544,25 +590,43 @@ export default function LeaderboardPage() {
                                   const hasResult = res && res.hs != null
                                   const hOk = has && hasResult && pk.h === res.hs
                                   const aOk = has && hasResult && pk.a === res.as
-                                  const bothOk = hOk && aOk
-                                  const anyOk = hOk || aOk
-                                  const numStyle = (ok) => ({
-                                    fontWeight:800,
-                                    color: !has || !hasResult ? 'inherit' : ok ? '#1a7a38' : '#c0392b'
-                                  })
-                                  let bg, color
-                                  if (!has) { bg = 'rgba(255,69,58,.1)'; color = '#c0392b' }
-                                  else if (!hasResult) { bg = 'rgba(0,113,227,.08)'; color = '#0055b3' }
-                                  else if (bothOk) { bg = 'rgba(48,209,88,.15)'; color = '#1a7a38' }
-                                  else if (anyOk) { bg = 'rgba(255,214,10,.18)'; color = '#7a5900' }
-                                  else { bg = 'rgba(255,69,58,.1)'; color = '#c0392b' }
+
+                                  const outcome = (h,a) => h>a ? 'H' : h<a ? 'A' : 'D'
+                                  const winnerOk = has && hasResult && outcome(pk.h,pk.a) === outcome(res.hs,res.as)
+                                  const pickOutcomeLabel = !has ? null :
+                                    outcome(pk.h,pk.a) === 'H' ? home : outcome(pk.h,pk.a) === 'A' ? away : 'Empate'
+
+                                  // Puntos del partido (igual a calcPts en quiniela2026_fixed.html)
+                                  let matchPts = 0
+                                  if (has && hasResult) {
+                                    if (hOk) matchPts += 1
+                                    if (aOk) matchPts += 1
+                                    if (winnerOk) matchPts += 2
+                                    if (hOk && aOk && winnerOk) matchPts += 1
+                                    dayTotal += matchPts
+                                  }
+
+                                  const mark = (ok) => !hasResult ? null :
+                                    <span style={{ fontWeight:900, color: ok ? '#1a7a38' : '#c0392b' }}>{ok ? '✓' : '✗'}</span>
+
                                   return (
-                                    <span key={mid} style={{ fontSize:9, fontWeight:700, padding:'1px 5px', borderRadius:4,
-                                      background: bg, color: color }}>
-                                      {home} <span style={numStyle(hOk)}>{has ? pk.h : '–'}</span>-<span style={numStyle(aOk)}>{has ? pk.a : '–'}</span> {away}
+                                    <span key={mid} style={{ fontSize:11, fontWeight:600, padding:'2px 7px', borderRadius:4,
+                                      background:'#f9f9fb', color:'#1d1d1f', display:'inline-flex', alignItems:'center', gap:4 }}>
+                                      <span>
+                                        {home} {has ? pk.h : '–'}{!has ? null : mark(hOk)}-{has ? pk.a : '–'}{!has ? null : mark(aOk)} {away}
+                                      </span>
+                                      {hasResult && pickOutcomeLabel && <span style={{ color:'#6e6e73', fontSize:10 }}>→ {pickOutcomeLabel}</span>}
+                                      {hasResult && <span style={{ fontWeight:900, color: (has && winnerOk) ? '#1a7a38' : '#c0392b' }}>{has && winnerOk ? '✓' : '✗'}</span>}
+                                      {hasResult && <span style={{ color:'#0071e3', fontWeight:800, fontSize:10 }}>+{matchPts}</span>}
                                     </span>
                                   )
-                                })}
+                            })
+                            return (
+                              <span style={{ display:'flex', gap:4, flexWrap:'wrap', alignItems:'center' }}>
+                                {chips}
+                                <span style={{ fontSize:10, fontWeight:800, color:'#1a7a38', background:'rgba(48,209,88,.15)', padding:'2px 7px', borderRadius:4 }}>
+                                  Hoy: {dayTotal} pts
+                                </span>
                               </span>
                             )
                           })()}
