@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -43,6 +44,7 @@ const ENTRY_FEE = 15
 
 export default function AdminPage() {
   const { profile: adminProfile } = useAuth()
+  const navigate = useNavigate()
   const [tab, setTab]           = useState('payments')
   const [users, setUsers]       = useState([])
   const [results, setResults]   = useState({})
@@ -209,10 +211,15 @@ export default function AdminPage() {
   }
 
   async function selectPickQuiniela(q) {
-    const { data, error } = await supabase.from('picks').select('match_id, goals_home, goals_away, winner, h_team, a_team').eq('quiniela_id', q.id)
-    if (error) { setMsg('Error cargando picks: ' + error.message); return }
+    const isKO = (mid) => { const m=/^M(\d+)$/.exec(mid||''); return m && +m[1]>=73 && +m[1]<=104 }
+    const [grpResp, koResp] = await Promise.all([
+      supabase.from('picks').select('match_id, goals_home, goals_away, winner, h_team, a_team').eq('quiniela_id', q.id),
+      supabase.from('picks_ko').select('match_id, goals_home, goals_away, winner, h_team, a_team').eq('quiniela_id', q.id),
+    ])
+    if (grpResp.error) { setMsg('Error cargando picks: ' + grpResp.error.message); return }
     const vals = {}
-    ;(data || []).forEach(p => { vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner, hTeam: p.h_team, aTeam: p.a_team } })
+    ;(grpResp.data || []).forEach(p => { if (!isKO(p.match_id)) vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner, hTeam: p.h_team, aTeam: p.a_team } })
+    ;(koResp.data || []).forEach(p => { vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner, hTeam: p.h_team, aTeam: p.a_team } })
     setPickQuiniela(q)
     setPickValues(vals)
     setEditedMatches({})
@@ -231,7 +238,8 @@ export default function AdminPage() {
     const matchIds = Object.keys(editedMatches)
     if (matchIds.length === 0) { setMsg('No hay cambios para guardar'); setTimeout(() => setMsg(''), 2000); return }
     setSavingPicks(true)
-    const rows = matchIds.map(match_id => {
+    const isKO = (mid) => { const m=/^M(\d+)$/.exec(mid||''); return m && +m[1]>=73 && +m[1]<=104 }
+    const buildRow = (match_id) => {
       const v = pickValues[match_id] || {}
       const fixture = GROUP_FIXTURE[match_id]
       return {
@@ -244,8 +252,19 @@ export default function AdminPage() {
         a_team: v.aTeam ?? fixture?.[1] ?? null,
         updated_at: new Date().toISOString(),
       }
-    })
-    const { error } = await supabase.from('picks').upsert(rows, { onConflict: 'quiniela_id,match_id' })
+    }
+    const grpRows = matchIds.filter(mid => !isKO(mid)).map(buildRow)
+    const koRows  = matchIds.filter(mid =>  isKO(mid)).map(buildRow)
+
+    let error = null
+    if (grpRows.length) {
+      const r = await supabase.from('picks').upsert(grpRows, { onConflict: 'quiniela_id,match_id' })
+      error = error || r.error
+    }
+    if (koRows.length) {
+      const r = await supabase.from('picks_ko').upsert(koRows, { onConflict: 'quiniela_id,match_id' })
+      error = error || r.error
+    }
     if (error) {
       setMsg('❌ Error: ' + error.message)
     } else {
@@ -306,11 +325,12 @@ export default function AdminPage() {
     setSaving(matchId)
 
     const isGroup = /^[A-L][1-6]$/.test(matchId)
-    // Para eliminatorias necesitamos h_team/a_team — los tomamos de un pick existente con ese match_id
+    // Para eliminatorias necesitamos h_team/a_team — los tomamos de un pick
+    // existente con ese match_id en la tabla CORREGIDA (picks_ko)
     let hTeam = null, aTeam = null
     if (!isGroup) {
       const { data: anyPick } = await supabase
-        .from('picks').select('h_team, a_team')
+        .from('picks_ko').select('h_team, a_team')
         .eq('match_id', matchId).not('h_team', 'is', null).limit(1).maybeSingle()
       hTeam = anyPick?.h_team || null
       aTeam = anyPick?.a_team || null
@@ -345,9 +365,18 @@ export default function AdminPage() {
     const { data: allQ } = await supabase.from('quinielas').select('id')
     if (!allQ) return
 
+    const isKO = (mid) => { const m=/^M(\d+)$/.exec(mid||''); return m && +m[1]>=73 && +m[1]<=104 }
+
     for (const q of allQ) {
-      const { data: picks } = await supabase.from('picks').select('*').eq('quiniela_id', q.id)
-      if (!picks) continue
+      // Grupos desde 'picks' · eliminatorias desde 'picks_ko' (fase corregida)
+      const [grpResp, koResp] = await Promise.all([
+        supabase.from('picks').select('*').eq('quiniela_id', q.id),
+        supabase.from('picks_ko').select('*').eq('quiniela_id', q.id),
+      ])
+      const grpPicksRaw = (grpResp.data || []).filter(p => !isKO(p.match_id)) // ignora M73-M104 viejos
+      const koPicks     = koResp.data || []
+      const picks = [...grpPicksRaw, ...koPicks]
+      if (picks.length === 0) continue
 
       let grpPts = 0, elimPts = 0, finalPtsCalc = 0
 
@@ -654,10 +683,22 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display:'flex', gap:6, marginBottom:20 }}>
+      <div style={{ display:'flex', gap:6, marginBottom:20, alignItems:'center' }}>
         <button style={tabStyle('payments')} onClick={() => setTab('payments')}>💰 Pagos</button>
         <button style={tabStyle('results')}  onClick={() => setTab('results')}>⚽ Resultados</button>
         <button style={tabStyle('picks')}    onClick={() => setTab('picks')}>📝 Picks</button>
+        {/* Separador + acceso a la sección de PRUEBA (oculta, solo admin) */}
+        <span style={{ width:1, height:24, background:'#e0e0e0', margin:'0 4px' }} />
+        <button
+          onClick={() => navigate('/dev-ko')}
+          title="Sección de prueba del bracket corregido (no afecta producción)"
+          style={{
+            padding:'8px 20px', border:'1px dashed #ff9f0a', borderRadius:8, fontFamily:'inherit',
+            fontSize:13, fontWeight:700, cursor:'pointer', background:'#fff8ec', color:'#b3700a',
+            display:'flex', alignItems:'center', gap:6,
+          }}>
+          🧪 Bracket (prueba)
+        </button>
       </div>
 
       {/* ══ TAB: PAGOS ══ */}
