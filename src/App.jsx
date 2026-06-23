@@ -8,6 +8,7 @@ import LeaderboardPage from './pages/LeaderboardPage'
 import AdminPage       from './pages/AdminPage'
 import PrintPage       from './pages/PrintPage'
 import GuidePage       from './pages/GuidePage'
+import DevKnockoutPage from './pages/DevKnockoutPage'
 import Layout          from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -43,6 +44,9 @@ export default function App() {
             <Route path="quiniela/:id"  element={<QuinielaPage />} />
             <Route path="tabla"         element={<LeaderboardPage />} />
             <Route path="admin"         element={<AdminRoute><AdminPage /></AdminRoute>} />
+            {/* Ruta OCULTA de pruebas — no enlazada en ningún menú, solo admin.
+                Se accede escribiendo la URL directamente: /dev-ko */}
+            <Route path="dev-ko"        element={<AdminRoute><DevKnockoutPage /></AdminRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
