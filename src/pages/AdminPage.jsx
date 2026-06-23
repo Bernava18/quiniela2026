@@ -211,15 +211,10 @@ export default function AdminPage() {
   }
 
   async function selectPickQuiniela(q) {
-    const isKO = (mid) => { const m=/^M(\d+)$/.exec(mid||''); return m && +m[1]>=73 && +m[1]<=104 }
-    const [grpResp, koResp] = await Promise.all([
-      supabase.from('picks').select('match_id, goals_home, goals_away, winner, h_team, a_team').eq('quiniela_id', q.id),
-      supabase.from('picks_ko').select('match_id, goals_home, goals_away, winner, h_team, a_team').eq('quiniela_id', q.id),
-    ])
-    if (grpResp.error) { setMsg('Error cargando picks: ' + grpResp.error.message); return }
+    const { data, error } = await supabase.from('picks').select('match_id, goals_home, goals_away, winner, h_team, a_team').eq('quiniela_id', q.id)
+    if (error) { setMsg('Error cargando picks: ' + error.message); return }
     const vals = {}
-    ;(grpResp.data || []).forEach(p => { if (!isKO(p.match_id)) vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner, hTeam: p.h_team, aTeam: p.a_team } })
-    ;(koResp.data || []).forEach(p => { vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner, hTeam: p.h_team, aTeam: p.a_team } })
+    ;(data || []).forEach(p => { vals[p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner, hTeam: p.h_team, aTeam: p.a_team } })
     setPickQuiniela(q)
     setPickValues(vals)
     setEditedMatches({})
@@ -238,8 +233,7 @@ export default function AdminPage() {
     const matchIds = Object.keys(editedMatches)
     if (matchIds.length === 0) { setMsg('No hay cambios para guardar'); setTimeout(() => setMsg(''), 2000); return }
     setSavingPicks(true)
-    const isKO = (mid) => { const m=/^M(\d+)$/.exec(mid||''); return m && +m[1]>=73 && +m[1]<=104 }
-    const buildRow = (match_id) => {
+    const rows = matchIds.map(match_id => {
       const v = pickValues[match_id] || {}
       const fixture = GROUP_FIXTURE[match_id]
       return {
@@ -252,19 +246,8 @@ export default function AdminPage() {
         a_team: v.aTeam ?? fixture?.[1] ?? null,
         updated_at: new Date().toISOString(),
       }
-    }
-    const grpRows = matchIds.filter(mid => !isKO(mid)).map(buildRow)
-    const koRows  = matchIds.filter(mid =>  isKO(mid)).map(buildRow)
-
-    let error = null
-    if (grpRows.length) {
-      const r = await supabase.from('picks').upsert(grpRows, { onConflict: 'quiniela_id,match_id' })
-      error = error || r.error
-    }
-    if (koRows.length) {
-      const r = await supabase.from('picks_ko').upsert(koRows, { onConflict: 'quiniela_id,match_id' })
-      error = error || r.error
-    }
+    })
+    const { error } = await supabase.from('picks').upsert(rows, { onConflict: 'quiniela_id,match_id' })
     if (error) {
       setMsg('❌ Error: ' + error.message)
     } else {
@@ -325,12 +308,11 @@ export default function AdminPage() {
     setSaving(matchId)
 
     const isGroup = /^[A-L][1-6]$/.test(matchId)
-    // Para eliminatorias necesitamos h_team/a_team — los tomamos de un pick
-    // existente con ese match_id en la tabla CORREGIDA (picks_ko)
+    // Para eliminatorias necesitamos h_team/a_team — los tomamos de un pick existente con ese match_id
     let hTeam = null, aTeam = null
     if (!isGroup) {
       const { data: anyPick } = await supabase
-        .from('picks_ko').select('h_team, a_team')
+        .from('picks').select('h_team, a_team')
         .eq('match_id', matchId).not('h_team', 'is', null).limit(1).maybeSingle()
       hTeam = anyPick?.h_team || null
       aTeam = anyPick?.a_team || null
@@ -365,18 +347,9 @@ export default function AdminPage() {
     const { data: allQ } = await supabase.from('quinielas').select('id')
     if (!allQ) return
 
-    const isKO = (mid) => { const m=/^M(\d+)$/.exec(mid||''); return m && +m[1]>=73 && +m[1]<=104 }
-
     for (const q of allQ) {
-      // Grupos desde 'picks' · eliminatorias desde 'picks_ko' (fase corregida)
-      const [grpResp, koResp] = await Promise.all([
-        supabase.from('picks').select('*').eq('quiniela_id', q.id),
-        supabase.from('picks_ko').select('*').eq('quiniela_id', q.id),
-      ])
-      const grpPicksRaw = (grpResp.data || []).filter(p => !isKO(p.match_id)) // ignora M73-M104 viejos
-      const koPicks     = koResp.data || []
-      const picks = [...grpPicksRaw, ...koPicks]
-      if (picks.length === 0) continue
+      const { data: picks } = await supabase.from('picks').select('*').eq('quiniela_id', q.id)
+      if (!picks) continue
 
       let grpPts = 0, elimPts = 0, finalPtsCalc = 0
 
