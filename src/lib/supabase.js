@@ -6,28 +6,10 @@ const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON)
 
 // ═══════════════════════════════════════════════════════════════
-// FASE DE ELIMINATORIAS CORREGIDA (picks_ko)
-// ───────────────────────────────────────────────────────────────
-// Los picks de eliminatorias (M73–M104) viven en la tabla NUEVA
-// 'picks_ko', construida sobre el bracket corregido (cruces FIFA).
-// La fase de grupos (A1–L6) sigue en la tabla 'picks' original,
-// que queda intacta. Este helper decide a qué tabla va cada pick.
-// ═══════════════════════════════════════════════════════════════
-export function isKnockoutMatch(matchId) {
-  // Eliminatorias = 'M73'..'M104'. Grupos = 'A1'..'L6'.
-  const m = /^M(\d+)$/.exec(matchId || '')
-  if (!m) return false
-  const n = parseInt(m[1], 10)
-  return n >= 73 && n <= 104
-}
-
-// ═══════════════════════════════════════════════════════════════
 // PICKS
 // ═══════════════════════════════════════════════════════════════
 export async function savePick(quinielaId, matchId, data) {
-  // Enrutamiento: eliminatorias → picks_ko · grupos → picks
-  const table = isKnockoutMatch(matchId) ? 'picks_ko' : 'picks'
-  const { error } = await supabase.from(table).upsert({
+  const { error } = await supabase.from('picks').upsert({
     quiniela_id: quinielaId,
     match_id: matchId,
     goals_home: data.h ?? null,
@@ -41,34 +23,23 @@ export async function savePick(quinielaId, matchId, data) {
 }
 
 export async function getQuinielaPicks(quinielaId) {
-  // Leemos AMBAS tablas y las combinamos: grupos desde 'picks',
-  // eliminatorias desde 'picks_ko' (fase corregida).
-  const [grpRes, koRes] = await Promise.all([
-    supabase.from('picks').select('*').eq('quiniela_id', quinielaId),
-    supabase.from('picks_ko').select('*').eq('quiniela_id', quinielaId),
-  ])
-
+  const { data, error } = await supabase
+    .from('picks')
+    .select('*')
+    .eq('quiniela_id', quinielaId)
+  if (error) return {}
+  // Convert to STATE.picks format
   const picks = {}
-  const toState = p => ({
-    h: p.goals_home,
-    a: p.goals_away,
-    win: p.winner,
-    hTeam: p.h_team,
-    aTeam: p.a_team,
-    saved: true,
+  data.forEach(p => {
+    picks[p.match_id] = {
+      h: p.goals_home,
+      a: p.goals_away,
+      win: p.winner,
+      hTeam: p.h_team,
+      aTeam: p.a_team,
+      saved: true,
+    }
   })
-
-  // Grupos: de 'picks' excluimos cualquier M73–M104 viejo (ya no se usan;
-  // las eliminatorias correctas vienen de picks_ko).
-  if (!grpRes.error && grpRes.data) {
-    grpRes.data.forEach(p => {
-      if (!isKnockoutMatch(p.match_id)) picks[p.match_id] = toState(p)
-    })
-  }
-  // Eliminatorias corregidas: de 'picks_ko'.
-  if (!koRes.error && koRes.data) {
-    koRes.data.forEach(p => { picks[p.match_id] = toState(p) })
-  }
   return picks
 }
 
@@ -132,8 +103,7 @@ export async function getLeaderboard() {
       id, name, user_id, seq_num, payment_status, hidden_from_table,
       profiles ( id, username, full_name ),
       scores ( quiniela_id, grp_pts, clasif_pts, elim_pts, final_pts, total_pts, updated_at ),
-      picks ( match_id, goals_home ),
-      picks_ko ( match_id, goals_home )
+      picks ( match_id, goals_home )
     `)
     .order('name')
     .limit(500)
@@ -151,8 +121,7 @@ export async function getLeaderboard() {
       final_pts: s.final_pts || 0,
       total_pts: s.total_pts || 0,
       updated_at: s.updated_at,
-      picks_count: (q.picks || []).filter(p => p.goals_home != null && !/^M(7[3-9]|8[0-9]|9[0-9]|10[0-4])$/.test(p.match_id)).length
-                 + (q.picks_ko || []).filter(p => p.goals_home != null).length,
+      picks_count: (q.picks || []).filter(p => p.goals_home != null).length,
       quinielas: {
         id: q.id,
         name: q.name,
@@ -224,6 +193,7 @@ export async function downloadQuinielaBackup(quinielaId, quinielaName) {
 // ───────────────────────────────────────────────────────────────
 // Lee SOLO la fase de grupos de una quiniela real (sin modificarla) y
 // guarda los picks de eliminatorias de PRUEBA en 'picks_ko_test'.
+// NO referencia 'picks_ko' (producción) — esa tabla aún no existe.
 // ═══════════════════════════════════════════════════════════════
 
 // Lista de quinielas para elegir cuál usar como caso de prueba (solo lectura)
