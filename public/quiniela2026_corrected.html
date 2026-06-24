@@ -2423,11 +2423,12 @@ function bracketMatch(m, isFinal=false) {
     </div>` : "";
 
   // ── Selector "¿Quién avanza?" ────────────────────────────────
-  // Visible cuando ambos equipos están definidos y no está bloqueado
-  // Siempre disponible: para empates reales (penales) y para el pick del usuario
+  // Con marcador no-empate, el ganador se infiere solo (no hace falta el selector).
+  // El selector aparece en EMPATE (para decidir por penales) o si aún no hay marcador.
   const pickIsDraw = hasPick && pk.h === pk.a;
   const realIsDraw = hasReal && res.hs === res.as;
-  const showAdvance = both && !locked && (pickIsDraw || realIsDraw || !hasReal || pk.win);
+  const noPickScore = !hasPick || pk.h == null || pk.a == null;
+  const showAdvance = both && !locked && (pickIsDraw || realIsDraw || noPickScore);
   const advanceRow = showAdvance ? `
     <div style="padding:4px 6px;border-top:0.5px solid var(--border)">
       <select class="fsel" style="width:100%;font-size:10px;font-weight:600"
@@ -2462,6 +2463,17 @@ function setBracketPick(id, field, val) {
   const teams = T[id] || {};
   if (teams.h) STATE.picks[id].hTeam = teams.h;
   if (teams.a) STATE.picks[id].aTeam = teams.a;
+  // Inferir automáticamente quién avanza desde el marcador (si NO es empate).
+  // En empate se respeta lo que el usuario elija en el dropdown (penales).
+  const pk0 = STATE.picks[id];
+  if (field === 'h' || field === 'a') {
+    const hh = pk0.h, aa = pk0.a;
+    if (hh != null && aa != null && hh !== aa) {
+      const tH = pk0.hTeam || teams.h, tA = pk0.aTeam || teams.a;
+      if (hh > aa && tH) pk0.win = tH;
+      else if (aa > hh && tA) pk0.win = tA;
+    }
+  }
   clearTimeout(saveTimers[id]);
   saveTimers[id] = setTimeout(() => {
     const pk = STATE.picks[id];
