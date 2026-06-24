@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, getFaseFinalStatus } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 // Equipos fijos de fase de grupos (conocidos desde el sorteo)
@@ -46,6 +46,8 @@ export default function AdminPage() {
   const { profile: adminProfile } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab]           = useState('payments')
+  const [faseData, setFaseData]     = useState([])
+  const [faseLoading, setFaseLoading] = useState(false)
   const [users, setUsers]       = useState([])
   const [results, setResults]   = useState({})
   const [phase, setPhase]       = useState(0)
@@ -77,6 +79,18 @@ export default function AdminPage() {
     const ov = quinielasMap[q.id]
     return ov ? { ...q, ...ov } : q
   }
+
+  async function loadFaseFinal() {
+    setFaseLoading(true)
+    const { data } = await getFaseFinalStatus()
+    setFaseData(data || [])
+    setFaseLoading(false)
+  }
+
+  useEffect(() => {
+    if (tab === 'fasefinal') loadFaseFinal()
+    // eslint-disable-next-line
+  }, [tab])
 
   function renderQRow(u, q, isLast, showUsername) {
     const gq     = getQ(q)
@@ -660,6 +674,7 @@ export default function AdminPage() {
         <button style={tabStyle('payments')} onClick={() => setTab('payments')}>💰 Pagos</button>
         <button style={tabStyle('results')}  onClick={() => setTab('results')}>⚽ Resultados</button>
         <button style={tabStyle('picks')}    onClick={() => setTab('picks')}>📝 Picks</button>
+        <button style={tabStyle('fasefinal')} onClick={() => setTab('fasefinal')}>🏆 Fase Final</button>
         {/* Separador + acceso a la sección de PRUEBA (oculta, solo admin) */}
         <span style={{ width:1, height:24, background:'#e0e0e0', margin:'0 4px' }} />
         <button
@@ -1047,6 +1062,95 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ── PESTAÑA FASE FINAL: estado de completitud de la fase corregida ── */}
+      {tab === 'fasefinal' && (
+        <div>
+          {faseLoading ? (
+            <div style={{ padding:40, textAlign:'center', color:'#aeaeb2' }}>Cargando estado de la fase final...</div>
+          ) : (
+            <>
+              {/* Resumen */}
+              {(() => {
+                const completas = faseData.filter(q => q.status === 'completa').length
+                const progreso  = faseData.filter(q => q.status === 'en_progreso').length
+                const sin       = faseData.filter(q => q.status === 'sin_empezar').length
+                const activas   = faseData.filter(q => q.fase_activa).length
+                const card = (label, val, color) => (
+                  <div style={{ flex:1, background:'#fff', border:'0.5px solid rgba(0,0,0,.1)', borderRadius:12, padding:'14px 18px' }}>
+                    <div style={{ fontSize:26, fontWeight:800, color }}>{val}</div>
+                    <div style={{ fontSize:12, color:'#6e6e73', fontWeight:600 }}>{label}</div>
+                  </div>
+                )
+                return (
+                  <div style={{ display:'flex', gap:12, marginBottom:18, flexWrap:'wrap' }}>
+                    {card('✓ Completas', completas, '#1a7a38')}
+                    {card('⏳ En progreso', progreso, '#b3700a')}
+                    {card('— Sin empezar', sin, '#8e8e93')}
+                    {card('🏆 Fase activada', `${activas} / ${faseData.length}`, '#0071e3')}
+                  </div>
+                )
+              })()}
+
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                <div style={{ fontSize:13, color:'#6e6e73' }}>
+                  {faseData.length} quinielas · "Completa" = 16 partidos (octavos a final + 3er lugar) con marcador y ganador
+                </div>
+                <button onClick={loadFaseFinal}
+                  style={{ padding:'6px 12px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
+                  🔄 Actualizar
+                </button>
+              </div>
+
+              <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.1)', borderRadius:12, overflow:'hidden' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+                  <thead>
+                    <tr style={{ background:'#f9fafb', textAlign:'left' }}>
+                      <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700 }}>QUINIELA</th>
+                      <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700 }}>JUGADOR</th>
+                      <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700, textAlign:'center' }}>FASE</th>
+                      <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700, textAlign:'center' }}>PROGRESO</th>
+                      <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700, textAlign:'center' }}>ESTADO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {faseData.map(q => {
+                      const badge = q.status === 'completa'
+                        ? { bg:'#dcfce7', col:'#15803d', txt:'✓ Completa' }
+                        : q.status === 'en_progreso'
+                        ? { bg:'#fef3c7', col:'#b3700a', txt:'⏳ En progreso' }
+                        : { bg:'#f2f2f7', col:'#8e8e93', txt:'— Sin empezar' }
+                      return (
+                        <tr key={q.id} style={{ borderTop:'0.5px solid rgba(0,0,0,.06)' }}>
+                          <td style={{ padding:'9px 14px', fontWeight:600 }}>{q.name}</td>
+                          <td style={{ padding:'9px 14px', color:'#6e6e73' }}>{q.full_name || q.username || '—'}</td>
+                          <td style={{ padding:'9px 14px', textAlign:'center' }}>
+                            {q.fase_activa
+                              ? <span style={{ fontSize:11, color:'#0071e3', fontWeight:700 }}>Activa</span>
+                              : <span style={{ fontSize:11, color:'#c7c7cc' }}>—</span>}
+                          </td>
+                          <td style={{ padding:'9px 14px', textAlign:'center', fontWeight:700,
+                            color: q.done === q.total ? '#15803d' : '#1d1d1f' }}>
+                            {q.done} / {q.total}
+                          </td>
+                          <td style={{ padding:'9px 14px', textAlign:'center' }}>
+                            <span style={{ background:badge.bg, color:badge.col, padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:700 }}>
+                              {badge.txt}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {faseData.length === 0 && (
+                      <tr><td colSpan={5} style={{ padding:20, textAlign:'center', color:'#aeaeb2' }}>No hay quinielas</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
