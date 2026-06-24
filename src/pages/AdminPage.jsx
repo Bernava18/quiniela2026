@@ -31,6 +31,55 @@ const GROUP_FIXTURE = {
   L4:['Panamá','Croacia'], L5:['Panamá','Inglaterra'], L6:['Croacia','Ghana'],
 }
 
+// ─── Clasificación de grupos: equipos por grupo y orden con desempate ───
+// Equipos de cada grupo (derivados de GROUP_FIXTURE)
+const GROUP_TEAMS = (() => {
+  const out = {}
+  Object.entries(GROUP_FIXTURE).forEach(([mid, teams]) => {
+    const g = mid[0]
+    if (!out[g]) out[g] = new Set()
+    teams.forEach(t => out[g].add(t))
+  })
+  const res = {}
+  Object.entries(out).forEach(([g, set]) => { res[g] = Array.from(set) })
+  return res
+})()
+
+// Partidos (match_ids) de cada grupo
+const GROUP_MATCHES = (() => {
+  const out = {}
+  Object.keys(GROUP_FIXTURE).forEach(mid => {
+    const g = mid[0]
+    if (!out[g]) out[g] = []
+    out[g].push(mid)
+  })
+  return out
+})()
+
+// Ordena los equipos de un grupo según un set de marcadores {matchId:{h,a}}.
+// Criterios: puntos → diferencia de goles → goles a favor (suficiente para
+// comparar posiciones; coincide con el orden mostrado al usuario).
+function orderGroup(g, scoresByMatch) {
+  const teams = GROUP_TEAMS[g] || []
+  const s = {}
+  teams.forEach(t => { s[t] = { pts:0, gf:0, gc:0 } })
+  ;(GROUP_MATCHES[g] || []).forEach(mid => {
+    const sc = scoresByMatch[mid]
+    if (!sc || sc.h == null || sc.a == null) return
+    const [h, a] = GROUP_FIXTURE[mid]
+    if (!s[h] || !s[a]) return
+    s[h].gf += sc.h; s[h].gc += sc.a
+    s[a].gf += sc.a; s[a].gc += sc.h
+    if (sc.h > sc.a)      s[h].pts += 3
+    else if (sc.h < sc.a) s[a].pts += 3
+    else { s[h].pts += 1; s[a].pts += 1 }
+  })
+  return teams
+    .map(t => ({ team:t, pts:s[t].pts, dif:s[t].gf - s[t].gc, gf:s[t].gf }))
+    .sort((x, y) => y.pts - x.pts || y.dif - x.dif || y.gf - x.gf)
+    .map(r => r.team)
+}
+
 const PHASES = [
   { label:'Grupos',      matches: Array.from({length:72},(_,i)=>{const g=String.fromCharCode(65+Math.floor(i/6));return `${g}${i%6+1}`}) },
   { label:'R32',         matches: Array.from({length:16},(_,i)=>`M${73+i}`) },
@@ -416,10 +465,34 @@ export default function AdminPage() {
         if (pickFourth === fourth) finalPtsCalc += 3
       }
 
-      const total = grpPts + elimPts + finalPtsCalc
+      // ── CLASIFICACIÓN: +1 por posición exacta (1ro-4to) en grupos terminados ──
+      let clasifPts = 0
+      // Marcadores de este jugador y reales, indexados por match de grupo
+      const pickScores = {}
+      const realScores = {}
+      picks.forEach(p => {
+        if (/^[A-L][1-6]$/.test(p.match_id) && p.goals_home != null)
+          pickScores[p.match_id] = { h: p.goals_home, a: p.goals_away }
+      })
+      Object.keys(GROUP_FIXTURE).forEach(mid => {
+        const r = resultsMap[mid]
+        if (r && r.goals_home != null) realScores[mid] = { h: r.goals_home, a: r.goals_away }
+      })
+      Object.keys(GROUP_TEAMS).forEach(g => {
+        // El grupo debe tener sus 6 partidos reales jugados
+        const allReal = (GROUP_MATCHES[g] || []).every(mid => realScores[mid])
+        if (!allReal) return
+        const realOrder = orderGroup(g, realScores)
+        const pickOrder = orderGroup(g, pickScores)
+        for (let i = 0; i < 4; i++) {
+          if (pickOrder[i] && realOrder[i] && pickOrder[i] === realOrder[i]) clasifPts += 1
+        }
+      })
+
+      const total = grpPts + clasifPts + elimPts + finalPtsCalc
       await supabase.from('scores').upsert({
         quiniela_id: q.id,
-        grp_pts: grpPts, clasif_pts: 0, elim_pts: elimPts,
+        grp_pts: grpPts, clasif_pts: clasifPts, elim_pts: elimPts,
         final_pts: finalPtsCalc, total_pts: total,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'quiniela_id' })
