@@ -410,6 +410,7 @@ export default function AdminPage() {
     const { data: allQ } = await supabase.from('quinielas').select('id')
     if (!allQ) return
 
+    let _diagFirst = true
     for (const q of allQ) {
       const { data: picks } = await supabase.from('picks').select('*').eq('quiniela_id', q.id)
       if (!picks) continue
@@ -487,7 +488,16 @@ export default function AdminPage() {
         for (let i = 0; i < 4; i++) {
           if (pickOrder[i] && realOrder[i] && pickOrder[i] === realOrder[i]) clasifPts += 1
         }
+        if (_diagFirst) {
+          console.log(`[CLASIF] Grupo ${g} completo · real:`, realOrder.join('>'), '· pick:', pickOrder.join('>'))
+        }
       })
+      if (_diagFirst) {
+        const gruposCompletos = Object.keys(GROUP_TEAMS).filter(g => (GROUP_MATCHES[g]||[]).every(mid => realScores[mid]))
+        console.log('[CLASIF] Grupos completos detectados:', gruposCompletos.length, gruposCompletos.join(','))
+        console.log('[CLASIF] clasifPts de esta quiniela:', clasifPts)
+        _diagFirst = false
+      }
 
       const total = grpPts + clasifPts + elimPts + finalPtsCalc
       await supabase.from('scores').upsert({
