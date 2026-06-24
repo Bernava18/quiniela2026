@@ -303,3 +303,71 @@ export async function devImportR32(quinielaId) {
     .upsert(rows, { onConflict: 'quiniela_id,match_id' })
   return { error: upErr, count: rows.length }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN — Estado de la FASE CORREGIDA por quiniela
+// ───────────────────────────────────────────────────────────────
+// Devuelve, para cada quiniela, cuántos de los 16 partidos editables
+// (octavos→final + 3er lugar, M89-M104) están completos en picks_ko_test.
+// Completo = tiene marcador (goals_home y goals_away) Y ganador (winner).
+// ═══════════════════════════════════════════════════════════════
+export async function getFaseFinalStatus() {
+  // Partidos editables de la fase corregida
+  const EDITABLES = ['M89','M90','M91','M92','M93','M94','M95','M96',
+                     'M97','M98','M99','M100','M101','M102','M103','M104']
+  const TOTAL = EDITABLES.length // 16
+
+  // 1. Todas las quinielas con dueño y si tienen la fase activa
+  const { data: quinielas, error: qErr } = await supabase
+    .from('quinielas')
+    .select('id, name, fase_corregida_activa, profiles!quinielas_user_id_fkey(username, full_name)')
+    .order('name')
+    .limit(1000)
+  if (qErr) return { data: [], error: qErr }
+
+  // 2. Todos los picks de la fase corregida (paginado por si son muchos)
+  const qids = (quinielas || []).map(q => q.id)
+  let koRows = []
+  let from = 0
+  const pageSize = 1000
+  while (true) {
+    const { data, error } = await supabase
+      .from('picks_ko_test')
+      .select('quiniela_id, match_id, goals_home, goals_away, winner')
+      .in('quiniela_id', qids)
+      .in('match_id', EDITABLES)
+      .range(from, from + pageSize - 1)
+    if (error || !data?.length) break
+    koRows = koRows.concat(data)
+    if (data.length < pageSize) break
+    from += pageSize
+  }
+
+  // 3. Contar completos por quiniela
+  const countByQ = {}
+  koRows.forEach(p => {
+    const ok = p.goals_home != null && p.goals_away != null && p.winner != null && p.winner !== ''
+    if (!ok) return
+    countByQ[p.quiniela_id] = (countByQ[p.quiniela_id] || 0) + 1
+  })
+
+  // 4. Armar resultado con estado
+  const result = (quinielas || []).map(q => {
+    const done = countByQ[q.id] || 0
+    let status
+    if (done >= TOTAL) status = 'completa'
+    else if (done > 0) status = 'en_progreso'
+    else status = 'sin_empezar'
+    return {
+      id: q.id,
+      name: q.name,
+      username: q.profiles?.username || '',
+      full_name: q.profiles?.full_name || '',
+      fase_activa: q.fase_corregida_activa === true,
+      done,
+      total: TOTAL,
+      status,
+    }
+  })
+  return { data: result, error: null }
+}
