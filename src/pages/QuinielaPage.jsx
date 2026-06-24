@@ -1,9 +1,13 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { supabase, savePick, getQuinielaPicks, getAllResults } from '../lib/supabase'
+import {
+  supabase, savePick, getQuinielaPicks, getAllResults,
+  devGetGroupPicks, devGetKoTestPicks, devSaveKoTestPick, devImportR32,
+} from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
-const QUINIELA_HTML_URL = '/quiniela2026_fixed.html'
+const QUINIELA_HTML_URL = '/quiniela2026_fixed.html'        // bracket original (sin cambios)
+const QUINIELA_HTML_FIXED = '/quiniela2026_corrected.html'  // bracket corregido (fase final)
 
 export default function QuinielaPage() {
   const { id: quinielaId } = useParams()
@@ -18,6 +22,9 @@ export default function QuinielaPage() {
   const [totalPts, setTotalPts]       = useState(0)
   const [filledPicks, setFilledPicks] = useState(0)
 
+  // Vista actual: 'normal' (quiniela de siempre) | 'corregida' (fase final corregida)
+  const [view, setView]   = useState('normal')
+  const [msg, setMsg]     = useState('')
 
   useEffect(() => { if (user) load() }, [quinielaId, user])
 
@@ -25,19 +32,30 @@ export default function QuinielaPage() {
     const handler = async (e) => {
       const { type, quinielaId: qid, matchId, pick, total } = e.data || {}
       if (type === 'IFRAME_READY') setIframeReady(true)
+
       if (type === 'SAVE_PICK' && qid && matchId && pick) {
-        await savePick(qid, matchId, pick)
-        setFilledPicks(prev => prev + 1)
+        if (view === 'corregida') {
+          // Fase corregida: solo octavos+ (M89-M104) van a picks_ko_test.
+          const m = /^M(\d+)$/.exec(matchId)
+          const isEditableKO = m && +m[1] >= 89 && +m[1] <= 104
+          if (!isEditableKO) return
+          await devSaveKoTestPick(qid, matchId, pick)
+        } else {
+          // Quiniela normal: comportamiento original intacto
+          await savePick(qid, matchId, pick)
+          setFilledPicks(prev => prev + 1)
+        }
       }
       if (type === 'PTS_UPDATE') setTotalPts(total || 0)
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [])
+  }, [view])
 
   useEffect(() => {
     if (iframeReady && quiniela) sendInitToIframe()
-  }, [iframeReady, quiniela])
+    // eslint-disable-next-line
+  }, [iframeReady, quiniela, view])
 
   async function load() {
     setLoading(true)
@@ -60,16 +78,54 @@ export default function QuinielaPage() {
   }
 
   async function sendInitToIframe() {
-    const [picks, results] = await Promise.all([
-      getQuinielaPicks(quinielaId),
-      getAllResults(),
-    ])
-    const filled = Object.values(picks).filter(p => p?.h != null).length
-    setFilledPicks(filled)
-    iframeRef.current?.contentWindow?.postMessage({
-      type: 'INIT',
-      data: { quinielaId, isLocked: quiniela?.is_locked || false, username: profile?.username, picks, results }
-    }, '*')
+    if (view === 'corregida') {
+      const [groupPicks, koTestPicks] = await Promise.all([
+        devGetGroupPicks(quinielaId),
+        devGetKoTestPicks(quinielaId),
+      ])
+      const picks = { ...groupPicks, ...koTestPicks }
+      iframeRef.current?.contentWindow?.postMessage({
+        type: 'INIT',
+        data: {
+          quinielaId,
+          isLocked: false,
+          testMode: true,    // bloquea grupos y 16avos; editable octavos+
+          username: profile?.username,
+          picks,
+          results: {},
+        }
+      }, '*')
+    } else {
+      const [picks, results] = await Promise.all([
+        getQuinielaPicks(quinielaId),
+        getAllResults(),
+      ])
+      const filled = Object.values(picks).filter(p => p?.h != null).length
+      setFilledPicks(filled)
+      iframeRef.current?.contentWindow?.postMessage({
+        type: 'INIT',
+        data: { quinielaId, isLocked: quiniela?.is_locked || false, username: profile?.username, picks, results }
+      }, '*')
+    }
+  }
+
+  function switchView(v) {
+    if (v === view) return
+    setView(v)
+    setIframeReady(false)
+    const url = (v === 'corregida' ? QUINIELA_HTML_FIXED : QUINIELA_HTML_URL) + '?t=' + Date.now()
+    if (iframeRef.current) iframeRef.current.src = url
+  }
+
+  async function traer16avos() {
+    setMsg('⏳ Trayendo 16avos...')
+    const { error, count } = await devImportR32(quinielaId)
+    if (error) { setMsg('❌ ' + (error.message || 'Error')); setTimeout(() => setMsg(''), 5000); return }
+    if (count === 0) { setMsg('⚠️ No hay 16avos guardados en la quiniela'); setTimeout(() => setMsg(''), 4000); return }
+    setMsg(`✓ ${count} partidos de 16avos cargados`)
+    setIframeReady(false)
+    if (iframeRef.current) iframeRef.current.src = QUINIELA_HTML_FIXED + '?t=' + Date.now()
+    setTimeout(() => setMsg(''), 4000)
   }
 
   useEffect(() => {
@@ -106,6 +162,8 @@ export default function QuinielaPage() {
     </div>
   )
 
+  const faseActiva = quiniela?.fase_corregida_activa === true
+
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'calc(100vh - 52px)' }}>
       <div style={{ background:'#fff', borderBottom:'0.5px solid rgba(0,0,0,.08)', padding:'8px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
@@ -115,21 +173,50 @@ export default function QuinielaPage() {
           </button>
           <span style={{ color:'#e0e0e0' }}>|</span>
           <span style={{ fontWeight:700, fontSize:15 }}>{quiniela?.name}</span>
-          <span style={{ fontSize:12, color:'#6e6e73' }}>{filledPicks} / 104 picks</span>
+          {view === 'normal' && <span style={{ fontSize:12, color:'#6e6e73' }}>{filledPicks} / 104 picks</span>}
           {quiniela?.is_locked && <span style={{ fontSize:12, color:'#ff9f0a', fontWeight:600 }}>🔒 Cerrada</span>}
         </div>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          {totalPts > 0 && (
+          {faseActiva && (
+            <div style={{ display:'flex', gap:4, background:'#f2f2f7', padding:3, borderRadius:9, marginRight:6 }}>
+              <button onClick={() => switchView('normal')}
+                style={{ padding:'5px 12px', border:'none', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer',
+                  background: view==='normal' ? '#0071e3' : 'transparent', color: view==='normal' ? '#fff' : '#6e6e73' }}>
+                Quiniela
+              </button>
+              <button onClick={() => switchView('corregida')}
+                style={{ padding:'5px 12px', border:'none', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer',
+                  background: view==='corregida' ? '#34c759' : 'transparent', color: view==='corregida' ? '#fff' : '#6e6e73' }}>
+                🏆 Fase Final (corregida)
+              </button>
+            </div>
+          )}
+          {view === 'corregida' && (
+            <button onClick={traer16avos}
+              style={{ padding:'6px 12px', border:'0.5px solid #0071e3', borderRadius:8, background:'#0071e3', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:600 }}>
+              ⬇️ Traer 16avos
+            </button>
+          )}
+          {msg && <span style={{ fontSize:12, color:'#0071e3', fontWeight:600 }}>{msg}</span>}
+          {view === 'normal' && totalPts > 0 && (
             <span style={{ background:'#ffd60a', color:'#7a5900', padding:'3px 12px', borderRadius:20, fontWeight:800, fontSize:15 }}>
               {totalPts} pts
             </span>
           )}
-          <button onClick={() => window.open(`/print/${quinielaId}`, '_blank')}
-            style={{ padding:'6px 12px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
-            🖨️ Imprimir PDF
-          </button>
+          {view === 'normal' && (
+            <button onClick={() => window.open(`/print/${quinielaId}`, '_blank')}
+              style={{ padding:'6px 12px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
+              🖨️ Imprimir PDF
+            </button>
+          )}
         </div>
       </div>
+
+      {view === 'corregida' && (
+        <div style={{ background:'#eaffea', color:'#1a7a38', padding:'6px 20px', fontSize:12, fontWeight:600, flexShrink:0, borderBottom:'0.5px solid rgba(0,0,0,.06)' }}>
+          🏆 Fase Final corregida — Grupos y 16avos bloqueados (vienen de tu quiniela). Editable desde Octavos según el cuadro oficial FIFA.
+        </div>
+      )}
 
       {!iframeReady && (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#aeaeb2', fontSize:14 }}>
