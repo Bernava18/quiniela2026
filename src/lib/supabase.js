@@ -271,3 +271,35 @@ export async function devResetKoTest(quinielaId) {
     .eq('quiniela_id', quinielaId)
   return error
 }
+
+// Trae los 16avos (M73-M88) de la quiniela ORIGINAL (tabla 'picks') a la fase
+// de prueba ('picks_ko_test'). Los enfrentamientos son idénticos, así que se
+// copian tal cual. Solo lee de 'picks' (no la modifica). Idempotente.
+export async function devImportR32(quinielaId) {
+  const R32 = ['M73','M74','M75','M76','M77','M78','M79','M80',
+               'M81','M82','M83','M84','M85','M86','M87','M88']
+  // 1. Leer los 16avos originales
+  const { data, error } = await supabase
+    .from('picks')
+    .select('match_id, goals_home, goals_away, winner, h_team, a_team')
+    .eq('quiniela_id', quinielaId)
+    .in('match_id', R32)
+  if (error) return { error, count: 0 }
+  if (!data || data.length === 0) return { error: null, count: 0 }
+
+  // 2. Insertar/actualizar en la tabla de prueba
+  const rows = data.map(p => ({
+    quiniela_id: quinielaId,
+    match_id: p.match_id,
+    goals_home: p.goals_home,
+    goals_away: p.goals_away,
+    winner: p.winner,
+    h_team: p.h_team,
+    a_team: p.a_team,
+    updated_at: new Date().toISOString(),
+  }))
+  const { error: upErr } = await supabase
+    .from('picks_ko_test')
+    .upsert(rows, { onConflict: 'quiniela_id,match_id' })
+  return { error: upErr, count: rows.length }
+}
