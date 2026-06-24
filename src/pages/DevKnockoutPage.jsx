@@ -7,6 +7,7 @@ import {
   devGetKoTestPicks,
   devSaveKoTestPick,
   devResetKoTest,
+  devImportR32,
 } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -112,6 +113,19 @@ export default function DevKnockoutPage() {
     setTimeout(() => setMsg(''), 2500)
   }
 
+  async function importR32() {
+    if (!selectedId) return
+    setMsg('⏳ Trayendo 16avos de la quiniela original...')
+    const { error, count } = await devImportR32(selectedId)
+    if (error) { setMsg('❌ Error: ' + error.message); setTimeout(() => setMsg(''), 4000); return }
+    if (count === 0) { setMsg('⚠️ Esta quiniela no tiene 16avos guardados en la original'); setTimeout(() => setMsg(''), 4000); return }
+    setMsg(`✓ ${count} partidos de 16avos traídos. Recargando...`)
+    // recargar el iframe para mostrar los 16avos ya cargados
+    setIframeReady(false)
+    if (iframeRef.current) iframeRef.current.src = QUINIELA_HTML_URL + '?t=' + Date.now()
+    setTimeout(() => setMsg(''), 3000)
+  }
+
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'calc(100vh - 52px)' }}>
       {/* Banner de advertencia: estás en modo prueba */}
@@ -146,6 +160,11 @@ export default function DevKnockoutPage() {
 
         {selectedId && (
           <>
+            <button onClick={importR32}
+              style={{ padding:'6px 12px', border:'0.5px solid #0071e3', borderRadius:8,
+                background:'#0071e3', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 }}>
+              ⬇️ Traer 16avos de la original
+            </button>
             <span style={{ fontSize:12, color:'#6e6e73' }}>
               {savedCount > 0 ? `${savedCount} picks de prueba guardados` : 'sin picks de prueba aún'}
             </span>
