@@ -1212,7 +1212,8 @@ function ptsBreakdown(pk,m){
 function partidoRow(m,teams){
   const pick=STATE.picks[m.id]||{};
   const res=RESULTS[m.id]||{};
-  const locked=res.locked||false;
+  // Grupos: bloqueados visualmente en modo prueba (fase corregida) o solo-lectura total
+  const locked=res.locked || SB.testMode || SB.readOnlyAll || false;
   const hasResult=res.hs!=null;
   const pts=calcPts(pick.h!=null?pick:null,m);
   const detail=hasResult&&pick.h!=null?calcPtsDetail(pick,m):[];
@@ -2356,7 +2357,7 @@ function bracketMatch(m, isFinal=false) {
   // solo octavos en adelante (M89-M104) quedan editables.
   const _mn = /^M(\d+)$/.exec(m.id); const _n = _mn ? +_mn[1] : 0;
   const testLocked = (SB.testMode && _n >= 73 && _n <= 88);
-  const locked  = res.locked || testLocked || false;
+  const locked  = res.locked || testLocked || SB.readOnlyAll || false;
   const hasReal = res.hs != null;
   const hasPick = pk.h  != null;
   const hTeam = m.hResolved || null;
@@ -2930,12 +2931,14 @@ const SB = {
   quinielaId: null,
   isLocked: false,
   testMode: false,
+  readOnlyAll: false,
 
   // Inicializar desde el parent (React app)
   init(data) {
     this.quinielaId = data.quinielaId;
     this.isLocked   = data.isLocked || false;
     this.testMode   = data.testMode || false;
+    this.readOnlyAll = data.readOnlyAll || false;
     STATE.user = { username: data.username || 'Usuario' };
     // Siempre empezar en Grupos → Grupo A
     STATE.activePhase = 'group';
@@ -2948,8 +2951,8 @@ const SB = {
     if (data.results) {
       Object.assign(RESULTS, data.results);
     }
-    // Bloquear picks si la quiniela está cerrada
-    if (this.isLocked) {
+    // Bloquear picks si la quiniela está cerrada o en modo solo-lectura total
+    if (this.isLocked || this.readOnlyAll) {
       document.body.setAttribute('data-locked', 'true');
     }
     // Re-render siempre en Grupos
