@@ -2352,7 +2352,11 @@ function centerCol(finals, t3) {
 function bracketMatch(m, isFinal=false) {
   const pk  = STATE.picks[m.id] || {};
   const res = RESULTS[m.id] || {};
-  const locked  = res.locked || false;
+  // En MODO PRUEBA, los 16avos (M73-M88) se muestran como bloqueados (solo lectura);
+  // solo octavos en adelante (M89-M104) quedan editables.
+  const _mn = /^M(\d+)$/.exec(m.id); const _n = _mn ? +_mn[1] : 0;
+  const testLocked = (SB.testMode && _n >= 73 && _n <= 88);
+  const locked  = res.locked || testLocked || false;
   const hasReal = res.hs != null;
   const hasPick = pk.h  != null;
   const hTeam = m.hResolved || null;
@@ -2980,10 +2984,12 @@ window.addEventListener('message', (e) => {
 // Interceptar autoSavePick para enviar al parent
 const _origAutoSave = autoSavePick;
 autoSavePick = function(id) {
-  // En MODO PRUEBA: los grupos son de SOLO LECTURA (vienen de la quiniela real).
-  // No se guardan; las eliminatorias (M73-M104) sí.
-  const isKO = /^M(\d+)$/.test(id) && (() => { const n=+id.slice(1); return n>=73 && n<=104; })();
-  if (SB.testMode && !isKO) { return; }
+  // En MODO PRUEBA: grupos Y 16avos (M73-M88) son SOLO LECTURA (vienen de la
+  // quiniela original). Solo se permite editar octavos en adelante (M89-M104).
+  const mm = /^M(\d+)$/.exec(id);
+  const n = mm ? +mm[1] : 0;
+  const isEditableKO = n >= 89 && n <= 104;
+  if (SB.testMode && !isEditableKO) { return; }
   _origAutoSave(id);
   const pk = STATE.picks[id];
   if (pk && SB.quinielaId) SB.savePick(id, pk);
@@ -2996,6 +3002,10 @@ autoSavePick = function(id) {
 // Interceptar setBracketPick también
 const _origSetBracket = setBracketPick;
 setBracketPick = function(id, field, val) {
+  // En MODO PRUEBA: 16avos (M73-M88) bloqueados; solo octavos+ (M89-M104) editables.
+  const mm = /^M(\d+)$/.exec(id);
+  const n = mm ? +mm[1] : 0;
+  if (SB.testMode && !(n >= 89 && n <= 104)) { return; }
   _origSetBracket(id, field, val);
   const pk = STATE.picks[id];
   if (pk && SB.quinielaId) {
