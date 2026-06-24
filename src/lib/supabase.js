@@ -331,25 +331,30 @@ export async function getFaseFinalStatus() {
   let from = 0
   const pageSize = 1000
   while (true) {
+    // Traemos TODAS las filas de picks_ko_test (sin filtrar por match_id en la
+    // query, para evitar problemas con doble .in() y filtrar luego en JS)
     const { data, error } = await supabase
       .from('picks_ko_test')
       .select('quiniela_id, match_id, goals_home, goals_away, winner')
-      .in('quiniela_id', qids)
-      .in('match_id', EDITABLES)
       .range(from, from + pageSize - 1)
-    if (error || !data?.length) break
+    if (error) { console.error('[FaseFinal] Error leyendo picks_ko_test:', error); break }
+    if (!data?.length) break
     koRows = koRows.concat(data)
     if (data.length < pageSize) break
     from += pageSize
   }
+  console.log('[FaseFinal] Filas leídas de picks_ko_test:', koRows.length)
 
-  // 3. Contar completos por quiniela
+  // 3. Contar completos por quiniela (solo partidos editables M89-M104)
+  const editSet = new Set(EDITABLES)
   const countByQ = {}
   koRows.forEach(p => {
+    if (!editSet.has(p.match_id)) return
     const ok = p.goals_home != null && p.goals_away != null && p.winner != null && p.winner !== ''
     if (!ok) return
     countByQ[p.quiniela_id] = (countByQ[p.quiniela_id] || 0) + 1
   })
+  console.log('[FaseFinal] Quinielas con algún pick de octavos+:', Object.keys(countByQ).length)
 
   // 4. Armar resultado con estado
   const result = (quinielas || []).map(q => {
