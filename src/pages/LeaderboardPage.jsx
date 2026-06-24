@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useAuth } from '../context/AuthContext'
-import { supabase, getQuinielaPicks, getAllResults } from '../lib/supabase'
+import { supabase, getQuinielaPicks, getAllResults, devGetGroupPicks, devGetKoTestPicks } from '../lib/supabase'
 
 const ENTRY_FEE = 15
 const LOCK_DATE = new Date('2026-06-11T18:00:00Z') // Inicio del Mundial
@@ -75,6 +75,7 @@ export default function LeaderboardPage() {
   const [results, setResults] = useState({})
   const [allPicks, setAllPicks] = useState({})
   const [viewing, setViewing] = useState(null)
+  const [viewerView, setViewerView] = useState('original')  // 'original' | 'corregida'
   const [iframeReady, setIframeReady] = useState(false)
   const [enriched, setEnriched]   = useState([])
   const [tableSearch, setTableSearch] = useState('')
@@ -144,7 +145,7 @@ export default function LeaderboardPage() {
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [viewing])
+  }, [viewing, viewerView])
 
   async function loadResults() {
     const { data } = await supabase.from('match_results').select('*')
@@ -256,16 +257,36 @@ export default function LeaderboardPage() {
       return
     }
     setViewing({ quinielaId: row.quiniela_id, name: row.quinielas?.profiles?.username, quinielaName: row.quinielas?.name })
+    setViewerView('original')
     setIframeReady(false)
   }
 
   async function loadViewerPicks() {
     if (!viewing) return
-    const [picks, res] = await Promise.all([getQuinielaPicks(viewing.quinielaId), getAllResults()])
-    document.getElementById('viewer-iframe')?.contentWindow?.postMessage({
-      type: 'INIT',
-      data: { quinielaId: viewing.quinielaId, isLocked: true, username: viewing.name, picks, results: res }
-    }, '*')
+    if (viewerView === 'corregida') {
+      // Grupos (de picks) + eliminatorias corregidas (de picks_ko_test), todo solo lectura
+      const [groupPicks, koTestPicks] = await Promise.all([
+        devGetGroupPicks(viewing.quinielaId),
+        devGetKoTestPicks(viewing.quinielaId),
+      ])
+      const picks = { ...groupPicks, ...koTestPicks }
+      document.getElementById('viewer-iframe')?.contentWindow?.postMessage({
+        type: 'INIT',
+        data: { quinielaId: viewing.quinielaId, isLocked: false, readOnlyAll: true, username: viewing.name, picks, results: {} }
+      }, '*')
+    } else {
+      const [picks, res] = await Promise.all([getQuinielaPicks(viewing.quinielaId), getAllResults()])
+      document.getElementById('viewer-iframe')?.contentWindow?.postMessage({
+        type: 'INIT',
+        data: { quinielaId: viewing.quinielaId, isLocked: true, username: viewing.name, picks, results: res }
+      }, '*')
+    }
+  }
+
+  function switchViewerView(v) {
+    if (v === viewerView) return
+    setViewerView(v)
+    setIframeReady(false)
   }
 
   const myRows = enriched.filter(r => r.quinielas?.profiles?.username === profile?.username)
@@ -295,17 +316,36 @@ export default function LeaderboardPage() {
 
   // ── VIEWER ──────────────────────────────────────────────────
   if (viewing) {
+    const viewerSrc = viewerView === 'corregida' ? '/quiniela2026_corrected.html' : '/quiniela2026_fixed.html'
     return (
       <div style={{ display:'flex', flexDirection:'column', height:'calc(100vh - 52px)' }}>
-        <div style={{ background:'#fff', borderBottom:'0.5px solid rgba(0,0,0,.08)', padding:'8px 20px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+        <div style={{ background:'#fff', borderBottom:'0.5px solid rgba(0,0,0,.08)', padding:'8px 20px', display:'flex', alignItems:'center', gap:10, flexShrink:0, flexWrap:'wrap' }}>
           <button onClick={() => setViewing(null)} style={{ border:'none', background:'none', cursor:'pointer', color:'#6e6e73', fontSize:13 }}>← Tabla</button>
           <span style={{ color:'#e0e0e0' }}>|</span>
           <span style={{ fontWeight:700, fontSize:15 }}>{viewing.name}</span>
           <span style={{ fontSize:12, color:'#6e6e73' }}>{viewing.quinielaName}</span>
           <span style={{ fontSize:11, background:'rgba(255,159,10,.12)', color:'#b06000', padding:'2px 8px', borderRadius:6, fontWeight:600 }}>👁 Solo lectura</span>
+          {/* Conmutador Original / Corregida */}
+          <div style={{ display:'flex', gap:4, background:'#f2f2f7', padding:3, borderRadius:9, marginLeft:'auto' }}>
+            <button onClick={() => switchViewerView('original')}
+              style={{ padding:'5px 12px', border:'none', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer',
+                background: viewerView==='original' ? '#0071e3' : 'transparent', color: viewerView==='original' ? '#fff' : '#6e6e73' }}>
+              Original
+            </button>
+            <button onClick={() => switchViewerView('corregida')}
+              style={{ padding:'5px 12px', border:'none', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer',
+                background: viewerView==='corregida' ? '#34c759' : 'transparent', color: viewerView==='corregida' ? '#fff' : '#6e6e73' }}>
+              🏆 Fase Final (corregida)
+            </button>
+          </div>
         </div>
+        {viewerView === 'corregida' && (
+          <div style={{ background:'#eaffea', color:'#1a7a38', padding:'5px 20px', fontSize:12, fontWeight:600, flexShrink:0 }}>
+            🏆 Fase Final corregida (cuadro oficial FIFA) — solo lectura
+          </div>
+        )}
         {!iframeReady && <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#aeaeb2' }}>⚽ Cargando...</div>}
-        <iframe id="viewer-iframe" src="/quiniela2026_fixed.html"
+        <iframe id="viewer-iframe" key={viewerView} src={viewerSrc}
           style={{ flex:1, border:'none', width:'100%', display: iframeReady ? 'block' : 'none' }}
           onLoad={() => { setIframeReady(true); setTimeout(() => loadViewerPicks(), 400) }} />
       </div>
