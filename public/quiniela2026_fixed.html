@@ -7,6 +7,17 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+/* Modo solo-lectura: deshabilita visualmente inputs y selectores sin tocar la lógica */
+body[data-locked="true"] .si,
+body[data-locked="true"] .fsel,
+body[data-locked="true"] input,
+body[data-locked="true"] select{
+  pointer-events:none !important;
+  opacity:.85;
+  background:var(--surface2) !important;
+  cursor:default !important;
+}
+body[data-locked="true"] .si{color:var(--text)}
 :root{
   --bg:#f5f5f7;--surface:#fff;--surface2:#f2f2f4;
   --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
