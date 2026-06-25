@@ -69,6 +69,58 @@ function calcGroupPts(picks, results, group) {
   return pts
 }
 
+// Equipos de cada grupo (derivados de TEAM_NAMES)
+const GROUP_TEAMS = (() => {
+  const out = {}
+  Object.entries(TEAM_NAMES).forEach(([mid, teams]) => {
+    const g = mid[0]
+    if (!out[g]) out[g] = new Set()
+    teams.forEach(t => out[g].add(t))
+  })
+  const res = {}
+  Object.entries(out).forEach(([g, set]) => { res[g] = Array.from(set) })
+  return res
+})()
+
+// Ordena los equipos de un grupo según marcadores. scoreOf(mid) → {h,a} o null.
+function orderGroupBy(group, scoreOf) {
+  const teams = GROUP_TEAMS[group] || []
+  const s = {}
+  teams.forEach(t => { s[t] = { pts:0, gf:0, gc:0 } })
+  for (let i = 1; i <= 6; i++) {
+    const mid = `${group}${i}`
+    const sc = scoreOf(mid)
+    if (!sc || sc.h == null || sc.a == null) continue
+    const [h, a] = TEAM_NAMES[mid] || []
+    if (!h || !a || !s[h] || !s[a]) continue
+    s[h].gf += sc.h; s[h].gc += sc.a
+    s[a].gf += sc.a; s[a].gc += sc.h
+    if (sc.h > sc.a)      s[h].pts += 3
+    else if (sc.h < sc.a) s[a].pts += 3
+    else { s[h].pts += 1; s[a].pts += 1 }
+  }
+  return teams
+    .map(t => ({ team:t, pts:s[t].pts, dif:s[t].gf - s[t].gc, gf:s[t].gf }))
+    .sort((x, y) => y.pts - x.pts || y.dif - x.dif || y.gf - x.gf)
+    .map(r => r.team)
+}
+
+// Clasificación EN VIVO: +1 por posición exacta en grupos completos (máx 48)
+function calcClasifPts(picks, results) {
+  let total = 0
+  GROUPS.forEach(g => {
+    let allReal = true
+    for (let i = 1; i <= 6; i++) { const r = results[`${g}${i}`]; if (!r || r.hs == null) { allReal = false; break } }
+    if (!allReal) return
+    const realOrder = orderGroupBy(g, mid => { const r = results[mid]; return r && r.hs != null ? { h:r.hs, a:r.as } : null })
+    const pickOrder = orderGroupBy(g, mid => { const p = picks[mid]; return p && p.h != null ? { h:p.h, a:p.a } : null })
+    for (let i = 0; i < 4; i++) {
+      if (pickOrder[i] && realOrder[i] && pickOrder[i] === realOrder[i]) total += 1
+    }
+  })
+  return total
+}
+
 export default function LeaderboardPage() {
   const { rows, loading } = useLeaderboard()
   const { profile } = useAuth()
@@ -211,15 +263,16 @@ export default function LeaderboardPage() {
         groupPts[g] = pts
         grpTotal += pts
       })
+      const clasifLive = calcClasifPts(picks, results)   // clasificación EN VIVO
       return {
         ...r,
         groupPts,
         grpTotal,
-        clasifPts: r.clasif_pts || 0,      // posición exacta en grupos
+        clasifPts: clasifLive,             // posición exacta en grupos (en vivo)
         elimPts:   r.elim_pts   || 0,      // R32+Oct+QF+SF+3ro+Final
         finalPts:  r.final_pts  || 0,      // orden final 20/10/5/3
-        // TOTAL calculado en vivo: grupos (en tiempo real) + resto (de BD)
-        total: grpTotal + (r.clasif_pts || 0) + (r.elim_pts || 0) + (r.final_pts || 0),
+        // TOTAL en vivo: grupos + clasificación (ambos en tiempo real) + resto (de BD)
+        total: grpTotal + clasifLive + (r.elim_pts || 0) + (r.final_pts || 0),
         dayPts: calcDayPts(picks),
       }
     }).sort((a, b) => b.total - a.total)
