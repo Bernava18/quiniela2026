@@ -2029,17 +2029,18 @@ const ANNEXC={
 // ── Devuelve [1ro,2do,3ro,4to] de un grupo (picks o resultados reales) ──
 function getGroupOrder(g) {
   const gm = GM.filter(m => m.g === g);
-  const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
-  return (allDone ? calcTablaReal(g) : calcTablaPicksOnly(g, gm)).map(r => r.team);
+  // El bracket SIEMPRE se arma con las PREDICCIONES del usuario (no con el orden
+  // real). La quiniela muestra lo que cada quien predijo; los resultados reales
+  // solo afectan la comparación y los puntos, no la estructura del cuadro.
+  return calcTablaPicksOnly(g, gm).map(r => r.team);
 }
 
-// ── Top 12 terceros ordenados FIFA: PTS → DIF → GF ──
+// ── Top 12 terceros ordenados FIFA: PTS → DIF → GF (según predicción) ──
 function getAll3rds() {
   const thirds = [];
   for (const g of Object.keys(GRUPOS)) {
     const gm = GM.filter(m => m.g === g);
-    const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
-    const tabla = allDone ? calcTablaReal(g) : calcTablaPicksOnly(g, gm);
+    const tabla = calcTablaPicksOnly(g, gm); // siempre predicción del usuario
     const t = tabla[2];
     if (t) thirds.push({ group: g, team: t.team, pts: t.pts, dif: t.dif, gf: t.gf });
   }
