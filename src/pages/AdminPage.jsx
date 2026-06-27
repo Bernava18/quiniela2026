@@ -744,10 +744,16 @@ export default function AdminPage() {
             </>
           )}
           {tab==='results' && (
-            <button onClick={triggerSync} disabled={syncing}
-              style={{ padding:'8px 16px', background:'#30d158', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:syncing?.4:1 }}>
-              {syncing ? '⏳ Sincronizando...' : '🔄 Sync API'}
-            </button>
+            <>
+              <button onClick={async () => { setMsg('⏳ Recalculando todas las quinielas...'); await recalcAllQuinielas(); setMsg('✓ Puntos recalculados (incluye clasificación)'); loadResults(); setTimeout(()=>setMsg(''),4000) }}
+                style={{ padding:'8px 16px', background:'#0071e3', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13 }}>
+                🧮 Recalcular puntos
+              </button>
+              <button onClick={triggerSync} disabled={syncing}
+                style={{ padding:'8px 16px', background:'#30d158', color:'#fff', border:'none', borderRadius:9, fontWeight:600, cursor:'pointer', fontSize:13, opacity:syncing?.4:1 }}>
+                {syncing ? '⏳ Sincronizando...' : '🔄 Sync API'}
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -769,6 +775,16 @@ export default function AdminPage() {
             display:'flex', alignItems:'center', gap:6,
           }}>
           🧪 Bracket (prueba)
+        </button>
+        <button
+          onClick={() => navigate('/real-fifa')}
+          title="Cuadro armado con resultados reales (referencia, visible para todos)"
+          style={{
+            padding:'8px 20px', border:'none', borderRadius:8, fontFamily:'inherit',
+            fontSize:13, fontWeight:700, cursor:'pointer', background:'#0a2540', color:'#fff',
+            display:'flex', alignItems:'center', gap:6,
+          }}>
+          🌐 REAL FIFA
         </button>
       </div>
 
