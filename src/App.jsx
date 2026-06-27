@@ -9,6 +9,7 @@ import AdminPage       from './pages/AdminPage'
 import PrintPage       from './pages/PrintPage'
 import GuidePage       from './pages/GuidePage'
 import DevKnockoutPage from './pages/DevKnockoutPage'
+import RealFifaPage    from './pages/RealFifaPage'
 import Layout          from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -43,6 +44,7 @@ export default function App() {
             <Route index                element={<DashboardPage />} />
             <Route path="quiniela/:id"  element={<QuinielaPage />} />
             <Route path="tabla"         element={<LeaderboardPage />} />
+            <Route path="real-fifa"     element={<RealFifaPage />} />
             <Route path="admin"         element={<AdminRoute><AdminPage /></AdminRoute>} />
             {/* Ruta OCULTA de pruebas — no enlazada en ningún menú, solo admin.
                 Se accede escribiendo la URL directamente: /dev-ko */}
