@@ -376,3 +376,25 @@ export async function getFaseFinalStatus() {
   })
   return { data: result, error: null }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// QUINIELA DE REFERENCIA "REAL FIFA" (visible para todos)
+// ───────────────────────────────────────────────────────────────
+// Convierte los resultados reales (match_results) en formato de picks,
+// para armar el bracket tal cual la realidad. Se llena sola: cada vez que
+// cargas un resultado real, esta vista lo refleja. NO crea datos en la BD.
+// ═══════════════════════════════════════════════════════════════
+export async function getRealAsPicks() {
+  const results = await getAllResults()  // {matchId:{hs,as,win,status}}
+  const picks = {}
+  Object.entries(results).forEach(([mid, r]) => {
+    if (r.hs == null || r.as == null) return
+    picks[mid] = {
+      h: r.hs,
+      a: r.as,
+      win: r.win || (r.hs > r.as ? 'H' : r.hs < r.as ? 'A' : null),
+      saved: true,
+    }
+  })
+  return picks
+}
