@@ -2355,10 +2355,12 @@ function centerCol(finals, t3) {
 function bracketMatch(m, isFinal=false) {
   const pk  = STATE.picks[m.id] || {};
   const res = RESULTS[m.id] || {};
-  // En MODO PRUEBA, los 16avos (M73-M88) se muestran como bloqueados (solo lectura);
-  // solo octavos en adelante (M89-M104) quedan editables.
+  // En MODO PRUEBA: los grupos quedan bloqueados (solo lectura), pero desde
+  // 16avos en adelante (M73-M104) TODO es editable. Los 16avos son editables
+  // porque con la lógica FIFA los cruces cambian (los terceros tienen otro rival),
+  // así que el usuario debe poder poner el marcador de esos nuevos enfrentamientos.
   const _mn = /^M(\d+)$/.exec(m.id); const _n = _mn ? +_mn[1] : 0;
-  const testLocked = (SB.testMode && _n >= 73 && _n <= 88);
+  const testLocked = false; // 16avos+ editables en la corregida
   const locked  = res.locked || testLocked || SB.readOnlyAll || false;
   const hasReal = res.hs != null;
   const hasPick = pk.h  != null;
@@ -3001,11 +3003,11 @@ window.addEventListener('message', (e) => {
 // Interceptar autoSavePick para enviar al parent
 const _origAutoSave = autoSavePick;
 autoSavePick = function(id) {
-  // En MODO PRUEBA: grupos Y 16avos (M73-M88) son SOLO LECTURA (vienen de la
-  // quiniela original). Solo se permite editar octavos en adelante (M89-M104).
+  // En MODO PRUEBA: los grupos son SOLO LECTURA, pero desde 16avos en adelante
+  // (M73-M104) es editable. El usuario ajusta los nuevos cruces FIFA.
   const mm = /^M(\d+)$/.exec(id);
   const n = mm ? +mm[1] : 0;
-  const isEditableKO = n >= 89 && n <= 104;
+  const isEditableKO = n >= 73 && n <= 104;
   if (SB.testMode && !isEditableKO) { return; }
   _origAutoSave(id);
   const pk = STATE.picks[id];
@@ -3019,10 +3021,10 @@ autoSavePick = function(id) {
 // Interceptar setBracketPick también
 const _origSetBracket = setBracketPick;
 setBracketPick = function(id, field, val) {
-  // En MODO PRUEBA: 16avos (M73-M88) bloqueados; solo octavos+ (M89-M104) editables.
+  // En MODO PRUEBA: grupos bloqueados; 16avos en adelante (M73-M104) editables.
   const mm = /^M(\d+)$/.exec(id);
   const n = mm ? +mm[1] : 0;
-  if (SB.testMode && !(n >= 89 && n <= 104)) { return; }
+  if (SB.testMode && !(n >= 73 && n <= 104)) { return; }
   _origSetBracket(id, field, val);
   const pk = STATE.picks[id];
   if (pk && SB.quinielaId) {
