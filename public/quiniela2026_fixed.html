@@ -7,17 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-/* Modo solo-lectura: deshabilita visualmente inputs y selectores sin tocar la lógica */
-body[data-locked="true"] .si,
-body[data-locked="true"] .fsel,
-body[data-locked="true"] input,
-body[data-locked="true"] select{
-  pointer-events:none !important;
-  opacity:.85;
-  background:var(--surface2) !important;
-  cursor:default !important;
-}
-body[data-locked="true"] .si{color:var(--text)}
 :root{
   --bg:#f5f5f7;--surface:#fff;--surface2:#f2f2f4;
   --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
@@ -2029,18 +2018,17 @@ const ANNEXC={
 // ── Devuelve [1ro,2do,3ro,4to] de un grupo (picks o resultados reales) ──
 function getGroupOrder(g) {
   const gm = GM.filter(m => m.g === g);
-  // El bracket SIEMPRE se arma con las PREDICCIONES del usuario (no con el orden
-  // real). La quiniela muestra lo que cada quien predijo; los resultados reales
-  // solo afectan la comparación y los puntos, no la estructura del cuadro.
-  return calcTablaPicksOnly(g, gm).map(r => r.team);
+  const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
+  return (allDone ? calcTablaReal(g) : calcTablaPicksOnly(g, gm)).map(r => r.team);
 }
 
-// ── Top 12 terceros ordenados FIFA: PTS → DIF → GF (según predicción) ──
+// ── Top 12 terceros ordenados FIFA: PTS → DIF → GF ──
 function getAll3rds() {
   const thirds = [];
   for (const g of Object.keys(GRUPOS)) {
     const gm = GM.filter(m => m.g === g);
-    const tabla = calcTablaPicksOnly(g, gm); // siempre predicción del usuario
+    const allDone = gm.every(m => RESULTS[m.id] && RESULTS[m.id].hs != null);
+    const tabla = allDone ? calcTablaReal(g) : calcTablaPicksOnly(g, gm);
     const t = tabla[2];
     if (t) thirds.push({ group: g, team: t.team, pts: t.pts, dif: t.dif, gf: t.gf });
   }
@@ -2356,8 +2344,13 @@ function bracketMatch(m, isFinal=false) {
   const locked  = res.locked || false;
   const hasReal = res.hs != null;
   const hasPick = pk.h  != null;
-  const hTeam = m.hResolved || null;
-  const aTeam = m.aResolved || null;
+  // La quiniela ORIGINAL es una "foto" inmutable: para eliminatorias usamos los
+  // equipos GUARDADOS en el pick (hTeam/aTeam) tal como se registraron, en lugar
+  // de recalcularlos. Así el cuadro queda idéntico al respaldo. Si por alguna
+  // razón no están guardados, caemos al cálculo en vivo como respaldo.
+  const koMatch = /^M(\d+)$/.test(m.id) && +m.id.slice(1) >= 73 && +m.id.slice(1) <= 104;
+  const hTeam = (koMatch && pk.hTeam) ? pk.hTeam : (m.hResolved || null);
+  const aTeam = (koMatch && pk.aTeam) ? pk.aTeam : (m.aResolved || null);
   const both  = !!(hTeam && aTeam);
   const tbd   = !both;
 
