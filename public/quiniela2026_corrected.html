@@ -951,7 +951,7 @@ function renderPhaseTabs(){
     `<button class="tb${p===STATE.activePhase?' active':''}" onclick="setPhase('${p}')">${PHASE_LABELS[p]}</button>`
   ).join('');
 }
-function setPhase(p){STATE.activePhase=p;renderPhaseTabs();renderMatches();}
+function setPhase(p){STATE.activePhase=p;try{sessionStorage.setItem('qf_phase',p);}catch(e){}renderPhaseTabs();renderMatches();}
 
 // ══════════════════════════════
 // RENDER MATCHES
@@ -979,6 +979,7 @@ function renderMatches(){
 
 function setGroup(g){
   STATE.activeGroup=g;
+  try{sessionStorage.setItem('qf_group',g);}catch(e){}
   document.querySelectorAll('#group-tabs .tb').forEach((b,i)=>b.classList.toggle('active',Object.keys(GRUPOS)[i]===g));
   renderGroupContent();
 }
@@ -2956,9 +2957,14 @@ const SB = {
     this.testMode   = data.testMode || false;
     this.readOnlyAll = data.readOnlyAll || false;
     STATE.user = { username: data.username || 'Usuario' };
-    // Siempre empezar en Grupos → Grupo A
-    STATE.activePhase = 'group';
-    STATE.activeGroup = 'A';
+    // Recordar la última fase/grupo visitados (se mantiene al recargar)
+    let savedPhase = 'group', savedGroup = 'A';
+    try {
+      savedPhase = sessionStorage.getItem('qf_phase') || 'group';
+      savedGroup = sessionStorage.getItem('qf_group') || 'A';
+    } catch (e) {}
+    STATE.activePhase = savedPhase;
+    STATE.activeGroup = savedGroup;
     // Cargar picks guardados desde Supabase
     if (data.picks) {
       Object.assign(STATE.picks, data.picks);
