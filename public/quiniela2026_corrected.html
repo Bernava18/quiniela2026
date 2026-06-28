@@ -2137,17 +2137,18 @@ function resolveKnockoutSlot(slot, T) {
 
 function getWinner(mid, T) {
   const t = T[mid]; if (!t || !t.h || !t.a) return null;
-  const res = RESULTS[mid]||{}, pk = STATE.picks[mid]||{};
-  let hs, as, useReal = false;
-  if (res.hs != null) { hs=res.hs; as=res.as; useReal=true; }
-  else if (pk.h != null) { hs=pk.h; as=pk.a; }
-  else return null;
+  const pk = STATE.picks[mid]||{};
+  // La quiniela CORREGIDA arma el cuadro SIEMPRE con las PREDICCIONES del usuario
+  // (nunca con resultados reales). Cada ronda avanza según lo que el usuario
+  // predijo en la ronda anterior.
+  if (pk.h == null || pk.a == null) return null;
+  const hs = pk.h, as = pk.a;
   if (hs > as) return t.h;
   if (hs < as) return t.a;
-  // Empate → quién avanza (penales)
-  // Real primero, luego pick del usuario
-  if (useReal && res.win) return res.win;
-  if (pk.win) return pk.win;
+  // Empate → quién avanza (penales). El ganador DEBE ser uno de los dos equipos
+  // de ESTE partido; si el win guardado es de otro equipo, se ignora.
+  const valid = (w) => w && (w === t.h || w === t.a) ? w : null;
+  if (valid(pk.win)) return valid(pk.win);
   return null; // no se sabe aún
 }
 
