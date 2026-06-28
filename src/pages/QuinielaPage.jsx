@@ -83,11 +83,10 @@ export default function QuinielaPage() {
 
   async function sendInitToIframe() {
     if (view === 'corregida') {
-      // Traer 16avos automáticamente la primera vez (idempotente)
-      if (!importedRef.current) {
-        importedRef.current = true
-        await devImportR32(quinielaId)   // copia M73-M88 de la original a picks_ko_test
-      }
+      // NO se re-importan los 16avos viejos: en la fase corregida los 16avos
+      // se arman con la lógica FIFA y arrancan VACÍOS para que el usuario los
+      // llene según los nuevos cruces. Solo se cargan los grupos (para calcular
+      // clasificados/terceros) y lo que el usuario ya haya guardado en picks_ko_test.
       const [groupPicks, koTestPicks] = await Promise.all([
         devGetGroupPicks(quinielaId),
         devGetKoTestPicks(quinielaId),
