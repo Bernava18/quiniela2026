@@ -36,9 +36,9 @@ export default function QuinielaPage() {
 
       if (type === 'SAVE_PICK' && qid && matchId && pick) {
         if (view === 'corregida') {
-          // Fase corregida: solo octavos+ (M89-M104) van a picks_ko_test.
+          // Fase corregida: 16avos en adelante (M73-M104) van a picks_ko_test.
           const m = /^M(\d+)$/.exec(matchId)
-          const isEditableKO = m && +m[1] >= 89 && +m[1] <= 104
+          const isEditableKO = m && +m[1] >= 73 && +m[1] <= 104
           if (!isEditableKO) return
           await devSaveKoTestPick(qid, matchId, pick)
         }
