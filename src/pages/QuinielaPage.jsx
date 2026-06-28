@@ -23,7 +23,13 @@ export default function QuinielaPage() {
   const [filledPicks, setFilledPicks] = useState(0)
 
   // Vista: 'normal' (Quiniela Original, solo lectura) | 'corregida' (Fase Final corregida)
-  const [view, setView]   = useState('normal')
+  // Se recuerda en la URL (?view=corregida) para mantenerse al recargar la página.
+  const [view, setView]   = useState(() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get('view')
+      return v === 'corregida' ? 'corregida' : 'normal'
+    } catch { return 'normal' }
+  })
   const [msg, setMsg]     = useState('')
   const importedRef       = useRef(false)  // evita reimportar 16avos en cada render
 
@@ -117,6 +123,13 @@ export default function QuinielaPage() {
     if (v === view) return
     setView(v)
     setIframeReady(false)
+    // Recordar la vista en la URL para que se mantenga al recargar
+    try {
+      const url = new URL(window.location.href)
+      if (v === 'corregida') url.searchParams.set('view', 'corregida')
+      else url.searchParams.delete('view')
+      window.history.replaceState({}, '', url)
+    } catch {}
     const url = (v === 'corregida' ? QUINIELA_HTML_FIXED : QUINIELA_HTML_URL) + '?t=' + Date.now()
     if (iframeRef.current) iframeRef.current.src = url
   }
@@ -207,7 +220,7 @@ export default function QuinielaPage() {
       )}
       {view === 'corregida' && (
         <div style={{ background:'#eaffea', color:'#1a7a38', padding:'6px 20px', fontSize:12, fontWeight:600, flexShrink:0, borderBottom:'0.5px solid rgba(0,0,0,.06)' }}>
-          🏆 Fase Final corregida — Grupos y 16avos bloqueados (vienen de tu quiniela). Editable desde Octavos según el cuadro oficial FIFA.
+          🏆 Fase Final corregida — Grupos bloqueados (vienen de tu quiniela). Editable desde 16avos según el cuadro oficial FIFA.
         </div>
       )}
 
