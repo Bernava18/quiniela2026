@@ -79,13 +79,17 @@ function matchCard(mid,isFinal){
   const played=PLAYED_LOCKED.includes(mid);
   const w=validWinner(mid);
   const nm=(n)=>n?`${fh(n)} <span class="tname${w===n?' win':''}">${n}</span>`:`<span class="tname tbd">Por definir</span>`;
-  const sc=(s)=>`<input class="sc" type="number" min="0" value="${pk[s]??''}" ${locked||!t.h||!t.a?'disabled':''} onchange="setScore('${mid}','${s}',this.value)">`;
+  // Editable si AMBOS lados tienen algún equipo (real o "Sin definir").
+  // Solo se bloquea cuando un lado aún es null (el partido previo no tiene ganador).
+  const canEdit = !locked && t.h && t.a;
+  const sc=(s)=>`<input class="sc" type="number" min="0" value="${pk[s]??''}" ${canEdit?'':'disabled'} onchange="setScore('${mid}','${s}',this.value)">`;
   let adv='';
   if(t.h&&t.a&&pk.h!=null&&pk.a!=null&&pk.h===pk.a){
+    // En empate, el menú "¿Quién avanza?" solo ofrece equipos reales (no "Sin definir")
+    const opts=[t.h,t.a].filter(x=>x&&x!=='Sin definir');
     adv=`<select class="adv" ${locked?'disabled':''} onchange="setAdv('${mid}',this.value)">
       <option value="">🏆 ¿Quién avanza?</option>
-      <option value="${t.h}" ${pk.w===t.h?'selected':''}>${t.h}</option>
-      <option value="${t.a}" ${pk.w===t.a?'selected':''}>${t.a}</option></select>`;}
+      ${opts.map(x=>`<option value="${x}" ${pk.w===x?'selected':''}>${x}</option>`).join('')}</select>`;}
   return `<div class="match${locked?' locked':''}${isFinal?' final-m':''}">
     <div class="mdate"><span>${dateOf(mid)} · ${mid}</span>${played?'🔒':''}</div>
     <div class="team">${nm(t.h)} ${sc('h')}</div>
