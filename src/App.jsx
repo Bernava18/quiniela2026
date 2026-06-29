@@ -10,6 +10,7 @@ import PrintPage       from './pages/PrintPage'
 import GuidePage       from './pages/GuidePage'
 import DevKnockoutPage from './pages/DevKnockoutPage'
 import RealFifaPage    from './pages/RealFifaPage'
+import FaseFinalPage   from './pages/FaseFinalPage'
 import Layout          from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
           <Route path="/guia"     element={<GuidePage />} />
           <Route path="/print/:id" element={<PrivateRoute><PrintPage /></PrivateRoute>} />
+          <Route path="/fase-final/:id" element={<PrivateRoute><FaseFinalPage /></PrivateRoute>} />
 
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
             <Route index                element={<DashboardPage />} />
