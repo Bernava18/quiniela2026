@@ -954,7 +954,13 @@ function renderPhaseTabs(){
     `<button class="tb${p===STATE.activePhase?' active':''}" onclick="setPhase('${p}')">${PHASE_LABELS[p]}</button>`
   ).join('');
 }
-function setPhase(p){STATE.activePhase=p;try{sessionStorage.setItem('qf_phase',p);}catch(e){}renderPhaseTabs();renderMatches();}
+function setPhase(p){
+  // En FASE FINAL nunca permitir 'group'
+  if (typeof SB !== 'undefined' && SB.realFinal && p === 'group') p = 'r32';
+  STATE.activePhase=p;
+  try{sessionStorage.setItem('qf_phase',p);}catch(e){}
+  renderPhaseTabs();renderMatches();
+}
 
 // ══════════════════════════════
 // RENDER MATCHES
@@ -2387,8 +2393,12 @@ function bracketMatch(m, isFinal=false) {
   // porque con la lógica FIFA los cruces cambian (los terceros tienen otro rival),
   // así que el usuario debe poder poner el marcador de esos nuevos enfrentamientos.
   const _mn = /^M(\d+)$/.exec(m.id); const _n = _mn ? +_mn[1] : 0;
-  const testLocked = false; // 16avos+ editables en la corregida
-  const locked  = res.locked || testLocked || SB.readOnlyAll || false;
+  // FASE FINAL: los partidos YA JUGADOS quedan bloqueados (solo lectura), para
+  // que el resultado cargado no se pueda modificar. Lista de partidos jugados:
+  const PLAYED_LOCKED = ['M73'];
+  const isPlayedLocked = (typeof SB !== 'undefined' && SB.realFinal && PLAYED_LOCKED.includes(m.id));
+  const testLocked = false; // resto de 16avos+ editables
+  const locked  = res.locked || testLocked || isPlayedLocked || SB.readOnlyAll || false;
   const hasReal = res.hs != null;
   const hasPick = pk.h  != null;
   const hTeam = m.hResolved || null;
