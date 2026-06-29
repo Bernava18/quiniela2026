@@ -244,6 +244,12 @@ export default function DashboardPage() {
 
                 {/* Action buttons */}
                 <div style={{ display:'flex', gap:6, flexShrink:0 }} onClick={e=>e.stopPropagation()}>
+                  <button onClick={()=>navigate(`/fase-final/${q.id}`)}
+                    title="Fase Final — equipos reales del Mundial"
+                    style={{ padding:'5px 12px', border:'none', borderRadius:7, cursor:'pointer', fontSize:12, fontWeight:800, color:'#fff',
+                      background:'linear-gradient(135deg,#ff8a00,#e52e71)', boxShadow:'0 2px 8px rgba(229,46,113,.35)', whiteSpace:'nowrap' }}>
+                    🏆 Fase Final
+                  </button>
                   <button onClick={()=>setExpanded(isExpanded?null:q.id)}
                     title="Ver progreso detallado"
                     style={{ padding:'5px 10px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:7, background:'none', cursor:'pointer', fontSize:13 }}>
