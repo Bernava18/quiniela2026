@@ -946,7 +946,10 @@ function showPage(name){
 // PHASE TABS
 // ══════════════════════════════
 function renderPhaseTabs(){
-  const phases=PHASE_ORDER;
+  // En FASE FINAL real, no se muestran los grupos (solo eliminatoria).
+  const phases = (typeof SB !== 'undefined' && SB.realFinal)
+    ? PHASE_ORDER.filter(p => p !== 'group')
+    : PHASE_ORDER;
   document.getElementById('phase-tabs').innerHTML=phases.map(p=>
     `<button class="tb${p===STATE.activePhase?' active':''}" onclick="setPhase('${p}')">${PHASE_LABELS[p]}</button>`
   ).join('');
@@ -2076,9 +2079,9 @@ const REAL_R32 = {
   M75:['Países Bajos','Marruecos'], M76:['Brasil','Japón'],
   M77:['Francia','Suecia'],         M78:['Costa de Marfil','Noruega'],
   M79:['México','Ecuador'],         M80:['Inglaterra','RD Congo'],
-  M81:['Estados Unidos','Bosnia'],  M82:['Bélgica','Senegal'],
+  M81:['EE. UU.','Bosnia'],         M82:['Bélgica','Senegal'],
   M83:['Portugal','Croacia'],       M84:['España','Austria'],
-  M85:['Suiza','Argelia'],          M86:['Argentina','Cabo Verde'],
+  M85:['Suiza','Argelia'],          M86:['Argentina','Islas de Cabo Verde'],
   M87:['Colombia','Ghana'],         M88:['Australia','Egipto'],
 };
 
@@ -2981,12 +2984,16 @@ const SB = {
     this.realFinal  = data.realFinal || false;  // fase final con equipos reales
     this.readOnlyAll = data.readOnlyAll || false;
     STATE.user = { username: data.username || 'Usuario' };
-    // Recordar la última fase/grupo visitados (se mantiene al recargar)
-    let savedPhase = 'group', savedGroup = 'A';
+    // Recordar la última fase/grupo visitados (se mantiene al recargar).
+    // En FASE FINAL real arrancamos en 16avos (nunca grupos).
+    const defaultPhase = (this.realFinal) ? 'r32' : 'group';
+    let savedPhase = defaultPhase, savedGroup = 'A';
     try {
-      savedPhase = sessionStorage.getItem('qf_phase') || 'group';
+      savedPhase = sessionStorage.getItem('qf_phase') || defaultPhase;
       savedGroup = sessionStorage.getItem('qf_group') || 'A';
     } catch (e) {}
+    // Si por sesión previa quedó 'group' pero estamos en fase final, forzar r32
+    if (this.realFinal && savedPhase === 'group') savedPhase = 'r32';
     STATE.activePhase = savedPhase;
     STATE.activeGroup = savedGroup;
     // Cargar picks guardados desde Supabase
