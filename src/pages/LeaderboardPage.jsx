@@ -317,9 +317,16 @@ export default function LeaderboardPage() {
   async function loadViewerPicks() {
     if (!viewing) return
     if (viewerView === 'corregida') {
-      // NUEVA Fase Final (equipos reales): solo los picks de la eliminatoria
-      // desde picks_ko_test. El HTML solo_fasefinal.html usa equipos reales fijos.
-      const koTestPicks = await devGetKoTestPicks(viewing.quinielaId)
+      // NUEVA Fase Final: leer los picks directamente de picks_ko_test con
+      // los campos correctos (incluido winner) para que el HTML los reciba bien.
+      const { data: koRows } = await supabase
+        .from('picks_ko_test')
+        .select('match_id, goals_home, goals_away, winner')
+        .eq('quiniela_id', viewing.quinielaId)
+      const koTestPicks = {}
+      for (const r of (koRows || [])) {
+        koTestPicks[r.match_id] = { h: r.goals_home, a: r.goals_away, w: r.winner }
+      }
       document.getElementById('viewer-iframe')?.contentWindow?.postMessage({
         type: 'INIT',
         data: { quinielaId: viewing.quinielaId, username: viewing.name, picks: koTestPicks, readOnly: true }
