@@ -1,203 +1,128 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fase Final - Mundial 2026</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f7;color:#1d1d1f;padding:14px}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.tb{padding:7px 14px;border:none;border-radius:8px;background:#fff;color:#6e6e73;font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.tb.active{background:#0071e3;color:#fff}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f7;color:#1d1d1f;padding:12px}
+.banner{background:linear-gradient(90deg,#fff4e6,#ffe9f0);color:#b3402a;padding:9px 14px;border-radius:10px;font-size:12.5px;font-weight:700;margin-bottom:12px}
+.muted{color:#86868b;font-size:12px;margin-bottom:10px}
 .flag{border-radius:3px;object-fit:cover;vertical-align:middle;box-shadow:0 0 1px rgba(0,0,0,.3)}
-.flag-ph{display:inline-flex;align-items:center;justify-content:center;background:#e5e5ea;border-radius:3px;font-size:9px;font-weight:700;color:#8e8e93;vertical-align:middle}
-.bracket{display:flex;gap:18px;overflow-x:auto;padding-bottom:20px}
-.col{display:flex;flex-direction:column;gap:14px;min-width:220px;justify-content:space-around}
-.col-title{font-size:12px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:4px}
-.match{background:#fff;border-radius:12px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);position:relative}
-.match.locked{background:#f2f2f7;opacity:.95}
-.match-date{font-size:10px;color:#aeaeb2;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
-.lock-ico{font-size:10px}
-.team{display:flex;align-items:center;gap:8px;padding:4px 0}
-.team-name{flex:1;font-size:13px;font-weight:600}
-.team-name.tbd{color:#c7c7cc;font-style:italic;font-weight:500}
-.score{width:38px;height:32px;border:1.5px solid #d2d2d7;border-radius:8px;text-align:center;font-size:15px;font-weight:700;color:#1d1d1f}
-.score:disabled{background:#e9e9eb;color:#8e8e93;cursor:not-allowed}
-.score:focus{outline:none;border-color:#0071e3}
-.adv{margin-top:6px;width:100%;padding:5px;border:1px solid #d2d2d7;border-radius:8px;font-size:12px;font-weight:600;color:#0071e3;background:#fff;cursor:pointer}
-.adv:disabled{background:#e9e9eb;color:#8e8e93;cursor:not-allowed}
-.win{color:#34c759}
-.final-match{background:linear-gradient(135deg,#fff8e6,#fff);border:2px solid #ffd60a}
-.banner{background:linear-gradient(90deg,#fff4e6,#ffe9f0);color:#b3402a;padding:9px 14px;border-radius:10px;font-size:12.5px;font-weight:700;margin-bottom:14px}
-.muted{color:#86868b;font-size:13px;margin:10px 0}
-</style>
-</head>
-<body>
+.flag-ph{display:inline-flex;align-items:center;justify-content:center;background:#e5e5ea;border-radius:3px;font-size:8px;font-weight:700;color:#8e8e93}
+.bwrap{overflow-x:auto;padding-bottom:16px}
+.bracket{display:flex;gap:10px;align-items:stretch;min-width:1400px}
+.col{display:flex;flex-direction:column;justify-content:space-around;min-width:140px;flex:1}
+.col.center{min-width:180px;flex:1.3}
+.ctitle{font-size:10px;font-weight:800;color:#86868b;text-transform:uppercase;letter-spacing:.4px;text-align:center;margin-bottom:8px}
+.match{background:#fff;border-radius:9px;padding:7px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin:5px 0}
+.match.locked{background:#f2f2f7}
+.match.final-m{background:linear-gradient(135deg,#fff8e6,#fff);border:2px solid #ffd60a}
+.mdate{font-size:9px;color:#aeaeb2;margin-bottom:4px;display:flex;justify-content:space-between}
+.team{display:flex;align-items:center;gap:5px;padding:2px 0}
+.tname{flex:1;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tname.tbd{color:#c7c7cc;font-style:italic;font-weight:500}
+.tname.win{color:#34c759;font-weight:800}
+.sc{width:30px;height:26px;border:1.4px solid #d2d2d7;border-radius:6px;text-align:center;font-size:13px;font-weight:700;flex-shrink:0}
+.sc:disabled{background:#e9e9eb;color:#8e8e93}
+.sc:focus{outline:none;border-color:#0071e3}
+.adv{margin-top:4px;width:100%;padding:3px;border:1px solid #d2d2d7;border-radius:6px;font-size:10.5px;font-weight:600;color:#0071e3}
+.champ{text-align:center;font-size:11px;color:#86868b;margin-top:8px}
+.champ b{color:#1d1d1f;font-size:13px}
+.podium{background:#fff;border-radius:9px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-top:10px;font-size:11px}
+.podium .row{display:flex;align-items:center;gap:6px;padding:3px 0}
+.podium .pos{font-weight:800;width:16px}
+</style></head><body>
 <div class="banner">🏆 FASE FINAL — Equipos reales del Mundial 2026. Predice los marcadores desde 16avos hasta la gran final. ¡Editable!</div>
-<div class="tabs" id="tabs"></div>
-<div id="content"></div>
-
+<div class="muted" id="cnt"></div>
+<div class="bwrap"><div class="bracket" id="bracket"></div></div>
 <script>
-const FLAGS={"México": "mx", "Sudáfrica": "za", "Rep. de Corea": "kr", "Rep. Checa": "cz", "Canadá": "ca", "Bosnia": "ba", "Catar": "qa", "Suiza": "ch", "Brasil": "br", "Marruecos": "ma", "Haití": "ht", "Escocia": "gb-sct", "EE. UU.": "us", "Paraguay": "py", "Australia": "au", "Turquía": "tr", "Alemania": "de", "Curazao": "cw", "Costa de Marfil": "ci", "Ecuador": "ec", "Países Bajos": "nl", "Japón": "jp", "Suecia": "se", "Túnez": "tn", "Bélgica": "be", "Egipto": "eg", "RI de Irán": "ir", "Nueva Zelanda": "nz", "España": "es", "Islas de Cabo Verde": "cv", "Arabia Saudí": "sa", "Uruguay": "uy", "Francia": "fr", "Senegal": "sn", "Irak": "iq", "Noruega": "no", "Argentina": "ar", "Argelia": "dz", "Austria": "at", "Jordania": "jo", "Portugal": "pt", "RD Congo": "cd", "Uzbekistán": "uz", "Colombia": "co", "Inglaterra": "gb-eng", "Croacia": "hr", "Ghana": "gh", "Panamá": "pa"};
-const REAL_R32={"M73": ["Canadá", "Sudáfrica"], "M74": ["Alemania", "Paraguay"], "M75": ["Países Bajos", "Marruecos"], "M76": ["Brasil", "Japón"], "M77": ["Francia", "Suecia"], "M78": ["Costa de Marfil", "Noruega"], "M79": ["México", "Ecuador"], "M80": ["Inglaterra", "RD Congo"], "M81": ["EE. UU.", "Bosnia"], "M82": ["Bélgica", "Senegal"], "M83": ["Portugal", "Croacia"], "M84": ["España", "Austria"], "M85": ["Suiza", "Argelia"], "M86": ["Argentina", "Islas de Cabo Verde"], "M87": ["Colombia", "Ghana"], "M88": ["Australia", "Egipto"]};
-const FECHAS_R32={"M73": "dom 28 jun", "M74": "lun 29 jun", "M75": "lun 29 jun", "M76": "lun 29 jun", "M77": "mar 30 jun", "M78": "mar 30 jun", "M79": "mar 30 jun", "M80": "mié 1 jul", "M81": "mié 1 jul", "M82": "mié 1 jul", "M83": "jue 2 jul", "M84": "jue 2 jul", "M85": "jue 2 jul", "M86": "vie 3 jul", "M87": "vie 3 jul", "M88": "vie 3 jul"};
-const KO_SLOTS={"M89": ["WM74", "WM77"], "M90": ["WM73", "WM75"], "M91": ["WM76", "WM78"], "M92": ["WM79", "WM80"], "M93": ["WM83", "WM84"], "M94": ["WM81", "WM82"], "M95": ["WM86", "WM88"], "M96": ["WM85", "WM87"], "M97": ["WM89", "WM90"], "M98": ["WM93", "WM94"], "M99": ["WM91", "WM92"], "M100": ["WM95", "WM96"], "M101": ["WM97", "WM98"], "M102": ["WM99", "WM100"], "M103": ["LM101", "LM102"], "M104": ["WM101", "WM102"]};
-const FECHAS_KO={"M89": "sáb 4 jul", "M90": "sáb 4 jul", "M91": "dom 5 jul", "M92": "dom 5 jul", "M93": "lun 6 jul", "M94": "lun 6 jul", "M95": "mar 7 jul", "M96": "mar 7 jul", "M97": "jue 9 jul", "M98": "vie 10 jul", "M99": "sáb 11 jul", "M100": "sáb 11 jul", "M101": "mar 14 jul", "M102": "mié 15 jul", "M103": "sáb 18 jul", "M104": "dom 19 jul"};
-const PLAYED_LOCKED=["M73"];
+const FLAGS={"México": "mx", "Sudáfrica": "za", "Rep. de Corea": "kr", "Rep. Checa": "cz", "Canadá": "ca", "Bosnia": "ba", "Catar": "qa", "Suiza": "ch", "Brasil": "br", "Marruecos": "ma", "Haití": "ht", "Escocia": "gb-sct", "EE. UU.": "us", "Paraguay": "py", "Australia": "au", "Turquía": "tr", "Alemania": "de", "Curazao": "cw", "Costa de Marfil": "ci", "Ecuador": "ec", "Países Bajos": "nl", "Japón": "jp", "Suecia": "se", "Túnez": "tn", "Bélgica": "be", "Egipto": "eg", "RI de Irán": "ir", "Nueva Zelanda": "nz", "España": "es", "Islas de Cabo Verde": "cv", "Arabia Saudí": "sa", "Uruguay": "uy", "Francia": "fr", "Senegal": "sn", "Irak": "iq", "Noruega": "no", "Argentina": "ar", "Argelia": "dz", "Austria": "at", "Jordania": "jo", "Portugal": "pt", "RD Congo": "cd", "Uzbekistán": "uz", "Colombia": "co", "Inglaterra": "gb-eng", "Croacia": "hr", "Ghana": "gh", "Panamá": "pa"}, R32={"M73": ["L", "dom 28 jun", "Canadá", "Sudáfrica"], "M74": ["L", "lun 29 jun", "Alemania", "Paraguay"], "M77": ["L", "mar 30 jun", "Francia", "Suecia"], "M75": ["L", "lun 29 jun", "Países Bajos", "Marruecos"], "M83": ["L", "jue 2 jul", "Portugal", "Croacia"], "M84": ["L", "jue 2 jul", "España", "Austria"], "M81": ["L", "mié 1 jul", "EE. UU.", "Bosnia"], "M82": ["L", "mié 1 jul", "Bélgica", "Senegal"], "M76": ["R", "lun 29 jun", "Brasil", "Japón"], "M78": ["R", "mar 30 jun", "Costa de Marfil", "Noruega"], "M79": ["R", "mar 30 jun", "México", "Ecuador"], "M80": ["R", "mié 1 jul", "Inglaterra", "RD Congo"], "M86": ["R", "vie 3 jul", "Argentina", "Islas de Cabo Verde"], "M88": ["R", "vie 3 jul", "Australia", "Egipto"], "M85": ["R", "jue 2 jul", "Suiza", "Argelia"], "M87": ["R", "vie 3 jul", "Colombia", "Ghana"]}, KO={"M89": ["L", "sáb 4 jul", "WM74", "WM77"], "M90": ["L", "sáb 4 jul", "WM73", "WM75"], "M93": ["L", "lun 6 jul", "WM83", "WM84"], "M94": ["L", "lun 6 jul", "WM81", "WM82"], "M91": ["R", "dom 5 jul", "WM76", "WM78"], "M92": ["R", "dom 5 jul", "WM79", "WM80"], "M95": ["R", "mar 7 jul", "WM86", "WM88"], "M96": ["R", "mar 7 jul", "WM85", "WM87"], "M97": ["L", "jue 9 jul", "WM89", "WM90"], "M98": ["L", "vie 10 jul", "WM93", "WM94"], "M99": ["R", "sáb 11 jul", "WM91", "WM92"], "M100": ["R", "sáb 11 jul", "WM95", "WM96"], "M101": ["L", "mar 14 jul", "WM97", "WM98"], "M102": ["R", "mié 15 jul", "WM99", "WM100"], "M103": ["C", "sáb 18 jul", "LM101", "LM102"], "M104": ["C", "dom 19 jul", "WM101", "WM102"]}, ORDER_L={"r32": ["M74", "M77", "M73", "M75", "M83", "M84", "M81", "M82"], "r16": ["M89", "M90", "M93", "M94"], "qf": ["M97", "M98"], "sf": ["M101"]}, ORDER_R={"r32": ["M76", "M78", "M79", "M80", "M86", "M88", "M85", "M87"], "r16": ["M91", "M92", "M95", "M96"], "qf": ["M99", "M100"], "sf": ["M102"]};
+const PLAYED_LOCKED=['M73'];
+let QID=null,USERNAME='Usuario';
+const PICKS={};
 
-const PHASES=[
-  {id:'r32',label:'16avos',matches:['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88']},
-  {id:'r16',label:'Octavos',matches:['M89','M90','M91','M92','M93','M94','M95','M96']},
-  {id:'qf',label:'Cuartos',matches:['M97','M98','M99','M100']},
-  {id:'sf',label:'Semis',matches:['M101','M102']},
-  {id:'3rd',label:'3er Lugar',matches:['M103']},
-  {id:'final',label:'Final',matches:['M104']},
-];
+function fh(n,w=18){const c=FLAGS[n],h=Math.round(w*.67);
+  if(!n)return `<div class="flag-ph" style="width:${w}px;height:${h}px">?</div>`;
+  if(!c)return `<div class="flag-ph" style="width:${w}px;height:${h}px">${n.slice(0,2)}</div>`;
+  return `<img src="https://flagcdn.com/w40/${c}.png" class="flag" style="width:${w}px;height:${h}px" alt="${n}">`;}
 
-// Estado
-let QID=null, USERNAME='Usuario';
-const PICKS={};   // matchId -> {h:goles, a:goles, w:'equipo'|null}
-
-function fh(name,w=24){
-  const c=FLAGS[name],h=Math.round(w*0.67);
-  if(!name)return `<div class="flag-ph" style="width:${w}px;height:${h}px">?</div>`;
-  if(!c)return `<div class="flag-ph" style="width:${w}px;height:${h}px">${name.slice(0,2)}</div>`;
-  return `<img src="https://flagcdn.com/w40/${c}.png" class="flag" style="width:${w}px;height:${h}px" alt="${name}">`;
-}
-
-// Resolver equipos de un partido
 function teamsOf(mid){
-  if(REAL_R32[mid]) return {h:REAL_R32[mid][0], a:REAL_R32[mid][1]};
-  const sl=KO_SLOTS[mid];
-  if(!sl) return {h:null,a:null};
-  return {h:resolveSlot(sl[0]), a:resolveSlot(sl[1])};
-}
-function resolveSlot(slot){
-  // WMxx = ganador del partido xx ; LMxx = perdedor
-  const m=/^([WL])M(\d+)$/.exec(slot);
-  if(!m) return null;
-  const kind=m[1], src='M'+m[2];
-  const pk=PICKS[src];
-  if(!pk||pk.w==null) return null;
-  const t=teamsOf(src);
-  if(kind==='W') return pk.w;
-  // perdedor
-  if(pk.w===t.h) return t.a;
-  if(pk.w===t.a) return t.h;
-  return null;
-}
+  if(R32[mid])return{h:R32[mid][2],a:R32[mid][3]};
+  const k=KO[mid]; if(!k)return{h:null,a:null};
+  return{h:resolve(k[2]),a:resolve(k[3])};}
+function resolve(slot){const m=/^([WL])M(\d+)$/.exec(slot);if(!m)return null;
+  const kind=m[1],src='M'+m[2],pk=PICKS[src];if(!pk||pk.w==null)return null;
+  const t=teamsOf(src);if(kind==='W')return pk.w;
+  if(pk.w===t.h)return t.a;if(pk.w===t.a)return t.h;return null;}
+function validWinner(mid){const pk=PICKS[mid];if(!pk)return null;const t=teamsOf(mid);
+  return(pk.w&&(pk.w===t.h||pk.w===t.a))?pk.w:null;}
+function isLocked(mid){return PLAYED_LOCKED.includes(mid);}
+function dateOf(mid){return (R32[mid]?R32[mid][1]:(KO[mid]?KO[mid][1]:''));}
 
-// Ganador válido (debe ser uno de los dos equipos)
-function validWinner(mid){
-  const pk=PICKS[mid]; if(!pk) return null;
-  const t=teamsOf(mid);
-  const w=pk.w;
-  return (w && (w===t.h||w===t.a)) ? w : null;
-}
-
-function isLocked(mid){ return PLAYED_LOCKED.includes(mid); }
-
-function setScore(mid,side,val){
-  if(isLocked(mid)) return;
+function setScore(mid,side,val){if(isLocked(mid))return;
   const pk=PICKS[mid]||(PICKS[mid]={h:null,a:null,w:null});
-  const v=val===''?null:Math.max(0,parseInt(val)||0);
-  pk[side]=v;
-  // inferir ganador si no es empate
-  if(pk.h!=null&&pk.a!=null){
-    const t=teamsOf(mid);
-    if(pk.h>pk.a) pk.w=t.h;
-    else if(pk.a>pk.h) pk.w=t.a;
-    // empate: dejar w como está (se elige en dropdown)
-  }
-  save(mid);
-  render();
-}
-function setAdv(mid,team){
-  if(isLocked(mid)) return;
-  const pk=PICKS[mid]||(PICKS[mid]={h:null,a:null,w:null});
-  pk.w=team||null;
-  save(mid);
-  render();
-}
-
-function save(mid){
-  const pk=PICKS[mid]||{};
+  pk[side]=val===''?null:Math.max(0,parseInt(val)||0);
+  if(pk.h!=null&&pk.a!=null){const t=teamsOf(mid);
+    if(pk.h>pk.a)pk.w=t.h;else if(pk.a>pk.h)pk.w=t.a;}
+  save(mid);render();}
+function setAdv(mid,team){if(isLocked(mid))return;
+  const pk=PICKS[mid]||(PICKS[mid]={h:null,a:null,w:null});pk.w=team||null;save(mid);render();}
+function save(mid){const pk=PICKS[mid]||{};
   parent.postMessage({type:'SAVE_PICK',quinielaId:QID,matchId:mid,
-    pick:{h:pk.h??null,a:pk.a??null,w:pk.w??null}}, '*');
-}
+    pick:{h:pk.h??null,a:pk.a??null,w:pk.w??null}},'*');}
 
-let activePhase='r32';
-function render(){
-  // tabs
-  document.getElementById('tabs').innerHTML=PHASES.map(p=>
-    `<button class="tb${p.id===activePhase?' active':''}" onclick="go('${p.id}')">${p.label}</button>`
-  ).join('');
-  // content
-  if(activePhase==='r32'){ renderList(PHASES[0].matches); }
-  else { renderList(PHASES.find(p=>p.id===activePhase).matches); }
-}
-window.go=function(p){activePhase=p;try{sessionStorage.setItem('ff_phase',p)}catch(e){}render();}
-
-function renderList(mids){
-  const done=Object.values(PICKS).filter(p=>p&&p.h!=null&&p.a!=null).length;
-  let h=`<div class="muted">${done} de 16 partidos pronosticados en la fase final</div><div class="bracket"><div class="col" style="min-width:240px">`;
-  for(const mid of mids){ h+=matchCard(mid); }
-  h+='</div></div>';
-  document.getElementById('content').innerHTML=h;
-}
-
-function matchCard(mid){
-  const t=teamsOf(mid);
-  const pk=PICKS[mid]||{h:null,a:null,w:null};
-  const locked=isLocked(mid);
-  const fecha=FECHAS_R32[mid]||FECHAS_KO[mid]||'';
+function matchCard(mid,isFinal){
+  const t=teamsOf(mid),pk=PICKS[mid]||{h:null,a:null,w:null},locked=isLocked(mid);
   const w=validWinner(mid);
-  const isFinal=(mid==='M104');
-  const tbd=(n)=>n?`${fh(n)} <span class="team-name${w===n?' win':''}">${n}</span>`:`<span class="team-name tbd">Por definir</span>`;
-  const sc=(side)=>`<input class="score" type="number" min="0" value="${pk[side]??''}" ${locked||!t.h||!t.a?'disabled':''} onchange="setScore('${mid}','${side}',this.value)">`;
-  // dropdown solo si empate y hay equipos
+  const nm=(n)=>n?`${fh(n)} <span class="tname${w===n?' win':''}">${n}</span>`:`<span class="tname tbd">Por definir</span>`;
+  const sc=(s)=>`<input class="sc" type="number" min="0" value="${pk[s]??''}" ${locked||!t.h||!t.a?'disabled':''} onchange="setScore('${mid}','${s}',this.value)">`;
   let adv='';
-  if(t.h&&t.a){
-    const tie=(pk.h!=null&&pk.a!=null&&pk.h===pk.a);
-    if(tie){
-      adv=`<select class="adv" ${locked?'disabled':''} onchange="setAdv('${mid}',this.value)">
-        <option value="">🏆 ¿Quién avanza?</option>
-        <option value="${t.h}" ${pk.w===t.h?'selected':''}>${t.h}</option>
-        <option value="${t.a}" ${pk.w===t.a?'selected':''}>${t.a}</option>
-      </select>`;
-    }
-  }
-  return `<div class="match${locked?' locked':''}${isFinal?' final-match':''}">
-    <div class="match-date"><span>${fecha} · ${mid}</span>${locked?'<span class="lock-ico">🔒</span>':''}</div>
-    <div class="team">${tbd(t.h)} ${sc('h')}</div>
-    <div class="team">${tbd(t.a)} ${sc('a')}</div>
-    ${adv}
-  </div>`;
+  if(t.h&&t.a&&pk.h!=null&&pk.a!=null&&pk.h===pk.a){
+    adv=`<select class="adv" ${locked?'disabled':''} onchange="setAdv('${mid}',this.value)">
+      <option value="">🏆 ¿Quién avanza?</option>
+      <option value="${t.h}" ${pk.w===t.h?'selected':''}>${t.h}</option>
+      <option value="${t.a}" ${pk.w===t.a?'selected':''}>${t.a}</option></select>`;}
+  return `<div class="match${locked?' locked':''}${isFinal?' final-m':''}">
+    <div class="mdate"><span>${dateOf(mid)} · ${mid}</span>${locked?'🔒':''}</div>
+    <div class="team">${nm(t.h)} ${sc('h')}</div>
+    <div class="team">${nm(t.a)} ${sc('a')}</div>${adv}</div>`;}
+
+function col(title,mids){return `<div class="col"><div class="ctitle">${title}</div>
+  ${mids.map(m=>matchCard(m,false)).join('')}</div>`;}
+
+function centerCol(){
+  const champ=validWinner('M104');
+  const t4=teamsOf('M104'),t3=teamsOf('M103');
+  // 1ro=ganador final, 2do=perdedor final, 3ro=ganador 3er, 4to=perdedor 3er
+  let p1=champ,p2=null,p3=validWinner('M103'),p4=null;
+  if(champ){p2=(champ===t4.h?t4.a:t4.h);}
+  if(p3){p4=(p3===t3.h?t3.a:t3.h);}
+  const row=(pos,team,medal)=>`<div class="row"><span class="pos">${medal}</span>${team?fh(team,16)+' <b>'+team+'</b>':'<span class="tname tbd">—</span>'}</div>`;
+  return `<div class="col center"><div class="ctitle">🏆 Final</div>
+    ${matchCard('M104',true)}
+    <div class="champ">${champ?'Campeón: <b>'+champ+'</b>':'El campeón se define con la final'}</div>
+    <div class="ctitle" style="margin-top:14px">3er Puesto</div>
+    ${matchCard('M103',false)}
+    <div class="podium">
+      <div class="ctitle" style="text-align:left;margin-bottom:6px">Posiciones finales</div>
+      ${row(1,p1,'🥇')}${row(2,p2,'🥈')}${row(3,p3,'🥉')}${row(4,p4,'4º')}
+    </div></div>`;}
+
+function render(){
+  const done=Object.values(PICKS).filter(p=>p&&p.h!=null&&p.a!=null).length;
+  document.getElementById('cnt').textContent=`${done} de 16 partidos pronosticados en la fase final`;
+  document.getElementById('bracket').innerHTML=
+    col('16avos',ORDER_L.r32)+col('Octavos',ORDER_L.r16)+col('Cuartos',ORDER_L.qf)+col('Semis',ORDER_L.sf)
+    +centerCol()
+    +col('Semis',ORDER_R.sf)+col('Cuartos',ORDER_R.qf)+col('Octavos',ORDER_R.r16)+col('16avos',ORDER_R.r32);
 }
 
-// Recibir datos del padre (React)
-window.addEventListener('message',(e)=>{
-  const d=e.data||{};
-  if(d.type==='INIT'){
-    QID=d.data?.quinielaId||null;
-    USERNAME=d.data?.username||'Usuario';
-    // cargar picks guardados
+window.addEventListener('message',(e)=>{const d=e.data||{};
+  if(d.type==='INIT'){QID=d.data?.quinielaId||null;USERNAME=d.data?.username||'Usuario';
     const picks=d.data?.picks||{};
-    for(const[mid,pk]of Object.entries(picks)){
-      if(/^M\d+$/.test(mid)){
-        PICKS[mid]={h:pk.h??null,a:pk.a??null,w:pk.w??pk.winner??null};
-      }
-    }
-    // restaurar fase
-    try{ const sp=sessionStorage.getItem('ff_phase'); if(sp) activePhase=sp; }catch(e){}
-    render();
-  }
-});
-
-// avisar listo
+    for(const[mid,pk]of Object.entries(picks)){if(/^M\d+$/.test(mid))
+      PICKS[mid]={h:pk.h??null,a:pk.a??null,w:pk.w??pk.winner??null};}
+    render();}});
 parent.postMessage({type:'IFRAME_READY'},'*');
 render();
-</script>
-</body>
-</html>
+</script></body></html>
