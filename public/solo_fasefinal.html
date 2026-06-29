@@ -113,8 +113,11 @@ function centerCol(){
     </div></div>`;}
 
 function render(){
-  const done=Object.values(PICKS).filter(p=>p&&p.h!=null&&p.a!=null).length;
-  document.getElementById('cnt').textContent=`${done} de 16 partidos pronosticados en la fase final`;
+  const done=Object.entries(PICKS).filter(([mid,p])=>{
+    const mm=/^M(\d+)$/.exec(mid); if(!mm) return false;
+    const n=+mm[1]; return n>=73&&n<=88&&p&&p.h!=null&&p.a!=null;
+  }).length;
+  document.getElementById('cnt').textContent=`${done} de 16 partidos pronosticados (16avos)`;
   document.getElementById('bracket').innerHTML=
     col('16avos',ORDER_L.r32)+col('Octavos',ORDER_L.r16)+col('Cuartos',ORDER_L.qf)+col('Semis',ORDER_L.sf)
     +centerCol()
@@ -124,8 +127,23 @@ function render(){
 window.addEventListener('message',(e)=>{const d=e.data||{};
   if(d.type==='INIT'){QID=d.data?.quinielaId||null;USERNAME=d.data?.username||'Usuario';READONLY=d.data?.readOnly||false;
     const picks=d.data?.picks||{};
-    for(const[mid,pk]of Object.entries(picks)){if(/^M\d+$/.test(mid))
-      PICKS[mid]={h:pk.h??null,a:pk.a??null,w:pk.w??pk.winner??null};}
+    // Cargar solo partidos de la fase final (M73-M104)
+    for(const[mid,pk]of Object.entries(picks)){
+      const mm=/^M(\d+)$/.exec(mid); if(!mm) continue;
+      const n=+mm[1]; if(n<73||n>104) continue;
+      const h=pk.h??pk.goals_home??null;
+      const a=pk.a??pk.goals_away??null;
+      let w=pk.w??pk.winner??null;
+      PICKS[mid]={h,a,w};
+    }
+    // Inferir ganador donde haya marcador no-empate pero falte winner
+    for(const mid of Object.keys(PICKS)){
+      const pk=PICKS[mid];
+      if(pk.h!=null&&pk.a!=null&&(pk.w==null||pk.w==='')){
+        const t=teamsOf(mid);
+        if(pk.h>pk.a)pk.w=t.h; else if(pk.a>pk.h)pk.w=t.a;
+      }
+    }
     render();}});
 parent.postMessage({type:'IFRAME_READY'},'*');
 render();
