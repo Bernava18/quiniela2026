@@ -66,10 +66,43 @@ function setScore(mid,side,val){if(isLocked(mid))return;
   const pk=PICKS[mid]||(PICKS[mid]={h:null,a:null,w:null});
   pk[side]=val===''?null:Math.max(0,parseInt(val)||0);
   if(pk.h!=null&&pk.a!=null){const t=teamsOf(mid);
-    if(pk.h>pk.a)pk.w=t.h;else if(pk.a>pk.h)pk.w=t.a;}
-  save(mid);render();}
+    if(pk.h>pk.a)pk.w=t.h;else if(pk.a>pk.h)pk.w=t.a;
+    else pk.w=pk.w&&(pk.w===t.h||pk.w===t.a)?pk.w:null;} // empate: conservar elección si válida
+  save(mid);
+  // NO redibujar todo (en móvil borra lo que se escribe). Solo refrescar las
+  // llaves siguientes y el contador, sin tocar los inputs que el usuario usa.
+  refreshDependents();}
 function setAdv(mid,team){if(isLocked(mid))return;
-  const pk=PICKS[mid]||(PICKS[mid]={h:null,a:null,w:null});pk.w=team||null;save(mid);render();}
+  const pk=PICKS[mid]||(PICKS[mid]={h:null,a:null,w:null});pk.w=team||null;save(mid);refreshDependents();}
+function refreshDependents(){
+  // Redibujar el cuadro completo SIN romper el foco: solo si el elemento activo
+  // no es un input de marcador. Si el usuario está escribiendo, se pospone.
+  const ae=document.activeElement;
+  if(ae&&ae.classList&&ae.classList.contains('sc')){
+    // El usuario está en un input: NO redibujar ahora (evita borrado en móvil).
+    // Los equipos que avanzan se actualizarán cuando salga del campo (blur/cambio siguiente).
+    updateCounter();
+    return;
+  }
+  render();
+}
+function updateCounter(){
+  const done=Object.entries(PICKS).filter(([mid,p])=>{
+    const mm=/^M(\d+)$/.exec(mid); if(!mm) return false;
+    const n=+mm[1]; return n>=73&&n<=88&&p&&p.h!=null&&p.a!=null;
+  }).length;
+  const el=document.getElementById('cnt');
+  if(el) el.textContent=`${done} de 16 partidos pronosticados (16avos)`;
+}
+function onLeaveInput(){
+  // Al salir de un input, redibujar para mostrar los equipos que avanzan.
+  // Se espera un instante para no chocar con el cambio de foco a otro input.
+  setTimeout(()=>{
+    const ae=document.activeElement;
+    if(ae&&ae.classList&&ae.classList.contains('sc'))return; // sigue en otro input
+    render();
+  },150);
+}
 function save(mid){const pk=PICKS[mid]||{};
   parent.postMessage({type:'SAVE_PICK',quinielaId:QID,matchId:mid,
     pick:{h:pk.h??null,a:pk.a??null,w:pk.w??null}},'*');}
@@ -82,7 +115,7 @@ function matchCard(mid,isFinal){
   // Editable si AMBOS lados tienen algún equipo (real o "Sin definir").
   // Solo se bloquea cuando un lado aún es null (el partido previo no tiene ganador).
   const canEdit = !locked && t.h && t.a;
-  const sc=(s)=>`<input class="sc" type="number" min="0" value="${pk[s]??''}" ${canEdit?'':'disabled'} onchange="setScore('${mid}','${s}',this.value)">`;
+  const sc=(s)=>`<input class="sc" type="number" min="0" inputmode="numeric" value="${pk[s]??''}" ${canEdit?'':'disabled'} onchange="setScore('${mid}','${s}',this.value)" onblur="onLeaveInput()">`;
   let adv='';
   if(t.h&&t.a&&pk.h!=null&&pk.a!=null&&pk.h===pk.a){
     // En empate, el menú "¿Quién avanza?" solo ofrece equipos reales (no "Sin definir")
