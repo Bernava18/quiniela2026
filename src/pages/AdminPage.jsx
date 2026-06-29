@@ -149,11 +149,23 @@ export default function AdminPage() {
       .select('id, name, user_id, profiles!quinielas_user_id_fkey(username, full_name)')
       .order('name')
 
-    // 2) Traer todos los picks de la fase final (picks_ko_test) de esos partidos
-    const { data: picks } = await supabase
-      .from('picks_ko_test')
-      .select('quiniela_id, match_id, goals_home, goals_away')
-      .in('match_id', FF_MATCHES)
+    // 2) Traer TODOS los picks de la fase final (picks_ko_test) de esos partidos.
+    //    Con 82 quinielas x 16 partidos = 1312 filas, hay que paginar porque
+    //    Supabase devuelve máximo 1000 filas por consulta.
+    let picks = []
+    let from = 0
+    const PAGE = 1000
+    while (true) {
+      const { data: chunk, error } = await supabase
+        .from('picks_ko_test')
+        .select('quiniela_id, match_id, goals_home, goals_away')
+        .in('match_id', FF_MATCHES)
+        .range(from, from + PAGE - 1)
+      if (error) { console.error('loadFaseFinal picks', error); break }
+      picks = picks.concat(chunk || [])
+      if (!chunk || chunk.length < PAGE) break
+      from += PAGE
+    }
 
     // 3) Contar por quiniela cuántos de los 16 tienen marcador
     const countByQ = {}
