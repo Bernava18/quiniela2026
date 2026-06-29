@@ -22,14 +22,9 @@ export default function QuinielaPage() {
   const [totalPts, setTotalPts]       = useState(0)
   const [filledPicks, setFilledPicks] = useState(0)
 
-  // Vista: 'normal' (Quiniela Original, solo lectura) | 'final' (Fase Final con equipos reales)
-  // Se recuerda en la URL (?view=final) para mantenerse al recargar la página.
-  const [view, setView]   = useState(() => {
-    try {
-      const v = new URLSearchParams(window.location.search).get('view')
-      return v === 'final' ? 'final' : 'normal'
-    } catch { return 'normal' }
-  })
+  // Esta vista muestra SIEMPRE la quiniela original (solo lectura). La fase
+  // final se ve por su propio acceso, no desde aquí.
+  const [view, setView]   = useState('normal')
   const [msg, setMsg]     = useState('')
   const importedRef       = useRef(false)  // evita reimportar 16avos en cada render
 
@@ -178,24 +173,6 @@ export default function QuinielaPage() {
           {quiniela?.is_locked && <span style={{ fontSize:12, color:'#ff9f0a', fontWeight:600 }}>🔒 Cerrada</span>}
         </div>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          {faseActiva && (
-            <div style={{ display:'flex', gap:4, background:'#f2f2f7', padding:3, borderRadius:9, marginRight:6 }}>
-              <button onClick={() => switchView('normal')}
-                style={{ padding:'5px 12px', border:'none', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer',
-                  background: view==='normal' ? '#0071e3' : 'transparent', color: view==='normal' ? '#fff' : '#6e6e73' }}>
-                Quiniela Original
-              </button>
-              <button onClick={() => switchView('final')}
-                style={{ padding:'6px 16px', border:'none', borderRadius:8, fontSize:12.5, fontWeight:800, cursor:'pointer',
-                  background: view==='final'
-                    ? 'linear-gradient(135deg,#ff8a00,#e52e71)'
-                    : 'linear-gradient(135deg,#ffb347,#ffcc33)',
-                  color:'#fff', boxShadow: view==='final' ? '0 2px 10px rgba(229,46,113,.45)' : '0 2px 8px rgba(255,140,0,.35)',
-                  letterSpacing:.3, transition:'all .2s', transform: view==='final' ? 'scale(1.04)' : 'scale(1)' }}>
-                🏆 FASE FINAL ⚽
-              </button>
-            </div>
-          )}
           {msg && <span style={{ fontSize:12, color:'#0071e3', fontWeight:600 }}>{msg}</span>}
           {view === 'normal' && totalPts > 0 && (
             <span style={{ background:'#ffd60a', color:'#7a5900', padding:'3px 12px', borderRadius:20, fontWeight:800, fontSize:15 }}>
