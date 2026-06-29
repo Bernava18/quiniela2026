@@ -317,15 +317,12 @@ export default function LeaderboardPage() {
   async function loadViewerPicks() {
     if (!viewing) return
     if (viewerView === 'corregida') {
-      // Grupos (de picks) + eliminatorias corregidas (de picks_ko_test), todo solo lectura
-      const [groupPicks, koTestPicks] = await Promise.all([
-        devGetGroupPicks(viewing.quinielaId),
-        devGetKoTestPicks(viewing.quinielaId),
-      ])
-      const picks = { ...groupPicks, ...koTestPicks }
+      // NUEVA Fase Final (equipos reales): solo los picks de la eliminatoria
+      // desde picks_ko_test. El HTML solo_fasefinal.html usa equipos reales fijos.
+      const koTestPicks = await devGetKoTestPicks(viewing.quinielaId)
       document.getElementById('viewer-iframe')?.contentWindow?.postMessage({
         type: 'INIT',
-        data: { quinielaId: viewing.quinielaId, isLocked: false, readOnlyAll: true, username: viewing.name, picks, results: {} }
+        data: { quinielaId: viewing.quinielaId, username: viewing.name, picks: koTestPicks, readOnly: true }
       }, '*')
     } else {
       const [picks, res] = await Promise.all([getQuinielaPicks(viewing.quinielaId), getAllResults()])
@@ -369,7 +366,7 @@ export default function LeaderboardPage() {
 
   // ── VIEWER ──────────────────────────────────────────────────
   if (viewing) {
-    const viewerSrc = viewerView === 'corregida' ? '/quiniela2026_corrected.html' : '/quiniela2026_fixed.html'
+    const viewerSrc = viewerView === 'corregida' ? '/solo_fasefinal.html' : '/quiniela2026_fixed.html'
     return (
       <div style={{ display:'flex', flexDirection:'column', height:'calc(100vh - 52px)' }}>
         <div style={{ background:'#fff', borderBottom:'0.5px solid rgba(0,0,0,.08)', padding:'8px 20px', display:'flex', alignItems:'center', gap:10, flexShrink:0, flexWrap:'wrap' }}>
@@ -387,14 +384,14 @@ export default function LeaderboardPage() {
             </button>
             <button onClick={() => switchViewerView('corregida')}
               style={{ padding:'5px 12px', border:'none', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer',
-                background: viewerView==='corregida' ? '#34c759' : 'transparent', color: viewerView==='corregida' ? '#fff' : '#6e6e73' }}>
-              🏆 Fase Final (corregida)
+                background: viewerView==='corregida' ? '#e52e71' : 'transparent', color: viewerView==='corregida' ? '#fff' : '#6e6e73' }}>
+              🏆 Fase Final
             </button>
           </div>
         </div>
         {viewerView === 'corregida' && (
-          <div style={{ background:'#eaffea', color:'#1a7a38', padding:'5px 20px', fontSize:12, fontWeight:600, flexShrink:0 }}>
-            🏆 Fase Final corregida (cuadro oficial FIFA) — solo lectura
+          <div style={{ background:'linear-gradient(90deg,#fff4e6,#ffe9f0)', color:'#b3402a', padding:'5px 20px', fontSize:12, fontWeight:600, flexShrink:0 }}>
+            🏆 Fase Final — Equipos reales del Mundial 2026 — solo lectura
           </div>
         )}
         {!iframeReady && <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#aeaeb2' }}>⚽ Cargando...</div>}
