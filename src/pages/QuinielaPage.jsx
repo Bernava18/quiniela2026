@@ -6,8 +6,8 @@ import {
 } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
-const QUINIELA_HTML_URL   = '/quiniela2026_fixed.html'      // bracket original (sin cambios)
-const QUINIELA_HTML_FIXED = '/quiniela2026_corrected.html'  // bracket corregido (fase final)
+const QUINIELA_HTML_URL   = '/quiniela2026_fixed.html'        // bracket original (sin cambios)
+const QUINIELA_HTML_FINAL = '/quiniela2026_fasefinal.html'    // FASE FINAL con equipos reales
 
 export default function QuinielaPage() {
   const { id: quinielaId } = useParams()
@@ -22,12 +22,12 @@ export default function QuinielaPage() {
   const [totalPts, setTotalPts]       = useState(0)
   const [filledPicks, setFilledPicks] = useState(0)
 
-  // Vista: 'normal' (Quiniela Original, solo lectura) | 'corregida' (Fase Final corregida)
-  // Se recuerda en la URL (?view=corregida) para mantenerse al recargar la página.
+  // Vista: 'normal' (Quiniela Original, solo lectura) | 'final' (Fase Final con equipos reales)
+  // Se recuerda en la URL (?view=final) para mantenerse al recargar la página.
   const [view, setView]   = useState(() => {
     try {
       const v = new URLSearchParams(window.location.search).get('view')
-      return v === 'corregida' ? 'corregida' : 'normal'
+      return v === 'final' ? 'final' : 'normal'
     } catch { return 'normal' }
   })
   const [msg, setMsg]     = useState('')
@@ -41,8 +41,8 @@ export default function QuinielaPage() {
       if (type === 'IFRAME_READY') setIframeReady(true)
 
       if (type === 'SAVE_PICK' && qid && matchId && pick) {
-        if (view === 'corregida') {
-          // Fase corregida: 16avos en adelante (M73-M104) van a picks_ko_test.
+        if (view === 'final') {
+          // Fase Final: 16avos en adelante (M73-M104) van a picks_ko_test.
           const m = /^M(\d+)$/.exec(matchId)
           const isEditableKO = m && +m[1] >= 73 && +m[1] <= 104
           if (!isEditableKO) return
@@ -82,24 +82,20 @@ export default function QuinielaPage() {
   }
 
   async function sendInitToIframe() {
-    if (view === 'corregida') {
-      // NO se re-importan los 16avos viejos: en la fase corregida los 16avos
-      // se arman con la lógica FIFA y arrancan VACÍOS para que el usuario los
-      // llene según los nuevos cruces. Solo se cargan los grupos (para calcular
-      // clasificados/terceros) y lo que el usuario ya haya guardado en picks_ko_test.
-      const [groupPicks, koTestPicks] = await Promise.all([
-        devGetGroupPicks(quinielaId),
-        devGetKoTestPicks(quinielaId),
-      ])
-      const picks = { ...groupPicks, ...koTestPicks }
+    if (view === 'final') {
+      // FASE FINAL: los 16avos tienen equipos REALES fijos. Solo se cargan los
+      // picks que el usuario haya guardado en picks_ko_test (marcadores de la
+      // eliminatoria). realFinal=true hace que el HTML use los cruces reales.
+      const koTestPicks = await devGetKoTestPicks(quinielaId)
       iframeRef.current?.contentWindow?.postMessage({
         type: 'INIT',
         data: {
           quinielaId,
           isLocked: false,
-          testMode: true,    // grupos y 16avos bloqueados; editable octavos+
+          testMode: true,     // grupos bloqueados; editable 16avos+
+          realFinal: true,    // usa equipos reales en 16avos
           username: profile?.username,
-          picks,
+          picks: koTestPicks,
           results: {},
         }
       }, '*')
@@ -125,11 +121,11 @@ export default function QuinielaPage() {
     // Recordar la vista en la URL para que se mantenga al recargar
     try {
       const url = new URL(window.location.href)
-      if (v === 'corregida') url.searchParams.set('view', 'corregida')
+      if (v === 'final') url.searchParams.set('view', 'final')
       else url.searchParams.delete('view')
       window.history.replaceState({}, '', url)
     } catch {}
-    const url = (v === 'corregida' ? QUINIELA_HTML_FIXED : QUINIELA_HTML_URL) + '?t=' + Date.now()
+    const url = (v === 'final' ? QUINIELA_HTML_FINAL : QUINIELA_HTML_URL) + '?t=' + Date.now()
     if (iframeRef.current) iframeRef.current.src = url
   }
 
@@ -189,10 +185,14 @@ export default function QuinielaPage() {
                   background: view==='normal' ? '#0071e3' : 'transparent', color: view==='normal' ? '#fff' : '#6e6e73' }}>
                 Quiniela Original
               </button>
-              <button onClick={() => switchView('corregida')}
-                style={{ padding:'5px 12px', border:'none', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer',
-                  background: view==='corregida' ? '#34c759' : 'transparent', color: view==='corregida' ? '#fff' : '#6e6e73' }}>
-                🏆 Fase Final (corregida)
+              <button onClick={() => switchView('final')}
+                style={{ padding:'6px 16px', border:'none', borderRadius:8, fontSize:12.5, fontWeight:800, cursor:'pointer',
+                  background: view==='final'
+                    ? 'linear-gradient(135deg,#ff8a00,#e52e71)'
+                    : 'linear-gradient(135deg,#ffb347,#ffcc33)',
+                  color:'#fff', boxShadow: view==='final' ? '0 2px 10px rgba(229,46,113,.45)' : '0 2px 8px rgba(255,140,0,.35)',
+                  letterSpacing:.3, transition:'all .2s', transform: view==='final' ? 'scale(1.04)' : 'scale(1)' }}>
+                🏆 FASE FINAL ⚽
               </button>
             </div>
           )}
@@ -217,9 +217,9 @@ export default function QuinielaPage() {
           📋 Quiniela Original — Vista de solo lectura. Tus picks originales tal como los registraste (no editable).
         </div>
       )}
-      {view === 'corregida' && (
-        <div style={{ background:'#eaffea', color:'#1a7a38', padding:'6px 20px', fontSize:12, fontWeight:600, flexShrink:0, borderBottom:'0.5px solid rgba(0,0,0,.06)' }}>
-          🏆 Fase Final corregida — Grupos bloqueados (vienen de tu quiniela). Editable desde 16avos según el cuadro oficial FIFA.
+      {view === 'final' && (
+        <div style={{ background:'linear-gradient(90deg,#fff4e6,#ffe9f0)', color:'#b3402a', padding:'7px 20px', fontSize:12, fontWeight:700, flexShrink:0, borderBottom:'0.5px solid rgba(0,0,0,.06)' }}>
+          🏆 FASE FINAL — Equipos reales del Mundial 2026. Predice los marcadores desde 16avos hasta la gran final. ¡Editable!
         </div>
       )}
 
