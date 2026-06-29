@@ -88,11 +88,22 @@ export default function FaseFinalPage() {
     if (error) console.error('saveKoPick', error)
   }
 
+  async function getLockedMatches() {
+    const { data } = await supabase
+      .from('match_locks')
+      .select('match_id, locked')
+      .eq('locked', true)
+    return (data || []).map(r => r.match_id)
+  }
+
   async function sendInit() {
-    const picks = await getKoPicks(quinielaId)
+    const [picks, lockedMatches] = await Promise.all([
+      getKoPicks(quinielaId),
+      getLockedMatches(),
+    ])
     iframeRef.current?.contentWindow?.postMessage({
       type: 'INIT',
-      data: { quinielaId, username: profile?.username, picks },
+      data: { quinielaId, username: profile?.username, picks, lockedMatches },
     }, '*')
   }
 

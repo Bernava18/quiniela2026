@@ -97,6 +97,7 @@ export default function AdminPage() {
   const [tab, setTab]           = useState('payments')
   const [faseData, setFaseData]     = useState([])
   const [faseLoading, setFaseLoading] = useState(false)
+  const [matchLocks, setMatchLocks] = useState({})  // { M74: true/false, M75: ... }
   const [users, setUsers]       = useState([])
   const [results, setResults]   = useState({})
   const [phase, setPhase]       = useState(0)
@@ -131,9 +132,78 @@ export default function AdminPage() {
 
   async function loadFaseFinal() {
     setFaseLoading(true)
-    const { data } = await getFaseFinalStatus()
-    setFaseData(data || [])
+    // Cargar el estado de bloqueo de los partidos
+    const { data: locks } = await supabase.from('match_locks').select('match_id, locked')
+    const lockMap = {}
+    for (const l of (locks || [])) lockMap[l.match_id] = l.locked
+    setMatchLocks(lockMap)
+    // NUEVA FASE FINAL: contamos los 16 partidos de 16avos (M73-M88), que son
+    // los que los usuarios llenan ahora. Un partido cuenta como "lleno" si tiene
+    // marcador (goals_home y goals_away no nulos).
+    const FF_MATCHES = Array.from({ length: 16 }, (_, i) => `M${73 + i}`)
+    const TOTAL = FF_MATCHES.length
+
+    // 1) Traer todas las quinielas con su jugador
+    const { data: quinielas } = await supabase
+      .from('quinielas')
+      .select('id, name, user_id, profiles!quinielas_user_id_fkey(username, full_name)')
+      .order('name')
+
+    // 2) Traer todos los picks de la fase final (picks_ko_test) de esos partidos
+    const { data: picks } = await supabase
+      .from('picks_ko_test')
+      .select('quiniela_id, match_id, goals_home, goals_away')
+      .in('match_id', FF_MATCHES)
+
+    // 3) Contar por quiniela cuántos de los 16 tienen marcador
+    const countByQ = {}
+    for (const p of (picks || [])) {
+      if (p.goals_home != null && p.goals_away != null) {
+        countByQ[p.quiniela_id] = (countByQ[p.quiniela_id] || 0) + 1
+      }
+    }
+
+    const data = (quinielas || []).map(q => {
+      const done = countByQ[q.id] || 0
+      const status = done === 0 ? 'sin_empezar' : (done === TOTAL ? 'completa' : 'en_progreso')
+      return {
+        id: q.id,
+        name: q.name,
+        username: q.profiles?.username,
+        full_name: q.profiles?.full_name,
+        fase_activa: true,
+        done,
+        total: TOTAL,
+        status,
+      }
+    })
+
+    // Ordenar: primero "en progreso" (los que están trabajando), luego
+    // "sin empezar", y al final los "completa". Dentro de cada grupo, por avance.
+    const orden = { en_progreso: 0, sin_empezar: 1, completa: 2 }
+    data.sort((a, b) => {
+      if (orden[a.status] !== orden[b.status]) return orden[a.status] - orden[b.status]
+      if (a.status === 'en_progreso') return b.done - a.done  // más avanzados primero
+      return a.name.localeCompare(b.name)
+    })
+
+    setFaseData(data)
     setFaseLoading(false)
+  }
+
+  async function toggleLock(matchId, locked) {
+    // Actualiza el estado local de inmediato (respuesta visual rápida)
+    setMatchLocks(prev => ({ ...prev, [matchId]: locked }))
+    const { error } = await supabase
+      .from('match_locks')
+      .upsert({ match_id: matchId, locked, updated_at: new Date().toISOString() },
+              { onConflict: 'match_id' })
+    if (error) {
+      console.error('toggleLock', error)
+      // revertir si falló
+      setMatchLocks(prev => ({ ...prev, [matchId]: !locked }))
+      alert('No se pudo cambiar el bloqueo: ' + error.message)
+    }
   }
 
   useEffect(() => {
@@ -1194,9 +1264,40 @@ export default function AdminPage() {
                 )
               })()}
 
+              {/* Panel de bloqueo de partidos */}
+              {(() => {
+                const partidos = [
+                  { id:'M74', nombre:'Alemania vs Paraguay' },
+                  { id:'M75', nombre:'Holanda vs Marruecos' },
+                ]
+                return (
+                  <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.1)', borderRadius:12, padding:'14px 18px', marginBottom:18 }}>
+                    <div style={{ fontSize:13, fontWeight:700, marginBottom:10 }}>🔒 Bloqueo de partidos (para todas las quinielas)</div>
+                    <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+                      {partidos.map(p => {
+                        const locked = !!matchLocks[p.id]
+                        return (
+                          <div key={p.id} style={{ display:'flex', alignItems:'center', gap:10, border:'0.5px solid rgba(0,0,0,.12)', borderRadius:10, padding:'8px 14px' }}>
+                            <span style={{ fontSize:13, fontWeight:600 }}>{p.nombre} <span style={{ color:'#aeaeb2', fontSize:11 }}>({p.id})</span></span>
+                            <button onClick={() => toggleLock(p.id, !locked)}
+                              style={{ padding:'5px 14px', border:'none', borderRadius:7, fontSize:12, fontWeight:700, cursor:'pointer',
+                                background: locked ? '#d9534f' : '#34c759', color:'#fff' }}>
+                              {locked ? '🔒 Bloqueado' : '🔓 Abierto'}
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div style={{ fontSize:11, color:'#8e8e93', marginTop:8 }}>
+                      Toca el botón para cambiar. "Bloqueado" = nadie puede editar ese partido. El cambio aplica de inmediato.
+                    </div>
+                  </div>
+                )
+              })()}
+
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
                 <div style={{ fontSize:13, color:'#6e6e73' }}>
-                  {faseData.length} quinielas · "Completa" = 16 partidos (octavos a final + 3er lugar) con marcador y ganador
+                  {faseData.length} quinielas · "Completa" = los 16 partidos de 16avos (M73–M88) con marcador
                 </div>
                 <button onClick={loadFaseFinal}
                   style={{ padding:'6px 12px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
@@ -1233,7 +1334,14 @@ export default function AdminPage() {
                           </td>
                           <td style={{ padding:'9px 14px', textAlign:'center', fontWeight:700,
                             color: q.done === q.total ? '#15803d' : '#1d1d1f' }}>
-                            {q.done} / {q.total}
+                            <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'center' }}>
+                              <div style={{ width:70, height:7, background:'#e9e9eb', borderRadius:4, overflow:'hidden' }}>
+                                <div style={{ width:`${Math.round((q.done/q.total)*100)}%`, height:'100%',
+                                  background: q.done===q.total ? '#34c759' : (q.done>0 ? '#ff9f0a' : 'transparent'),
+                                  transition:'width .3s' }} />
+                              </div>
+                              <span style={{ fontSize:12, minWidth:38 }}>{q.done}/{q.total}</span>
+                            </div>
                           </td>
                           <td style={{ padding:'9px 14px', textAlign:'center' }}>
                             <span style={{ background:badge.bg, color:badge.col, padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:700 }}>

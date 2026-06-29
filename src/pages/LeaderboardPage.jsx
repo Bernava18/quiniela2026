@@ -327,9 +327,12 @@ export default function LeaderboardPage() {
       for (const r of (koRows || [])) {
         koTestPicks[r.match_id] = { h: r.goals_home, a: r.goals_away, w: r.winner }
       }
+      const { data: lockRows } = await supabase
+        .from('match_locks').select('match_id, locked').eq('locked', true)
+      const lockedMatches = (lockRows || []).map(r => r.match_id)
       document.getElementById('viewer-iframe')?.contentWindow?.postMessage({
         type: 'INIT',
-        data: { quinielaId: viewing.quinielaId, username: viewing.name, picks: koTestPicks, readOnly: true }
+        data: { quinielaId: viewing.quinielaId, username: viewing.name, picks: koTestPicks, readOnly: true, lockedMatches }
       }, '*')
     } else {
       const [picks, res] = await Promise.all([getQuinielaPicks(viewing.quinielaId), getAllResults()])
