@@ -1703,6 +1703,7 @@ export default function AdminPage() {
                       <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700, textAlign:'center' }}>FASE</th>
                       <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700, textAlign:'center' }}>PROGRESO</th>
                       <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700, textAlign:'center' }}>ESTADO</th>
+                      <th style={{ padding:'10px 14px', fontSize:11, color:'#6e6e73', fontWeight:700, textAlign:'center' }}>ACCIÓN</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1737,11 +1738,17 @@ export default function AdminPage() {
                               {badge.txt}
                             </span>
                           </td>
+                          <td style={{ padding:'9px 14px', textAlign:'center' }}>
+                            <button onClick={() => window.open(`/fase-final/${q.id}`, '_blank')}
+                              style={{ padding:'5px 12px', border:'none', borderRadius:7, background:'#0071e3', color:'#fff', cursor:'pointer', fontSize:12, fontWeight:700 }}>
+                              ✏️ Editar
+                            </button>
+                          </td>
                         </tr>
                       )
                     })}
                     {faseData.length === 0 && (
-                      <tr><td colSpan={5} style={{ padding:20, textAlign:'center', color:'#aeaeb2' }}>No hay quinielas</td></tr>
+                      <tr><td colSpan={6} style={{ padding:20, textAlign:'center', color:'#aeaeb2' }}>No hay quinielas</td></tr>
                     )}
                   </tbody>
                 </table>

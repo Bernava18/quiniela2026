@@ -53,7 +53,9 @@ export default function FaseFinalPage() {
         .single()
       if (qErr) { setError('Error cargando quiniela: ' + qErr.message); setLoading(false); return }
       if (!q) { setError('Quiniela no encontrada'); setLoading(false); return }
-      if (q.user_id !== user?.id) { navigate('/'); return }
+      // El dueño puede editar la suya; el admin puede editar cualquiera.
+      const esAdmin = profile?.is_admin === true
+      if (q.user_id !== user?.id && !esAdmin) { navigate('/'); return }
       setQuiniela(q)
     } catch (e) {
       setError('Error inesperado: ' + e.message)
@@ -101,11 +103,12 @@ export default function FaseFinalPage() {
       getKoPicks(quinielaId),
       getLockedMatches(),
     ])
-    // Si es la quiniela REAL, el admin puede editar todos los partidos (sin bloqueos)
+    // Si es la quiniela REAL o el editor es admin, puede editar todos los partidos
     const esReal = quiniela?.es_real === true
+    const esAdmin = profile?.is_admin === true
     iframeRef.current?.contentWindow?.postMessage({
       type: 'INIT',
-      data: { quinielaId, username: profile?.username, picks, lockedMatches: esReal ? [] : lockedMatches },
+      data: { quinielaId, username: profile?.username, picks, lockedMatches: (esReal || esAdmin) ? [] : lockedMatches },
     }, '*')
   }
 
