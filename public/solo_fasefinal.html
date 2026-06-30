@@ -26,6 +26,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .sc:disabled{background:#e9e9eb;color:#8e8e93}
 .sc:focus{outline:none;border-color:#0071e3}
 .adv{margin-top:4px;width:100%;padding:3px;border:1px solid #d2d2d7;border-radius:6px;font-size:10.5px;font-weight:600;color:#0071e3}
+.mpts{margin-top:5px;text-align:center;font-size:11px;font-weight:800;padding:2px 0;border-radius:6px}
+.mpts.pos{background:#e8f9ee;color:#1a7a38}
+.mpts.zero{background:#f2f2f7;color:#8e8e93}
 .champ{text-align:center;font-size:11px;color:#86868b;margin-top:8px}
 .champ b{color:#1d1d1f;font-size:13px}
 .podium{background:#fff;border-radius:9px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-top:10px;font-size:11px}
@@ -39,6 +42,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 const FLAGS={"México": "mx", "Sudáfrica": "za", "Rep. de Corea": "kr", "Rep. Checa": "cz", "Canadá": "ca", "Bosnia": "ba", "Catar": "qa", "Suiza": "ch", "Brasil": "br", "Marruecos": "ma", "Haití": "ht", "Escocia": "gb-sct", "EE. UU.": "us", "Paraguay": "py", "Australia": "au", "Turquía": "tr", "Alemania": "de", "Curazao": "cw", "Costa de Marfil": "ci", "Ecuador": "ec", "Países Bajos": "nl", "Japón": "jp", "Suecia": "se", "Túnez": "tn", "Bélgica": "be", "Egipto": "eg", "RI de Irán": "ir", "Nueva Zelanda": "nz", "España": "es", "Islas de Cabo Verde": "cv", "Arabia Saudí": "sa", "Uruguay": "uy", "Francia": "fr", "Senegal": "sn", "Irak": "iq", "Noruega": "no", "Argentina": "ar", "Argelia": "dz", "Austria": "at", "Jordania": "jo", "Portugal": "pt", "RD Congo": "cd", "Uzbekistán": "uz", "Colombia": "co", "Inglaterra": "gb-eng", "Croacia": "hr", "Ghana": "gh", "Panamá": "pa"}, R32={"M73": ["L", "dom 28 jun", "Canadá", "Sudáfrica"], "M74": ["L", "lun 29 jun", "Alemania", "Paraguay"], "M77": ["L", "mar 30 jun", "Francia", "Suecia"], "M75": ["L", "lun 29 jun", "Países Bajos", "Marruecos"], "M83": ["L", "jue 2 jul", "Portugal", "Croacia"], "M84": ["L", "jue 2 jul", "España", "Austria"], "M81": ["L", "mié 1 jul", "EE. UU.", "Bosnia"], "M82": ["L", "mié 1 jul", "Bélgica", "Senegal"], "M76": ["R", "lun 29 jun", "Brasil", "Japón"], "M78": ["R", "mar 30 jun", "Costa de Marfil", "Noruega"], "M79": ["R", "mar 30 jun", "México", "Ecuador"], "M80": ["R", "mié 1 jul", "Inglaterra", "RD Congo"], "M86": ["R", "vie 3 jul", "Argentina", "Islas de Cabo Verde"], "M88": ["R", "vie 3 jul", "Australia", "Egipto"], "M85": ["R", "jue 2 jul", "Suiza", "Argelia"], "M87": ["R", "vie 3 jul", "Colombia", "Ghana"]}, KO={"M89": ["L", "sáb 4 jul", "WM74", "WM77"], "M90": ["L", "sáb 4 jul", "WM73", "WM75"], "M93": ["L", "lun 6 jul", "WM83", "WM84"], "M94": ["L", "lun 6 jul", "WM81", "WM82"], "M91": ["R", "dom 5 jul", "WM76", "WM78"], "M92": ["R", "dom 5 jul", "WM79", "WM80"], "M95": ["R", "mar 7 jul", "WM86", "WM88"], "M96": ["R", "mar 7 jul", "WM85", "WM87"], "M97": ["L", "jue 9 jul", "WM89", "WM90"], "M98": ["L", "vie 10 jul", "WM93", "WM94"], "M99": ["R", "sáb 11 jul", "WM91", "WM92"], "M100": ["R", "sáb 11 jul", "WM95", "WM96"], "M101": ["L", "mar 14 jul", "WM97", "WM98"], "M102": ["R", "mié 15 jul", "WM99", "WM100"], "M103": ["C", "sáb 18 jul", "LM101", "LM102"], "M104": ["C", "dom 19 jul", "WM101", "WM102"]}, ORDER_L={"r32": ["M74", "M77", "M73", "M75", "M83", "M84", "M81", "M82"], "r16": ["M89", "M90", "M93", "M94"], "qf": ["M97", "M98"], "sf": ["M101"]}, ORDER_R={"r32": ["M76", "M78", "M79", "M80", "M86", "M88", "M85", "M87"], "r16": ["M91", "M92", "M95", "M96"], "qf": ["M99", "M100"], "sf": ["M102"]};
 let PLAYED_LOCKED=['M73','M76'];  // por defecto; se actualiza desde el INIT (tabla match_locks)
 let QID=null,USERNAME='Usuario',READONLY=false;
+let REAL={};        // resultados reales {mid:{h,a,w}} (solo en modo lectura/puntos)
+let SHOW_PTS=false; // mostrar puntos por partido
+
+// Puntos de un partido: pick del usuario vs resultado real, comparando posición.
+function puntosDe(mid){
+  if(!SHOW_PTS) return null;
+  const real=REAL[mid]; const pk=PICKS[mid];
+  if(!real||real.h==null||real.a==null) return null;  // sin resultado real, no se puntúa
+  if(!pk||pk.h==null||pk.a==null) return 0;
+  const pickT=teamsOf(mid), realT=realTeamsOf(mid);
+  let pts=0;
+  const localCoincide = pickT.h && realT.h && pickT.h===realT.h;
+  const visitCoincide = pickT.a && realT.a && pickT.a===realT.a;
+  const golLocalOk = localCoincide && pk.h===real.h;
+  const golVisitOk = visitCoincide && pk.a===real.a;
+  if(golLocalOk) pts+=1;
+  if(golVisitOk) pts+=1;
+  const ganadorOk = pk.w && real.w && pk.w===real.w && pk.w!=='Sin definir';
+  if(ganadorOk) pts+=2;
+  if(golLocalOk && golVisitOk && ganadorOk) pts+=1;
+  return pts;
+}
+// Equipos en cada posición según los RESULTADOS REALES (propaga con REAL)
+function realTeamsOf(mid){
+  if(R32[mid])return{h:R32[mid][2],a:R32[mid][3]};
+  const k=KO[mid]; if(!k)return{h:null,a:null};
+  return{h:realResolve(k[2]),a:realResolve(k[3])};
+}
+function realResolve(slot){const m=/^([WL])M(\d+)$/.exec(slot);if(!m)return null;
+  const kind=m[1],src='M'+m[2],pk=REAL[src];if(!pk||pk.w==null)return null;
+  if(pk.w==='Sin definir')return 'Sin definir';
+  const t=realTeamsOf(src);if(kind==='W')return pk.w;
+  if(pk.w===t.h)return t.a;if(pk.w===t.a)return t.h;return null;}
 const PICKS={};
 
 function fh(n,w=18){const c=FLAGS[n],h=Math.round(w*.67);
@@ -123,10 +159,13 @@ function matchCard(mid,isFinal){
     adv=`<select class="adv" ${locked?'disabled':''} onchange="setAdv('${mid}',this.value)">
       <option value="">🏆 ¿Quién avanza?</option>
       ${opts.map(x=>`<option value="${x}" ${pk.w===x?'selected':''}>${x}</option>`).join('')}</select>`;}
+  // Pastilla de puntos (solo en modo lectura con resultados reales)
+  const pts=puntosDe(mid);
+  const ptsHtml = (pts!=null) ? `<div class="mpts ${pts>0?'pos':'zero'}">${pts} pts</div>` : '';
   return `<div class="match${locked?' locked':''}${isFinal?' final-m':''}">
     <div class="mdate"><span>${dateOf(mid)} · ${mid}</span>${played?'🔒':''}</div>
     <div class="team">${nm(t.h)} ${sc('h')}</div>
-    <div class="team">${nm(t.a)} ${sc('a')}</div>${adv}</div>`;}
+    <div class="team">${nm(t.a)} ${sc('a')}</div>${adv}${ptsHtml}</div>`;}
 
 function col(title,mids){return `<div class="col"><div class="ctitle">${title}</div>
   ${mids.map(m=>matchCard(m,false)).join('')}</div>`;}
@@ -164,6 +203,10 @@ function render(){
 window.addEventListener('message',(e)=>{const d=e.data||{};
   if(d.type==='INIT'){QID=d.data?.quinielaId||null;USERNAME=d.data?.username||'Usuario';READONLY=d.data?.readOnly||false;
     if(Array.isArray(d.data?.lockedMatches)) PLAYED_LOCKED=d.data.lockedMatches;
+    // Resultados reales para calcular puntos (solo si vienen)
+    if(d.data?.realResults && typeof d.data.realResults==='object'){
+      REAL=d.data.realResults; SHOW_PTS=true;
+    }
     const picks=d.data?.picks||{};
     // Cargar solo partidos de la fase final (M73-M104)
     for(const[mid,pk]of Object.entries(picks)){
