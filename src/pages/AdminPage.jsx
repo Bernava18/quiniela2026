@@ -218,6 +218,16 @@ export default function AdminPage() {
     }
   }
 
+  async function toggleLockMany(matchIds, locked) {
+    // Cambiar varios a la vez (un solo upsert)
+    const next = { ...matchLocks }
+    matchIds.forEach(id => { next[id] = locked })
+    setMatchLocks(next)
+    const rows = matchIds.map(id => ({ match_id: id, locked, updated_at: new Date().toISOString() }))
+    const { error } = await supabase.from('match_locks').upsert(rows, { onConflict: 'match_id' })
+    if (error) { console.error('toggleLockMany', error); alert('Error: ' + error.message); loadFaseFinal() }
+  }
+
   useEffect(() => {
     if (tab === 'fasefinal') loadFaseFinal()
     // eslint-disable-next-line
@@ -1396,30 +1406,65 @@ export default function AdminPage() {
 
               {/* Panel de bloqueo de partidos */}
               {(() => {
-                const partidos = [
-                  { id:'M74', nombre:'Alemania vs Paraguay' },
-                  { id:'M75', nombre:'Holanda vs Marruecos' },
+                const fases = [
+                  { titulo:'16avos', partidos:[
+                    ['M73','Canadá vs Sudáfrica'],['M74','Alemania vs Paraguay'],['M75','Holanda vs Marruecos'],['M76','Brasil vs Japón'],
+                    ['M77','Francia vs Suecia'],['M78','C. Marfil vs Noruega'],['M79','México vs Ecuador'],['M80','Inglaterra vs RD Congo'],
+                    ['M81','EE.UU. vs Bosnia'],['M82','Bélgica vs Senegal'],['M83','Portugal vs Croacia'],['M84','España vs Austria'],
+                    ['M85','Suiza vs Argelia'],['M86','Argentina vs Cabo Verde'],['M87','Colombia vs Ghana'],['M88','Australia vs Egipto'],
+                  ]},
+                  { titulo:'Octavos', partidos:[
+                    ['M89','Octavos 1'],['M90','Octavos 2'],['M91','Octavos 3'],['M92','Octavos 4'],
+                    ['M93','Octavos 5'],['M94','Octavos 6'],['M95','Octavos 7'],['M96','Octavos 8'],
+                  ]},
+                  { titulo:'Cuartos', partidos:[
+                    ['M97','Cuartos 1'],['M98','Cuartos 2'],['M99','Cuartos 3'],['M100','Cuartos 4'],
+                  ]},
+                  { titulo:'Semis / Final', partidos:[
+                    ['M101','Semifinal 1'],['M102','Semifinal 2'],['M103','3er Puesto'],['M104','Final'],
+                  ]},
                 ]
+                const allIds = fases.flatMap(f => f.partidos.map(p => p[0]))
+                const setAll = (locked) => toggleLockMany(allIds, locked)
                 return (
                   <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.1)', borderRadius:12, padding:'14px 18px', marginBottom:18 }}>
-                    <div style={{ fontSize:13, fontWeight:700, marginBottom:10 }}>🔒 Bloqueo de partidos (para todas las quinielas)</div>
-                    <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
-                      {partidos.map(p => {
-                        const locked = !!matchLocks[p.id]
-                        return (
-                          <div key={p.id} style={{ display:'flex', alignItems:'center', gap:10, border:'0.5px solid rgba(0,0,0,.12)', borderRadius:10, padding:'8px 14px' }}>
-                            <span style={{ fontSize:13, fontWeight:600 }}>{p.nombre} <span style={{ color:'#aeaeb2', fontSize:11 }}>({p.id})</span></span>
-                            <button onClick={() => toggleLock(p.id, !locked)}
-                              style={{ padding:'5px 14px', border:'none', borderRadius:7, fontSize:12, fontWeight:700, cursor:'pointer',
-                                background: locked ? '#d9534f' : '#34c759', color:'#fff' }}>
-                              {locked ? '🔒 Bloqueado' : '🔓 Abierto'}
-                            </button>
-                          </div>
-                        )
-                      })}
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10, flexWrap:'wrap', gap:8 }}>
+                      <div style={{ fontSize:13, fontWeight:700 }}>🔒 Bloqueo de partidos (para todas las quinielas)</div>
+                      <div style={{ display:'flex', gap:6 }}>
+                        <button onClick={() => setAll(true)}
+                          style={{ padding:'4px 10px', border:'none', borderRadius:6, background:'#d9534f', color:'#fff', cursor:'pointer', fontSize:11, fontWeight:700 }}>
+                          🔒 Bloquear todos
+                        </button>
+                        <button onClick={() => setAll(false)}
+                          style={{ padding:'4px 10px', border:'none', borderRadius:6, background:'#34c759', color:'#fff', cursor:'pointer', fontSize:11, fontWeight:700 }}>
+                          🔓 Abrir todos
+                        </button>
+                      </div>
                     </div>
-                    <div style={{ fontSize:11, color:'#8e8e93', marginTop:8 }}>
-                      Toca el botón para cambiar. "Bloqueado" = nadie puede editar ese partido. El cambio aplica de inmediato.
+                    {fases.map(f => (
+                      <div key={f.titulo} style={{ marginBottom:12 }}>
+                        <div style={{ fontSize:11, fontWeight:800, color:'#86868b', textTransform:'uppercase', letterSpacing:.4, marginBottom:6 }}>{f.titulo}</div>
+                        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                          {f.partidos.map(([id,nombre]) => {
+                            const locked = !!matchLocks[id]
+                            return (
+                              <button key={id} onClick={() => toggleLock(id, !locked)}
+                                title={nombre}
+                                style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:2,
+                                  padding:'6px 10px', border:'none', borderRadius:8, cursor:'pointer', minWidth:130,
+                                  background: locked ? '#fdeaea' : '#e8f9ee', borderLeft: `3px solid ${locked?'#d9534f':'#34c759'}` }}>
+                                <span style={{ fontSize:11, fontWeight:700, color:'#1d1d1f' }}>{nombre}</span>
+                                <span style={{ fontSize:10, fontWeight:700, color: locked?'#d9534f':'#1a7a38' }}>
+                                  {locked ? '🔒 Bloqueado' : '🔓 Abierto'} · {id}
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ fontSize:11, color:'#8e8e93', marginTop:4 }}>
+                      Toca un partido para cambiar su estado. El cambio aplica de inmediato para todas las quinielas.
                     </div>
                   </div>
                 )
