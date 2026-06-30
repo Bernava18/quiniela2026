@@ -842,12 +842,18 @@ export default function AdminPage() {
         const img = await captureFaseFinalBracket(q.id, q.name, picksByQ[q.id] || {})
         if (!img) continue
         const pW = Math.max(297, Math.round(img.width/3.78))
-        const pH = Math.round((img.height/img.width)*pW)
+        const pH = Math.round((img.height/img.width)*pW) + 12  // +12mm para la franja del nombre
         if (!pdf) pdf = new jsPDF({ orientation: pW>pH?'landscape':'portrait', unit:'mm', format:[pW,pH] })
         else pdf.addPage([pW,pH], pW>pH?'landscape':'portrait')
         pdf.outline.add(null, label, { pageNumber: pdf.internal.getNumberOfPages() })
-        pdf.setTextColor(255,255,255); pdf.setFontSize(8); pdf.text(label, 2, 4)
-        pdf.addImage(img.img,'JPEG',0,0,pW,pH)
+        // Franja superior con el nombre de la quiniela (visible)
+        pdf.setFillColor(0,113,227)
+        pdf.rect(0, 0, pW, 12, 'F')
+        pdf.setTextColor(255,255,255)
+        pdf.setFontSize(13)
+        pdf.text(`${q.name}   ·   ${q.profiles?.username || ''}`, 5, 8)
+        // Imagen de las llaves debajo de la franja
+        pdf.addImage(img.img,'JPEG',0,12,pW,pH-12)
       }
 
       if (pdf) {
