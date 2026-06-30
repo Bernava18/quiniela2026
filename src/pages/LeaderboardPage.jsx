@@ -330,9 +330,20 @@ export default function LeaderboardPage() {
       const { data: lockRows } = await supabase
         .from('match_locks').select('match_id, locked').eq('locked', true)
       const lockedMatches = (lockRows || []).map(r => r.match_id)
+      // Resultados reales (de la quiniela marcada es_real) para mostrar puntos por partido
+      let realResults = {}
+      const { data: realQ } = await supabase.from('quinielas').select('id').eq('es_real', true).maybeSingle()
+      if (realQ?.id) {
+        const { data: realRows } = await supabase
+          .from('picks_ko_test').select('match_id, goals_home, goals_away, winner')
+          .eq('quiniela_id', realQ.id)
+        for (const r of (realRows || [])) {
+          realResults[r.match_id] = { h: r.goals_home, a: r.goals_away, w: r.winner }
+        }
+      }
       document.getElementById('viewer-iframe')?.contentWindow?.postMessage({
         type: 'INIT',
-        data: { quinielaId: viewing.quinielaId, username: viewing.name, picks: koTestPicks, readOnly: true, lockedMatches }
+        data: { quinielaId: viewing.quinielaId, username: viewing.name, picks: koTestPicks, readOnly: true, lockedMatches, realResults }
       }, '*')
     } else {
       const [picks, res] = await Promise.all([getQuinielaPicks(viewing.quinielaId), getAllResults()])
