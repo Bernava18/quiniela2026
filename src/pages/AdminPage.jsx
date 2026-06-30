@@ -794,6 +794,118 @@ export default function AdminPage() {
     })
   }
 
+  // ── Imprimir TODAS las quinielas de FASE FINAL (llaves) en un solo PDF ──
+  async function printAllFaseFinal() {
+    setPrinting(true)
+    setPrintProgress('Cargando librerías...')
+    try {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      const { jsPDF } = window.jspdf
+
+      // 1) Traer todas las quinielas
+      const { data: quinielas } = await supabase
+        .from('quinielas')
+        .select('id, name, profiles!quinielas_user_id_fkey(username)')
+        .order('name')
+      if (!quinielas?.length) { alert('No hay quinielas.'); setPrinting(false); return }
+
+      // 2) Traer TODOS los picks de fase final (paginado, 32 partidos x 82 = ~2600 filas)
+      const FF = []
+      for (let i = 73; i <= 104; i++) FF.push(`M${i}`)
+      let allPicks = []
+      let from = 0
+      while (true) {
+        const { data: chunk } = await supabase
+          .from('picks_ko_test')
+          .select('quiniela_id, match_id, goals_home, goals_away, winner')
+          .in('match_id', FF)
+          .range(from, from + 999)
+        allPicks = allPicks.concat(chunk || [])
+        if (!chunk || chunk.length < 1000) break
+        from += 1000
+      }
+      // Agrupar picks por quiniela
+      const picksByQ = {}
+      for (const p of allPicks) {
+        (picksByQ[p.quiniela_id] = picksByQ[p.quiniela_id] || {})[p.match_id] =
+          { h: p.goals_home, a: p.goals_away, w: p.winner }
+      }
+
+      let pdf = null
+      const fecha = new Date().toISOString().slice(0,10)
+
+      for (let i = 0; i < quinielas.length; i++) {
+        const q = quinielas[i]
+        const label = `${q.name} · ${q.profiles?.username || ''}`
+        setPrintProgress(`Capturando ${i+1}/${quinielas.length}: ${q.name}`)
+        const img = await captureFaseFinalBracket(q.id, q.name, picksByQ[q.id] || {})
+        if (!img) continue
+        const pW = Math.max(297, Math.round(img.width/3.78))
+        const pH = Math.round((img.height/img.width)*pW)
+        if (!pdf) pdf = new jsPDF({ orientation: pW>pH?'landscape':'portrait', unit:'mm', format:[pW,pH] })
+        else pdf.addPage([pW,pH], pW>pH?'landscape':'portrait')
+        pdf.outline.add(null, label, { pageNumber: pdf.internal.getNumberOfPages() })
+        pdf.setTextColor(255,255,255); pdf.setFontSize(8); pdf.text(label, 2, 4)
+        pdf.addImage(img.img,'JPEG',0,0,pW,pH)
+      }
+
+      if (pdf) {
+        setPrintProgress('Guardando PDF...')
+        pdf.save(`FaseFinal_Mundial_2026_TODAS_${fecha}.pdf`)
+      }
+      setPrintProgress('')
+      setMsg(`✓ PDF de Fase Final generado con ${quinielas.length} quinielas`)
+    } catch(e) {
+      console.error(e)
+      alert('Error: ' + e.message)
+      setPrintProgress('')
+    }
+    setPrinting(false)
+    setTimeout(() => setMsg(''), 5000)
+  }
+
+  // Captura el cuadro de llaves de una quiniela usando el HTML de fase final
+  async function captureFaseFinalBracket(quinielaId, quinielaName, picks) {
+    return new Promise((resolve) => {
+      const iframe = document.createElement('iframe')
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1500px;height:1000px;border:none;opacity:0;pointer-events:none;z-index:-1'
+      document.body.appendChild(iframe)
+      const timeout = setTimeout(() => { try{document.body.removeChild(iframe)}catch(e){}; resolve(null) }, 20000)
+      iframe.onload = async () => {
+        try {
+          // Esperar a que el HTML esté listo y mandarle los datos
+          await new Promise(r => setTimeout(r, 600))
+          iframe.contentWindow?.postMessage({
+            type: 'INIT',
+            data: { quinielaId, username: quinielaName, picks, readOnly: true, lockedMatches: [] }
+          }, '*')
+          await new Promise(r => setTimeout(r, 1200))  // que dibuje las llaves
+          const iDoc = iframe.contentDocument
+          const el = iDoc.querySelector('.bracket') || iDoc.body
+          // Ajustar el iframe al tamaño real del bracket para capturarlo completo
+          const w = Math.max(el.scrollWidth + 40, 1400)
+          const h = Math.max(el.scrollHeight + 120, 700)
+          iframe.style.width = w + 'px'
+          iframe.style.height = h + 'px'
+          await new Promise(r => setTimeout(r, 400))
+          const canvas = await window.html2canvas(iDoc.body, {
+            scale: 1.6, useCORS: true, backgroundColor: '#ffffff', logging: false,
+            allowTaint: true, windowWidth: w, width: w, height: iDoc.body.scrollHeight + 40
+          })
+          clearTimeout(timeout)
+          document.body.removeChild(iframe)
+          resolve({ img: canvas.toDataURL('image/jpeg', 0.9), width: canvas.width, height: canvas.height })
+        } catch(e) {
+          clearTimeout(timeout)
+          try { document.body.removeChild(iframe) } catch(_){}
+          resolve(null)
+        }
+      }
+      iframe.src = '/solo_fasefinal.html'
+    })
+  }
+
   const tabStyle = (t) => ({
     padding:'8px 20px', border:'none', borderRadius:8, fontFamily:'inherit',
     fontSize:13, fontWeight:700, cursor:'pointer',
@@ -1311,11 +1423,22 @@ export default function AdminPage() {
                 <div style={{ fontSize:13, color:'#6e6e73' }}>
                   {faseData.length} quinielas · "Completa" = los 16 partidos de 16avos (M73–M88) con marcador
                 </div>
-                <button onClick={loadFaseFinal}
-                  style={{ padding:'6px 12px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
-                  🔄 Actualizar
-                </button>
+                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                  <button onClick={printAllFaseFinal} disabled={printing}
+                    style={{ padding:'6px 14px', border:'none', borderRadius:8, background: printing?'#aeaeb2':'#0071e3', color:'#fff', cursor: printing?'default':'pointer', fontSize:13, fontWeight:700 }}>
+                    📄 Imprimir todas (PDF)
+                  </button>
+                  <button onClick={loadFaseFinal}
+                    style={{ padding:'6px 12px', border:'0.5px solid rgba(0,0,0,.12)', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:13 }}>
+                    🔄 Actualizar
+                  </button>
+                </div>
               </div>
+              {printing && printProgress && (
+                <div style={{ background:'#eef4ff', color:'#0a4ea3', padding:'8px 14px', borderRadius:8, fontSize:12.5, fontWeight:600, marginBottom:10 }}>
+                  ⏳ {printProgress}
+                </div>
+              )}
 
               <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.1)', borderRadius:12, overflow:'hidden' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
