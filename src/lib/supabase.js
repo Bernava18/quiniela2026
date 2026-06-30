@@ -100,7 +100,7 @@ export async function getLeaderboard() {
   const { data, error } = await supabase
     .from('quinielas')
     .select(`
-      id, name, user_id, seq_num, payment_status, hidden_from_table,
+      id, name, user_id, seq_num, payment_status, hidden_from_table, elim_pts, final_pts,
       profiles ( id, username, full_name ),
       scores ( quiniela_id, grp_pts, clasif_pts, elim_pts, final_pts, total_pts, updated_at ),
       picks ( match_id, goals_home )
@@ -113,12 +113,16 @@ export async function getLeaderboard() {
   // Transformar al formato que espera LeaderboardPage (igual que scores con quinielas embebidas)
   const transformed = data.map(q => {
     const s = q.scores?.[0] || { grp_pts:0, clasif_pts:0, elim_pts:0, final_pts:0, total_pts:0 }
+    // elim_pts y final_pts ahora se toman de la tabla quinielas (calculados por el Admin).
+    // Si la quiniela no los tuviera, se usa el valor de scores como respaldo.
+    const elimPts  = (q.elim_pts  != null) ? q.elim_pts  : (s.elim_pts  || 0)
+    const finalPts = (q.final_pts != null) ? q.final_pts : (s.final_pts || 0)
     return {
       quiniela_id: q.id,
       grp_pts: s.grp_pts || 0,
       clasif_pts: s.clasif_pts || 0,
-      elim_pts: s.elim_pts || 0,
-      final_pts: s.final_pts || 0,
+      elim_pts: elimPts,
+      final_pts: finalPts,
       total_pts: s.total_pts || 0,
       updated_at: s.updated_at,
       picks_count: (q.picks || []).filter(p => p.goals_home != null).length,
