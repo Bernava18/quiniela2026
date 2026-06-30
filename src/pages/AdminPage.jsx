@@ -844,13 +844,19 @@ export default function AdminPage() {
 
       let pdf = null
       const fecha = new Date().toISOString().slice(0,10)
+      const fallidas = []
 
       for (let i = 0; i < quinielas.length; i++) {
         const q = quinielas[i]
         const label = `${q.name} · ${q.profiles?.username || ''}`
         setPrintProgress(`Capturando ${i+1}/${quinielas.length}: ${q.name}`)
-        const img = await captureFaseFinalBracket(q.id, q.name, picksByQ[q.id] || {})
-        if (!img) continue
+        // Intentar capturar; si falla, reintentar hasta 2 veces más
+        let img = null
+        for (let intento = 0; intento < 3 && !img; intento++) {
+          img = await captureFaseFinalBracket(q.id, q.name, picksByQ[q.id] || {})
+          if (!img) await new Promise(r => setTimeout(r, 500))
+        }
+        if (!img) { fallidas.push(q.name); continue }
         const pW = Math.max(297, Math.round(img.width/3.78))
         const pH = Math.round((img.height/img.width)*pW) + 12  // +12mm para la franja del nombre
         if (!pdf) pdf = new jsPDF({ orientation: pW>pH?'landscape':'portrait', unit:'mm', format:[pW,pH] })
@@ -866,19 +872,25 @@ export default function AdminPage() {
         pdf.addImage(img.img,'JPEG',0,12,pW,pH-12)
       }
 
+      const generadas = quinielas.length - fallidas.length
       if (pdf) {
         setPrintProgress('Guardando PDF...')
         pdf.save(`FaseFinal_Mundial_2026_TODAS_${fecha}.pdf`)
       }
       setPrintProgress('')
-      setMsg(`✓ PDF de Fase Final generado con ${quinielas.length} quinielas`)
+      if (fallidas.length) {
+        setMsg(`✓ PDF generado: ${generadas}/${quinielas.length}. No salieron: ${fallidas.join(', ')}`)
+        console.warn('Quinielas que fallaron al capturar:', fallidas)
+      } else {
+        setMsg(`✓ PDF de Fase Final generado con las ${generadas} quinielas`)
+      }
     } catch(e) {
       console.error(e)
       alert('Error: ' + e.message)
       setPrintProgress('')
     }
     setPrinting(false)
-    setTimeout(() => setMsg(''), 5000)
+    setTimeout(() => setMsg(''), 12000)
   }
 
   // Captura el cuadro de llaves de una quiniela usando el HTML de fase final
@@ -887,7 +899,7 @@ export default function AdminPage() {
       const iframe = document.createElement('iframe')
       iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1500px;height:1000px;border:none;opacity:0;pointer-events:none;z-index:-1'
       document.body.appendChild(iframe)
-      const timeout = setTimeout(() => { try{document.body.removeChild(iframe)}catch(e){}; resolve(null) }, 20000)
+      const timeout = setTimeout(() => { try{document.body.removeChild(iframe)}catch(e){}; resolve(null) }, 30000)
       iframe.onload = async () => {
         try {
           // Esperar a que el HTML esté listo y mandarle los datos
@@ -896,7 +908,7 @@ export default function AdminPage() {
             type: 'INIT',
             data: { quinielaId, username: quinielaName, picks, readOnly: true, lockedMatches: [] }
           }, '*')
-          await new Promise(r => setTimeout(r, 1200))  // que dibuje las llaves
+          await new Promise(r => setTimeout(r, 1500))  // que dibuje las llaves
           const iDoc = iframe.contentDocument
           const el = iDoc.querySelector('.bracket') || iDoc.body
           // Ajustar el iframe al tamaño real del bracket para capturarlo completo
@@ -904,7 +916,16 @@ export default function AdminPage() {
           const h = Math.max(el.scrollHeight + 120, 700)
           iframe.style.width = w + 'px'
           iframe.style.height = h + 'px'
-          await new Promise(r => setTimeout(r, 400))
+          // Esperar a que carguen las banderas (imágenes) antes de capturar
+          try {
+            const imgs = Array.from(iDoc.querySelectorAll('img'))
+            await Promise.race([
+              Promise.all(imgs.map(im => im.complete ? Promise.resolve() :
+                new Promise(res => { im.onload = res; im.onerror = res }))),
+              new Promise(r => setTimeout(r, 2500)),
+            ])
+          } catch(_) {}
+          await new Promise(r => setTimeout(r, 300))
           const canvas = await window.html2canvas(iDoc.body, {
             scale: 1.6, useCORS: true, backgroundColor: '#ffffff', logging: false,
             allowTaint: true, windowWidth: w, width: w, height: iDoc.body.scrollHeight + 40
