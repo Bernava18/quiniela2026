@@ -98,6 +98,9 @@ export default function AdminPage() {
   const [faseData, setFaseData]     = useState([])
   const [faseLoading, setFaseLoading] = useState(false)
   const [matchLocks, setMatchLocks] = useState({})  // { M74: true/false, M75: ... }
+  const [realQuiniela, setRealQuiniela] = useState(null)  // la quiniela de resultados reales
+  const [calculando, setCalculando] = useState(false)
+  const [calcMsg, setCalcMsg] = useState('')
   const [users, setUsers]       = useState([])
   const [results, setResults]   = useState({})
   const [phase, setPhase]       = useState(0)
@@ -130,8 +133,155 @@ export default function AdminPage() {
     return ov ? { ...q, ...ov } : q
   }
 
+  // ════════════════════════════════════════════════════════════
+  // SISTEMA DE PUNTUACIÓN DE FASE FINAL
+  // ════════════════════════════════════════════════════════════
+  const REAL_R32_MAP = {
+    M73:['Canadá','Sudáfrica'],M74:['Alemania','Paraguay'],M75:['Países Bajos','Marruecos'],
+    M76:['Brasil','Japón'],M77:['Francia','Suecia'],M78:['Costa de Marfil','Noruega'],
+    M79:['México','Ecuador'],M80:['Inglaterra','RD Congo'],M81:['EE. UU.','Bosnia'],
+    M82:['Bélgica','Senegal'],M83:['Portugal','Croacia'],M84:['España','Austria'],
+    M85:['Suiza','Argelia'],M86:['Argentina','Islas de Cabo Verde'],M87:['Colombia','Ghana'],
+    M88:['Australia','Egipto'],
+  }
+  const KO_SLOTS_MAP = {
+    M89:['WM74','WM77'],M90:['WM73','WM75'],M91:['WM76','WM78'],M92:['WM79','WM80'],
+    M93:['WM83','WM84'],M94:['WM81','WM82'],M95:['WM86','WM88'],M96:['WM85','WM87'],
+    M97:['WM89','WM90'],M98:['WM93','WM94'],M99:['WM91','WM92'],M100:['WM95','WM96'],
+    M101:['WM97','WM98'],M102:['WM99','WM100'],M103:['LM101','LM102'],M104:['WM101','WM102'],
+  }
+  function teamsOfMatch(mid, picks) {
+    if (REAL_R32_MAP[mid]) return { h: REAL_R32_MAP[mid][0], a: REAL_R32_MAP[mid][1] }
+    const sl = KO_SLOTS_MAP[mid]
+    if (!sl) return { h: null, a: null }
+    return { h: resolveSlotPts(sl[0], picks), a: resolveSlotPts(sl[1], picks) }
+  }
+  function resolveSlotPts(slot, picks) {
+    const m = /^([WL])M(\d+)$/.exec(slot)
+    if (!m) return null
+    const kind = m[1], src = 'M' + m[2], pk = picks[src]
+    if (!pk || pk.w == null) return null
+    if (pk.w === 'Sin definir') return 'Sin definir'
+    const t = teamsOfMatch(src, picks)
+    if (kind === 'W') return pk.w
+    if (pk.w === t.h) return t.a
+    if (pk.w === t.a) return t.h
+    return null
+  }
+  // Puntos de un partido: pick vs real (ambos con equipos en cada posición)
+  function puntosPartido(pick, real, pickTeams, realTeams) {
+    if (!pick || !real || pick.h == null || pick.a == null || real.h == null || real.a == null) return 0
+    let pts = 0
+    const localCoincide = pickTeams.h && realTeams.h && pickTeams.h === realTeams.h
+    const visitCoincide = pickTeams.a && realTeams.a && pickTeams.a === realTeams.a
+    const golLocalOk = localCoincide && pick.h === real.h
+    const golVisitOk = visitCoincide && pick.a === real.a
+    if (golLocalOk) pts += 1
+    if (golVisitOk) pts += 1
+    const ganadorOk = pick.w && real.w && pick.w === real.w && pick.w !== 'Sin definir'
+    if (ganadorOk) pts += 2
+    if (golLocalOk && golVisitOk && ganadorOk) pts += 1
+    return pts
+  }
+  // Orden final desde los picks de una quiniela: campeón/subcampeón/3ro/4to
+  function ordenFinal(picks) {
+    const t104 = teamsOfMatch('M104', picks)  // final
+    const t103 = teamsOfMatch('M103', picks)  // 3er puesto
+    const pk104 = picks['M104'], pk103 = picks['M103']
+    let campeon=null, sub=null, tercero=null, cuarto=null
+    if (pk104?.w && pk104.w !== 'Sin definir') {
+      campeon = pk104.w
+      sub = (pk104.w === t104.h) ? t104.a : (pk104.w === t104.a ? t104.h : null)
+    }
+    if (pk103?.w && pk103.w !== 'Sin definir') {
+      tercero = pk103.w
+      cuarto = (pk103.w === t103.h) ? t103.a : (pk103.w === t103.a ? t103.h : null)
+    }
+    return { campeon, sub, tercero, cuarto }
+  }
+
+  async function loadRealQuiniela() {
+    const { data } = await supabase.from('quinielas').select('id, name').eq('es_real', true).maybeSingle()
+    setRealQuiniela(data || null)
+    return data
+  }
+
+  // Calcula y guarda elim_pts y final_pts de TODAS las quinielas
+  async function calcularPuntosFaseFinal() {
+    setCalculando(true); setCalcMsg('Cargando resultados reales...')
+    try {
+      const real = realQuiniela || await loadRealQuiniela()
+      if (!real) { alert('No existe la quiniela real. Ejecuta el SQL para crearla.'); setCalculando(false); return }
+
+      // 1) Picks de la quiniela REAL
+      const { data: realRows } = await supabase
+        .from('picks_ko_test').select('match_id, goals_home, goals_away, winner')
+        .eq('quiniela_id', real.id)
+      const realPicks = {}
+      for (const r of (realRows||[])) realPicks[r.match_id] = { h:r.goals_home, a:r.goals_away, w:r.winner }
+
+      // 2) Todos los picks de todas las quinielas (paginado)
+      setCalcMsg('Cargando picks de todas las quinielas...')
+      const FF = []; for (let i=73;i<=104;i++) FF.push('M'+i)
+      let all = []; let from = 0
+      while (true) {
+        const { data: chunk } = await supabase
+          .from('picks_ko_test').select('quiniela_id, match_id, goals_home, goals_away, winner')
+          .in('match_id', FF).range(from, from+999)
+        all = all.concat(chunk||[])
+        if (!chunk || chunk.length < 1000) break
+        from += 1000
+      }
+      const byQ = {}
+      for (const p of all) (byQ[p.quiniela_id] = byQ[p.quiniela_id]||{})[p.match_id] = { h:p.goals_home, a:p.goals_away, w:p.winner }
+
+      // 3) Equipos reales en cada posición (reconstruidos)
+      const realTeamsByMatch = {}
+      for (let i=73;i<=104;i++) realTeamsByMatch['M'+i] = teamsOfMatch('M'+i, realPicks)
+      const ordenReal = ordenFinal(realPicks)
+
+      // 4) Calcular por quiniela
+      setCalcMsg('Calculando puntos...')
+      const updates = []
+      for (const [qid, picks] of Object.entries(byQ)) {
+        if (qid === real.id) continue  // no puntuar la real
+        let elim = 0
+        for (let i=73;i<=104;i++) {
+          const mid = 'M'+i
+          const pick = picks[mid], realM = realPicks[mid]
+          if (!realM || realM.h == null) continue  // solo partidos con resultado real cargado
+          const pickTeams = teamsOfMatch(mid, picks)
+          elim += puntosPartido(pick, realM, pickTeams, realTeamsByMatch[mid])
+        }
+        // Orden final
+        const oq = ordenFinal(picks)
+        let fin = 0
+        if (oq.campeon && ordenReal.campeon && oq.campeon === ordenReal.campeon) fin += 20
+        if (oq.sub && ordenReal.sub && oq.sub === ordenReal.sub) fin += 10
+        if (oq.tercero && ordenReal.tercero && oq.tercero === ordenReal.tercero) fin += 5
+        if (oq.cuarto && ordenReal.cuarto && oq.cuarto === ordenReal.cuarto) fin += 3
+        updates.push({ id: qid, elim_pts: elim, final_pts: fin })
+      }
+
+      // 5) Guardar (uno por uno, solo las columnas de puntos)
+      setCalcMsg(`Guardando ${updates.length} quinielas...`)
+      let ok = 0
+      for (const u of updates) {
+        const { error } = await supabase.from('quinielas')
+          .update({ elim_pts: u.elim_pts, final_pts: u.final_pts }).eq('id', u.id)
+        if (!error) ok++
+      }
+      setCalcMsg(`✓ Puntos calculados y guardados para ${ok} quinielas`)
+    } catch(e) {
+      console.error(e); setCalcMsg('Error: ' + e.message)
+    }
+    setCalculando(false)
+    setTimeout(() => setCalcMsg(''), 8000)
+  }
+
   async function loadFaseFinal() {
     setFaseLoading(true)
+    loadRealQuiniela()  // cargar la quiniela real para el panel
     // Cargar el estado de bloqueo de los partidos
     const { data: locks } = await supabase.from('match_locks').select('match_id, locked')
     const lockMap = {}
@@ -1424,6 +1574,38 @@ export default function AdminPage() {
                   </div>
                 )
               })()}
+
+              {/* Panel de RESULTADOS REALES y cálculo de puntos */}
+              <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.1)', borderRadius:12, padding:'14px 18px', marginBottom:18 }}>
+                <div style={{ fontSize:13, fontWeight:700, marginBottom:10 }}>📊 Resultados reales y puntuación</div>
+                <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
+                  {realQuiniela ? (
+                    <button onClick={() => window.open(`/fase-final/${realQuiniela.id}`, '_blank')}
+                      style={{ padding:'8px 16px', border:'none', borderRadius:8, background:'#1d1d1f', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700 }}>
+                      ✏️ Editar resultados reales
+                    </button>
+                  ) : (
+                    <span style={{ fontSize:12, color:'#d9534f', fontWeight:600 }}>
+                      ⚠️ No existe la quiniela real. Ejecuta el SQL para crearla.
+                    </span>
+                  )}
+                  <button onClick={calcularPuntosFaseFinal} disabled={calculando || !realQuiniela}
+                    style={{ padding:'8px 16px', border:'none', borderRadius:8,
+                      background: (calculando||!realQuiniela)?'#aeaeb2':'#34c759', color:'#fff',
+                      cursor:(calculando||!realQuiniela)?'default':'pointer', fontSize:13, fontWeight:700 }}>
+                    🧮 Calcular puntos de todas
+                  </button>
+                </div>
+                {calcMsg && (
+                  <div style={{ marginTop:10, background:'#eef4ff', color:'#0a4ea3', padding:'8px 12px', borderRadius:8, fontSize:12.5, fontWeight:600 }}>
+                    {calculando ? '⏳ ' : ''}{calcMsg}
+                  </div>
+                )}
+                <div style={{ fontSize:11, color:'#8e8e93', marginTop:8 }}>
+                  Primero edita los resultados reales (mismo cuadro de llaves). Luego pulsa "Calcular puntos":
+                  compara cada quiniela contra la real y guarda Elim (1 gol local + 1 gol visitante + 2 ganador + 1 extra) y Final (campeón 20, subcampeón 10, 3ro 5, 4to 3). Se ven en la Tabla.
+                </div>
+              </div>
 
               {/* Panel de bloqueo de partidos */}
               {(() => {

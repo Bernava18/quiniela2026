@@ -101,9 +101,11 @@ export default function FaseFinalPage() {
       getKoPicks(quinielaId),
       getLockedMatches(),
     ])
+    // Si es la quiniela REAL, el admin puede editar todos los partidos (sin bloqueos)
+    const esReal = quiniela?.es_real === true
     iframeRef.current?.contentWindow?.postMessage({
       type: 'INIT',
-      data: { quinielaId, username: profile?.username, picks, lockedMatches },
+      data: { quinielaId, username: profile?.username, picks, lockedMatches: esReal ? [] : lockedMatches },
     }, '*')
   }
 
