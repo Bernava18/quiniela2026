@@ -24,6 +24,11 @@ const MATCH_DATES = {
   J1:'2026-06-16', J2:'2026-06-17', J3:'2026-06-22', J4:'2026-06-22', J5:'2026-06-27', J6:'2026-06-27',
   K1:'2026-06-17', K2:'2026-06-17', K3:'2026-06-23', K4:'2026-06-23', K5:'2026-06-27', K6:'2026-06-27',
   L1:'2026-06-17', L2:'2026-06-17', L3:'2026-06-23', L4:'2026-06-23', L5:'2026-06-27', L6:'2026-06-27',
+  // Fase final (16avos) — fechas horario Venezuela
+  M73:'2026-06-28', M74:'2026-06-29', M75:'2026-06-29', M76:'2026-06-29',
+  M77:'2026-06-30', M78:'2026-06-30', M79:'2026-06-30', M80:'2026-07-01',
+  M81:'2026-07-01', M82:'2026-07-01', M83:'2026-07-02', M84:'2026-07-02',
+  M85:'2026-07-02', M86:'2026-07-03', M87:'2026-07-03', M88:'2026-07-03',
 }
 
 
@@ -52,6 +57,11 @@ const TEAM_NAMES = {
   K4:['Colombia','RD Congo'], K5:['Colombia','Portugal'], K6:['RD Congo','Uzbekistán'],
   L1:['Inglaterra','Croacia'], L2:['Ghana','Panamá'], L3:['Inglaterra','Ghana'],
   L4:['Panamá','Croacia'], L5:['Panamá','Inglaterra'], L6:['Croacia','Ghana'],
+  // Fase final (16avos)
+  M73:['Canadá','Sudáfrica'], M74:['Alemania','Paraguay'], M75:['Países Bajos','Marruecos'], M76:['Brasil','Japón'],
+  M77:['Francia','Suecia'], M78:['Costa de Marfil','Noruega'], M79:['México','Ecuador'], M80:['Inglaterra','RD Congo'],
+  M81:['EE. UU.','Bosnia'], M82:['Bélgica','Senegal'], M83:['Portugal','Croacia'], M84:['España','Austria'],
+  M85:['Suiza','Argelia'], M86:['Argentina','Islas de Cabo Verde'], M87:['Colombia','Ghana'], M88:['Australia','Egipto'],
 }
 
 function calcGroupPts(picks, results, group) {
@@ -133,6 +143,7 @@ export default function LeaderboardPage() {
   const [tableSearch, setTableSearch] = useState('')
   const [hasPaid, setHasPaid]     = useState(false)
   const [prizePool, setPrizePool] = useState({ total:0, p1:0, p2:0, p3:0, committedCount:0 })
+  const [realResults, setRealResults] = useState({})  // resultados de la quiniela real {mid:{h,a,w}}
   const tableRef = useRef(null)
 
   async function exportPDF() {
@@ -170,7 +181,7 @@ export default function LeaderboardPage() {
     link.click()
   }
 
-  useEffect(() => { loadResults(); checkPayment() }, [])
+  useEffect(() => { loadResults(); checkPayment(); loadRealResults() }, [])
   useEffect(() => { if (rows.length > 0) loadAllPicks() }, [rows])
   useEffect(() => { if (rows.length >= 0) buildEnriched() }, [rows, allPicks, results, prizePool])
 
@@ -205,6 +216,18 @@ export default function LeaderboardPage() {
     data?.forEach(r => { map[r.match_id] = { hs: r.goals_home, as: r.goals_away, win: r.winner } })
     setResults(map)
   }
+
+  async function loadRealResults() {
+    const { data: realQ } = await supabase.from('quinielas').select('id').eq('es_real', true).maybeSingle()
+    if (!realQ?.id) return
+    const { data: rrows } = await supabase
+      .from('picks_ko_test').select('match_id, goals_home, goals_away, winner')
+      .eq('quiniela_id', realQ.id)
+    const out = {}
+    for (const r of (rrows || [])) out[r.match_id] = { h: r.goals_home, a: r.goals_away, w: r.winner }
+    setRealResults(out)
+  }
+
 
   async function loadAllPicks() {
     const qids = rows.map(r => r.quiniela_id)
@@ -449,7 +472,7 @@ export default function LeaderboardPage() {
             <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', color:'rgba(0,0,0,.5)' }}>💰 Premio acumulado</div>
             <div style={{ fontSize:28, fontWeight:900, color:'#000' }}>${prizePool.total} USD</div>
           </div>
-          <div style={{ display:'flex', gap:20 }}>
+          <div style={{ display:'flex', gap:20, alignItems:'center' }}>
             {[['🥇','1er lugar',prizePool.p1,'60%'],['🥈','2do lugar',prizePool.p2,'20%'],['🥉','3er lugar',prizePool.p3,'10%']].map(([medal,label,amt,pct]) => (
               <div key={label} style={{ textAlign:'center' }}>
                 <div style={{ fontSize:20 }}>{medal}</div>
@@ -457,6 +480,16 @@ export default function LeaderboardPage() {
                 <div style={{ fontSize:10, color:'rgba(0,0,0,.5)', fontWeight:600 }}>{pct}</div>
               </div>
             ))}
+            {/* Entregado / falta por repartir */}
+            <div style={{ borderLeft:'1px solid rgba(0,0,0,.2)', paddingLeft:16, textAlign:'center' }}>
+              <div style={{ fontSize:10, fontWeight:700, color:'rgba(0,0,0,.5)', textTransform:'uppercase' }}>Ya entregado</div>
+              <div style={{ fontSize:16, fontWeight:900, color:'#000' }}>$225</div>
+              <div style={{ fontSize:9, color:'rgba(0,0,0,.5)' }}>🥇150 · 🥈50 · 🥉25</div>
+            </div>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:10, fontWeight:700, color:'rgba(0,0,0,.5)', textTransform:'uppercase' }}>Falta repartir</div>
+              <div style={{ fontSize:16, fontWeight:900, color:'#000' }}>${Math.max(0, (prizePool.total || 0) - 225)}</div>
+            </div>
           </div>
         </div>
 
@@ -481,15 +514,20 @@ export default function LeaderboardPage() {
                 </div>
                 <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
                   {mids.map(mid => {
-                    const r = results[mid]
+                    const esFF = /^M\d+$/.test(mid)
+                    // Grupos: de results (match_results). Fase final: de realResults (quiniela real)
+                    const r = esFF ? realResults[mid] : results[mid]
                     const [home, away] = TEAM_NAMES[mid] || ['?','?']
-                    const played = r && r.hs != null
+                    const played = esFF ? (r && r.h != null) : (r && r.hs != null)
+                    const hs = esFF ? r?.h : r?.hs
+                    const as = esFF ? r?.a : r?.as
+                    const etiqueta = esFF ? '16avos' : `GR.${mid[0]}`
                     return (
                       <div key={mid} style={{ display:'flex', alignItems:'center', gap:4, fontSize:12, padding:'3px 6px', background:'#f9f9fb', borderRadius:5, lineHeight:1.4 }}>
-                        <span style={{ fontSize:9, color:'#c7c7cc', fontWeight:700, minWidth:24 }}>GR.{mid[0]}</span>
+                        <span style={{ fontSize:9, color:'#c7c7cc', fontWeight:700, minWidth:24 }}>{etiqueta}</span>
                         <span style={{ flex:1, textAlign:'right', fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{home}</span>
                         <span style={{ fontWeight:800, fontSize:13, color: played ? '#1d1d1f' : '#c7c7cc', minWidth:34, textAlign:'center', flexShrink:0 }}>
-                          {played ? `${r.hs}–${r.as}` : '–:–'}
+                          {played ? `${hs}–${as}` : '–:–'}
                         </span>
                         <span style={{ flex:1, fontWeight:600, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{away}</span>
                       </div>
