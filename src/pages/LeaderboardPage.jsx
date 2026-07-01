@@ -136,6 +136,7 @@ export default function LeaderboardPage() {
   const { profile } = useAuth()
   const [results, setResults] = useState({})
   const [allPicks, setAllPicks] = useState({})
+  const [picksLoaded, setPicksLoaded] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [viewerView, setViewerView] = useState('original')  // 'original' | 'corregida'
   const [iframeReady, setIframeReady] = useState(false)
@@ -182,8 +183,11 @@ export default function LeaderboardPage() {
   }
 
   useEffect(() => { loadResults(); checkPayment(); loadRealResults() }, [])
-  useEffect(() => { if (rows.length > 0) loadAllPicks() }, [rows])
-  useEffect(() => { if (rows.length >= 0) buildEnriched() }, [rows, allPicks, results, prizePool])
+  useEffect(() => {
+    if (rows.length > 0) loadAllPicks()
+    else if (rows.length === 0) setPicksLoaded(true)
+  }, [rows])
+  useEffect(() => { if (picksLoaded) buildEnriched() }, [rows, allPicks, results, prizePool, realResults, picksLoaded])
 
   async function checkPayment() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -253,6 +257,7 @@ export default function LeaderboardPage() {
       map[p.quiniela_id][p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner }
     })
     setAllPicks(map)
+    setPicksLoaded(true)
   }
 
   function buildEnriched() {
