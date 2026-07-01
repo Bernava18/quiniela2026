@@ -267,8 +267,10 @@ export default function LeaderboardPage() {
     const calcDayPts = (picks) => {
       let total = 0
       todayMatchIds.forEach(mid => {
+        const esFF = /^M\d+$/.test(mid)
         const pk = picks[mid]
-        const res = results[mid]
+        const rres = esFF ? realResults[mid] : results[mid]
+        const res = esFF ? (rres ? { hs: rres.h, as: rres.a } : null) : rres
         if (!pk || pk.h == null || pk.a == null || !res || res.hs == null) return
         const hOk = pk.h === res.hs, aOk = pk.a === res.as
         const winOk = outcome(pk.h,pk.a) === outcome(res.hs,res.as)
@@ -472,28 +474,39 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Prize pool banner */}
-        <div style={{ background:'linear-gradient(135deg,#ffd60a,#ff9f0a)', borderRadius:14, padding:'14px 20px', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:10, boxShadow:'0 4px 16px rgba(255,214,10,.25)' }}>
-          <div>
-            <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', color:'rgba(0,0,0,.5)' }}>💰 Premio acumulado</div>
-            <div style={{ fontSize:28, fontWeight:900, color:'#000' }}>${prizePool.total} USD</div>
-          </div>
-          <div style={{ display:'flex', gap:20, alignItems:'center' }}>
-            {[['🥇','1er lugar',prizePool.p1,'60%'],['🥈','2do lugar',prizePool.p2,'20%'],['🥉','3er lugar',prizePool.p3,'10%']].map(([medal,label,amt,pct]) => (
-              <div key={label} style={{ textAlign:'center' }}>
-                <div style={{ fontSize:20 }}>{medal}</div>
-                <div style={{ fontSize:14, fontWeight:800, color:'#000' }}>${amt}</div>
-                <div style={{ fontSize:10, color:'rgba(0,0,0,.5)', fontWeight:600 }}>{pct}</div>
-              </div>
-            ))}
-            {/* Entregado / falta por repartir */}
-            <div style={{ borderLeft:'1px solid rgba(0,0,0,.2)', paddingLeft:16, textAlign:'center' }}>
-              <div style={{ fontSize:10, fontWeight:700, color:'rgba(0,0,0,.5)', textTransform:'uppercase' }}>Ya entregado</div>
-              <div style={{ fontSize:16, fontWeight:900, color:'#000' }}>$225</div>
-              <div style={{ fontSize:9, color:'rgba(0,0,0,.5)' }}>🥇150 · 🥈50 · 🥉25</div>
+        <div style={{ background:'linear-gradient(135deg,#ffd60a,#ff9f0a)', borderRadius:14, padding:'16px 22px', marginBottom:16, boxShadow:'0 4px 16px rgba(255,214,10,.25)' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:14 }}>
+            <div>
+              <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.5px', color:'rgba(0,0,0,.5)' }}>💰 Premio acumulado</div>
+              <div style={{ fontSize:30, fontWeight:900, color:'#000' }}>${prizePool.total} USD</div>
             </div>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ fontSize:10, fontWeight:700, color:'rgba(0,0,0,.5)', textTransform:'uppercase' }}>Falta repartir</div>
-              <div style={{ fontSize:16, fontWeight:900, color:'#000' }}>${Math.max(0, (prizePool.total || 0) - 225)}</div>
+            <div style={{ display:'flex', gap:18, alignItems:'center' }}>
+              {[['🥇','1er lugar',prizePool.p1,'60%',150],['🥈','2do lugar',prizePool.p2,'20%',50],['🥉','3er lugar',prizePool.p3,'10%',25]].map(([medal,label,amt,pct,entregado]) => {
+                const falta = Math.max(0, (amt||0) - entregado)
+                return (
+                  <div key={label} style={{ textAlign:'center', minWidth:70 }}>
+                    <div style={{ fontSize:22 }}>{medal}</div>
+                    <div style={{ fontSize:15, fontWeight:800, color:'#000' }}>${amt}</div>
+                    <div style={{ fontSize:9, color:'rgba(0,0,0,.5)', fontWeight:600 }}>{pct}</div>
+                    <div style={{ fontSize:10, fontWeight:700, color: falta>0?'#8a2b00':'#1a7a38', marginTop:2 }}>
+                      {falta>0 ? `falta $${falta}` : '✓ pagado'}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          {/* Zona grande: entregado y faltante */}
+          <div style={{ display:'flex', gap:12, marginTop:14, flexWrap:'wrap' }}>
+            <div style={{ flex:1, minWidth:200, background:'rgba(255,255,255,.55)', borderRadius:10, padding:'12px 16px', textAlign:'center' }}>
+              <div style={{ fontSize:12, fontWeight:800, color:'rgba(0,0,0,.6)', textTransform:'uppercase', letterSpacing:'.4px' }}>Ya entregado</div>
+              <div style={{ fontSize:26, fontWeight:900, color:'#000' }}>$225</div>
+              <div style={{ fontSize:11, color:'rgba(0,0,0,.55)', fontWeight:600 }}>🥇 $150 · 🥈 $50 · 🥉 $25</div>
+            </div>
+            <div style={{ flex:1, minWidth:200, background:'rgba(0,0,0,.08)', borderRadius:10, padding:'12px 16px', textAlign:'center' }}>
+              <div style={{ fontSize:12, fontWeight:800, color:'rgba(0,0,0,.6)', textTransform:'uppercase', letterSpacing:'.4px' }}>Falta por repartir</div>
+              <div style={{ fontSize:26, fontWeight:900, color:'#000' }}>${Math.max(0, (prizePool.total || 0) - 225)}</div>
+              <div style={{ fontSize:11, color:'rgba(0,0,0,.55)', fontWeight:600 }}>del total de ${prizePool.total}</div>
             </div>
           </div>
         </div>
@@ -737,8 +750,11 @@ export default function LeaderboardPage() {
                             if (todayMatches.length === 0) return null
                             let dayTotal = 0
                             const chips = todayMatches.map(mid => {
+                                  const esFF = /^M\d+$/.test(mid)
                                   const pk = picks[mid]
-                                  const res = results[mid]
+                                  // Grupos: resultado de results. Fase final: de realResults (quiniela real)
+                                  const rres = esFF ? realResults[mid] : results[mid]
+                                  const res = esFF ? (rres ? { hs: rres.h, as: rres.a } : null) : rres
                                   const has = pk && pk.h != null && pk.a != null
                                   const [home, away] = TEAM_NAMES[mid] || ['?','?']
                                   const hasResult = res && res.hs != null
@@ -750,7 +766,6 @@ export default function LeaderboardPage() {
                                   const pickOutcomeLabel = !has ? null :
                                     outcome(pk.h,pk.a) === 'H' ? home : outcome(pk.h,pk.a) === 'A' ? away : 'Empate'
 
-                                  // Puntos del partido (igual a calcPts en quiniela2026_fixed.html)
                                   let matchPts = 0
                                   if (has && hasResult) {
                                     if (hOk) matchPts += 1
@@ -769,7 +784,7 @@ export default function LeaderboardPage() {
                                       <span>
                                         {home} {has ? pk.h : '–'}{!has ? null : mark(hOk)}-{has ? pk.a : '–'}{!has ? null : mark(aOk)} {away}
                                       </span>
-                                      {hasResult && pickOutcomeLabel && <span style={{ color:'#6e6e73', fontSize:10 }}>→ {pickOutcomeLabel}</span>}
+                                      {hasResult && pickOutcomeLabel && <span style={{ color: (has && winnerOk) ? '#1a7a38' : '#6e6e73', fontWeight: (has && winnerOk) ? 800 : 600, fontSize:10 }}>→ {pickOutcomeLabel}</span>}
                                       {hasResult && <span style={{ fontWeight:900, color: (has && winnerOk) ? '#1a7a38' : '#c0392b' }}>{has && winnerOk ? '✓' : '✗'}</span>}
                                       {hasResult && <span style={{ color:'#0071e3', fontWeight:800, fontSize:10 }}>+{matchPts}</span>}
                                     </span>
