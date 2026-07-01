@@ -136,6 +136,14 @@ export default function AdminPage() {
   // ════════════════════════════════════════════════════════════
   // SISTEMA DE PUNTUACIÓN DE FASE FINAL
   // ════════════════════════════════════════════════════════════
+  const MATCH_LABEL = {
+    M73:'Canadá-Sudáfrica', M74:'Alemania-Paraguay', M75:'Holanda-Marruecos', M76:'Brasil-Japón',
+    M77:'Francia-Suecia', M78:'C.Marfil-Noruega', M79:'México-Ecuador', M80:'Inglaterra-RDCongo',
+    M81:'EEUU-Bosnia', M82:'Bélgica-Senegal', M83:'Portugal-Croacia', M84:'España-Austria',
+    M85:'Suiza-Argelia', M86:'Argentina-CaboVerde', M87:'Colombia-Ghana', M88:'Australia-Egipto',
+    M89:'8vos-1', M90:'8vos-2', M91:'8vos-3', M92:'8vos-4', M93:'8vos-5', M94:'8vos-6', M95:'8vos-7', M96:'8vos-8',
+    M97:'4tos-1', M98:'4tos-2', M99:'4tos-3', M100:'4tos-4', M101:'Semi-1', M102:'Semi-2', M103:'3er lugar', M104:'Final',
+  }
   const REAL_R32_MAP = {
     M73:['Canadá','Sudáfrica'],M74:['Alemania','Paraguay'],M75:['Países Bajos','Marruecos'],
     M76:['Brasil','Japón'],M77:['Francia','Suecia'],M78:['Costa de Marfil','Noruega'],
@@ -290,7 +298,7 @@ export default function AdminPage() {
     // NUEVA FASE FINAL: contamos los 16 partidos de 16avos (M73-M88), que son
     // los que los usuarios llenan ahora. Un partido cuenta como "lleno" si tiene
     // marcador (goals_home y goals_away no nulos).
-    const FF_MATCHES = Array.from({ length: 16 }, (_, i) => `M${73 + i}`)
+    const FF_MATCHES = Array.from({ length: 32 }, (_, i) => `M${73 + i}`)  // M73-M104 (16avos a final + 3er lugar)
     const TOTAL = FF_MATCHES.length
 
     // 1) Traer todas las quinielas con su jugador
@@ -317,17 +325,21 @@ export default function AdminPage() {
       from += PAGE
     }
 
-    // 3) Contar por quiniela cuántos de los 16 tienen marcador
+    // 3) Contar por quiniela cuántos de los 32 tienen marcador + cuáles tiene
     const countByQ = {}
+    const filledByQ = {}
     for (const p of (picks || [])) {
       if (p.goals_home != null && p.goals_away != null) {
         countByQ[p.quiniela_id] = (countByQ[p.quiniela_id] || 0) + 1
+        ;(filledByQ[p.quiniela_id] = filledByQ[p.quiniela_id] || new Set()).add(p.match_id)
       }
     }
 
     const data = (quinielas || []).map(q => {
       const done = countByQ[q.id] || 0
       const status = done === 0 ? 'sin_empezar' : (done === TOTAL ? 'completa' : 'en_progreso')
+      const tiene = filledByQ[q.id] || new Set()
+      const faltan = FF_MATCHES.filter(m => !tiene.has(m))
       return {
         id: q.id,
         name: q.name,
@@ -337,6 +349,7 @@ export default function AdminPage() {
         done,
         total: TOTAL,
         status,
+        faltan,
       }
     })
 
@@ -1675,7 +1688,7 @@ export default function AdminPage() {
 
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
                 <div style={{ fontSize:13, color:'#6e6e73' }}>
-                  {faseData.length} quinielas · "Completa" = los 16 partidos de 16avos (M73–M88) con marcador
+                  {faseData.length} quinielas · "Completa" = los 32 partidos de fase final (M73–M104: 16avos hasta final y 3er lugar) con marcador
                 </div>
                 <div style={{ display:'flex', gap:8, alignItems:'center' }}>
                   <button onClick={printAllFaseFinal} disabled={printing}
@@ -1737,6 +1750,11 @@ export default function AdminPage() {
                             <span style={{ background:badge.bg, color:badge.col, padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:700 }}>
                               {badge.txt}
                             </span>
+                            {q.status === 'en_progreso' && q.faltan?.length > 0 && (
+                              <div style={{ fontSize:10, color:'#b3700a', marginTop:4, maxWidth:240 }}>
+                                Faltan: {q.faltan.map(m => MATCH_LABEL[m] || m).join(', ')}
+                              </div>
+                            )}
                           </td>
                           <td style={{ padding:'9px 14px', textAlign:'center' }}>
                             <button onClick={() => window.open(`/fase-final/${q.id}`, '_blank')}

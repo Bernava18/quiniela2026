@@ -231,15 +231,21 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Points badge */}
+                {/* Points badge — GRAN TOTAL (grupos + clasificación + eliminatoria + final) */}
                 <div style={{ flexShrink:0, textAlign:'right' }}>
-                  {q.scores ? (
-                    <span style={{ background:'#ffd60a', color:'#7a5900', padding:'3px 10px', borderRadius:20, fontWeight:800, fontSize:14 }}>
-                      {q.scores.total_pts} pts
-                    </span>
-                  ) : (
-                    <span style={{ fontSize:11, color:'#aeaeb2' }}>0 pts</span>
-                  )}
+                  {(() => {
+                    const s = q.scores || {}
+                    const grp = s.grp_pts || 0
+                    const clasif = s.clasif_pts || 0
+                    const elim = q.elim_pts || 0
+                    const fin = q.final_pts || 0
+                    const granTotal = grp + clasif + elim + fin
+                    return (
+                      <span style={{ background:'#ffd60a', color:'#7a5900', padding:'3px 10px', borderRadius:20, fontWeight:800, fontSize:14 }}>
+                        {granTotal} pts
+                      </span>
+                    )
+                  })()}
                 </div>
 
                 {/* Action buttons */}
