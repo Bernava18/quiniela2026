@@ -359,13 +359,16 @@ export default function LeaderboardPage() {
     return { campeon, sub, tercero, cuarto }
   }
   // Calcula elim y final EN VIVO para una quiniela (picks = allPicks[qid] con {h,a,win})
-  function calcElimFinal(P) {
-    // Construir mapa de resultados reales normalizado a {h,a,win}
+  function normalizeRealMap() {
     const realMap = {}
     for (const mid in realResults) {
       const r = realResults[mid]
       realMap[mid] = { h: r.h, a: r.a, win: r.w }
     }
+    return realMap
+  }
+  function calcElimFinal(P) {
+    const realMap = normalizeRealMap()
     // Equipos reales por posición
     const realTeams = {}
     for (let i=73;i<=104;i++) realTeams['M'+i] = ffTeams('M'+i, realMap)
@@ -403,12 +406,23 @@ export default function LeaderboardPage() {
         const rres = esFF ? realResults[mid] : results[mid]
         const res = esFF ? (rres ? { hs: rres.h, as: rres.a } : null) : rres
         if (!pk || pk.h == null || pk.a == null || !res || res.hs == null) return
-        const hOk = pk.h === res.hs, aOk = pk.a === res.as
-        // Ganador: en fase final se compara el equipo que avanza (winner);
-        // en grupos, por el resultado del marcador.
+        // Para fase final, comparar posición exacta de equipos
+        let hOk, aOk
+        if (esFF) {
+          const pT = ffTeams(mid, picks)
+          const rT = ffTeams(mid, normalizeRealMap())
+          hOk = pT.h && rT.h && pT.h === rT.h && pk.h === res.hs
+          aOk = pT.a && rT.a && pT.a === rT.a && pk.a === res.as
+        } else {
+          hOk = pk.h === res.hs
+          aOk = pk.a === res.as
+        }
+        // Ganador: en fase final se compara el equipo que avanza (deducido si falta)
         let winOk
         if (esFF) {
-          winOk = pk.win && rres.w && pk.win === rres.w && pk.win !== 'Sin definir'
+          const pickWin = ffWinner(mid, picks)
+          const realWin = ffWinner(mid, normalizeRealMap())
+          winOk = pickWin && realWin && pickWin === realWin && pickWin !== 'Sin definir'
         } else {
           winOk = outcome(pk.h,pk.a) === outcome(res.hs,res.as)
         }
@@ -915,11 +929,13 @@ export default function LeaderboardPage() {
                                   const aOk = has && hasResult && pk.a === res.as
 
                                   const outcome = (h,a) => h>a ? 'H' : h<a ? 'A' : 'D'
+                                  const pickWinFF = esFF ? ffWinner(mid, picks) : null
+                                  const realWinFF = esFF ? ffWinner(mid, normalizeRealMap()) : null
                                   const winnerOk = esFF
-                                    ? (has && rres && pk.win && rres.w && pk.win === rres.w && pk.win !== 'Sin definir')
+                                    ? (has && pickWinFF && realWinFF && pickWinFF === realWinFF && pickWinFF !== 'Sin definir')
                                     : (has && hasResult && outcome(pk.h,pk.a) === outcome(res.hs,res.as))
                                   const pickOutcomeLabel = esFF
-                                    ? (pk?.win && pk.win !== 'Sin definir' ? pk.win : null)
+                                    ? (pickWinFF && pickWinFF !== 'Sin definir' ? pickWinFF : null)
                                     : (!has ? null : outcome(pk.h,pk.a) === 'H' ? home : outcome(pk.h,pk.a) === 'A' ? away : 'Empate')
 
                                   let matchPts = 0
