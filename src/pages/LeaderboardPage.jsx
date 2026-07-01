@@ -286,6 +286,111 @@ export default function LeaderboardPage() {
     setPicksLoaded(true)
   }
 
+  // ── Cálculo EN VIVO de puntos de fase final (desde picks_ko_test) ──
+  const R32_FF = {
+    M73:['Canadá','Sudáfrica'],M74:['Alemania','Paraguay'],M75:['Países Bajos','Marruecos'],
+    M76:['Brasil','Japón'],M77:['Francia','Suecia'],M78:['Costa de Marfil','Noruega'],
+    M79:['México','Ecuador'],M80:['Inglaterra','RD Congo'],M81:['EE. UU.','Bosnia'],
+    M82:['Bélgica','Senegal'],M83:['Portugal','Croacia'],M84:['España','Austria'],
+    M85:['Suiza','Argelia'],M86:['Argentina','Islas de Cabo Verde'],M87:['Colombia','Ghana'],
+    M88:['Australia','Egipto'],
+  }
+  const KO_FF = {
+    M89:['WM74','WM77'],M90:['WM73','WM75'],M91:['WM76','WM78'],M92:['WM79','WM80'],
+    M93:['WM83','WM84'],M94:['WM81','WM82'],M95:['WM86','WM88'],M96:['WM85','WM87'],
+    M97:['WM89','WM90'],M98:['WM93','WM94'],M99:['WM91','WM92'],M100:['WM95','WM96'],
+    M101:['WM97','WM98'],M102:['WM99','WM100'],M103:['LM101','LM102'],M104:['WM101','WM102'],
+  }
+  function ffTeams(mid, P) {
+    if (R32_FF[mid]) return { h: R32_FF[mid][0], a: R32_FF[mid][1] }
+    const sl = KO_FF[mid]; if (!sl) return { h:null, a:null }
+    return { h: ffResolve(sl[0], P), a: ffResolve(sl[1], P) }
+  }
+  function ffResolve(slot, P) {
+    const m = /^([WL])M(\d+)$/.exec(slot); if (!m) return null
+    const kind = m[1], src = 'M'+m[2], pk = P[src]
+    if (!pk) return null
+    const w = ffWinner(src, P)
+    if (w == null || w === 'Sin definir') return w === 'Sin definir' ? 'Sin definir' : null
+    const t = ffTeams(src, P)
+    if (kind === 'W') return w
+    if (w === t.h) return t.a
+    if (w === t.a) return t.h
+    return null
+  }
+  // Ganador de un partido: usa winner guardado, o lo deduce por marcador (como el HTML)
+  function ffWinner(mid, P) {
+    const pk = P[mid]; if (!pk) return null
+    const t = ffTeams(mid, P)
+    if (pk.win && pk.win !== 'Sin definir') return pk.win
+    if (pk.win === 'Sin definir') return 'Sin definir'
+    if (pk.h == null || pk.a == null) return null
+    if (pk.h > pk.a) return t.h
+    if (pk.a > pk.h) return t.a
+    return null  // empate sin winner
+  }
+  function ffMatchPts(mid, pick, real, pickTeams, realTeams, P) {
+    if (!pick || !real || pick.h == null || pick.a == null || real.h == null || real.a == null) return 0
+    let pts = 0
+    const localOk = pickTeams.h && realTeams.h && pickTeams.h === realTeams.h
+    const visitOk = pickTeams.a && realTeams.a && pickTeams.a === realTeams.a
+    const gL = localOk && pick.h === real.h
+    const gV = visitOk && pick.a === real.a
+    if (gL) pts += 1
+    if (gV) pts += 1
+    const pickWin = ffWinner(mid, P)
+    const wOk = pickWin && real.w && pickWin === real.w && pickWin !== 'Sin definir'
+    if (wOk) pts += 2
+    if (gL && gV && wOk) pts += 1
+    return pts
+  }
+  function ffOrden(P) {
+    const t104 = ffTeams('M104', P), t103 = ffTeams('M103', P)
+    const w104 = ffWinner('M104', P), w103 = ffWinner('M103', P)
+    let campeon=null, sub=null, tercero=null, cuarto=null
+    if (w104 && w104 !== 'Sin definir') {
+      campeon = w104
+      sub = w104 === t104.h ? t104.a : (w104 === t104.a ? t104.h : null)
+    }
+    if (w103 && w103 !== 'Sin definir') {
+      tercero = w103
+      cuarto = w103 === t103.h ? t103.a : (w103 === t103.a ? t103.h : null)
+    }
+    return { campeon, sub, tercero, cuarto }
+  }
+  // Calcula elim y final EN VIVO para una quiniela (picks = allPicks[qid] con {h,a,win})
+  function calcElimFinal(P) {
+    // Construir mapa de resultados reales normalizado a {h,a,win}
+    const realMap = {}
+    for (const mid in realResults) {
+      const r = realResults[mid]
+      realMap[mid] = { h: r.h, a: r.a, win: r.w }
+    }
+    // Equipos reales por posición
+    const realTeams = {}
+    for (let i=73;i<=104;i++) realTeams['M'+i] = ffTeams('M'+i, realMap)
+    let elim = 0
+    for (let i=73;i<=104;i++) {
+      const mid = 'M'+i
+      const real = realMap[mid]
+      if (!real || real.h == null) continue
+      const pick = P[mid]
+      const pickTeams = ffTeams(mid, P)
+      // pasar real con winner deducido
+      const realW = { h: real.h, a: real.a, w: ffWinner(mid, realMap) }
+      elim += ffMatchPts(mid, pick, realW, pickTeams, realTeams[mid], P)
+    }
+    // Orden final
+    const oReal = ffOrden(realMap)
+    const oQ = ffOrden(P)
+    let fin = 0
+    if (oQ.campeon && oReal.campeon && oQ.campeon === oReal.campeon) fin += 20
+    if (oQ.sub && oReal.sub && oQ.sub === oReal.sub) fin += 10
+    if (oQ.tercero && oReal.tercero && oQ.tercero === oReal.tercero) fin += 5
+    if (oQ.cuarto && oReal.cuarto && oQ.cuarto === oReal.cuarto) fin += 3
+    return { elim, fin }
+  }
+
   function buildEnriched() {
     const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Caracas', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date())
     const todayMatchIds = Object.entries(MATCH_DATES).filter(([, d]) => d === todayStr).map(([mid]) => mid)
@@ -327,15 +432,16 @@ export default function LeaderboardPage() {
         grpTotal += pts
       })
       const clasifLive = calcClasifPts(picks, results)   // clasificación EN VIVO
+      const ff = calcElimFinal(picks)                     // eliminatoria + final EN VIVO
       return {
         ...r,
         groupPts,
         grpTotal,
         clasifPts: clasifLive,             // posición exacta en grupos (en vivo)
-        elimPts:   r.elim_pts   || 0,      // R32+Oct+QF+SF+3ro+Final
-        finalPts:  r.final_pts  || 0,      // orden final 20/10/5/3
-        // TOTAL en vivo: grupos + clasificación (ambos en tiempo real) + resto (de BD)
-        total: grpTotal + clasifLive + (r.elim_pts || 0) + (r.final_pts || 0),
+        elimPts:   ff.elim,                // R32+Oct+QF+SF+3ro+Final (EN VIVO desde picks_ko_test)
+        finalPts:  ff.fin,                 // orden final 20/10/5/3 (EN VIVO)
+        // TOTAL 100% en vivo
+        total: grpTotal + clasifLive + ff.elim + ff.fin,
         dayPts: calcDayPts(picks),
       }
     }).sort((a, b) => b.total - a.total)
