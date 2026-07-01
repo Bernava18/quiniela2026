@@ -137,6 +137,7 @@ export default function LeaderboardPage() {
   const [results, setResults] = useState({})
   const [allPicks, setAllPicks] = useState({})
   const [picksLoaded, setPicksLoaded] = useState(false)
+  const [resultsLoaded, setResultsLoaded] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [viewerView, setViewerView] = useState('original')  // 'original' | 'corregida'
   const [iframeReady, setIframeReady] = useState(false)
@@ -182,12 +183,15 @@ export default function LeaderboardPage() {
     link.click()
   }
 
-  useEffect(() => { loadResults(); checkPayment(); loadRealResults() }, [])
+  useEffect(() => {
+    Promise.all([loadResults(), loadRealResults()]).then(() => setResultsLoaded(true))
+    checkPayment()
+  }, [])
   useEffect(() => {
     if (rows.length > 0) loadAllPicks()
     else if (rows.length === 0) setPicksLoaded(true)
   }, [rows])
-  useEffect(() => { if (picksLoaded) buildEnriched() }, [rows, allPicks, results, prizePool, realResults, picksLoaded])
+  useEffect(() => { if (picksLoaded && resultsLoaded) buildEnriched() }, [rows, allPicks, results, prizePool, realResults, picksLoaded, resultsLoaded])
 
   async function checkPayment() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -256,6 +260,24 @@ export default function LeaderboardPage() {
       if (!map[p.quiniela_id]) map[p.quiniela_id] = {}
       map[p.quiniela_id][p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner }
     })
+    // También cargar los picks de FASE FINAL (picks_ko_test) para los partidos M73+
+    let koData = []
+    let kfrom = 0
+    while (true) {
+      const { data, error } = await supabase
+        .from('picks_ko_test')
+        .select('quiniela_id, match_id, goals_home, goals_away, winner')
+        .in('quiniela_id', qids)
+        .range(kfrom, kfrom + pageSize - 1)
+      if (error || !data?.length) break
+      koData = koData.concat(data)
+      if (data.length < pageSize) break
+      kfrom += pageSize
+    }
+    koData.forEach(p => {
+      if (!map[p.quiniela_id]) map[p.quiniela_id] = {}
+      map[p.quiniela_id][p.match_id] = { h: p.goals_home, a: p.goals_away, win: p.winner }
+    })
     setAllPicks(map)
     setPicksLoaded(true)
   }
@@ -273,7 +295,14 @@ export default function LeaderboardPage() {
         const res = esFF ? (rres ? { hs: rres.h, as: rres.a } : null) : rres
         if (!pk || pk.h == null || pk.a == null || !res || res.hs == null) return
         const hOk = pk.h === res.hs, aOk = pk.a === res.as
-        const winOk = outcome(pk.h,pk.a) === outcome(res.hs,res.as)
+        // Ganador: en fase final se compara el equipo que avanza (winner);
+        // en grupos, por el resultado del marcador.
+        let winOk
+        if (esFF) {
+          winOk = pk.win && rres.w && pk.win === rres.w && pk.win !== 'Sin definir'
+        } else {
+          winOk = outcome(pk.h,pk.a) === outcome(res.hs,res.as)
+        }
         if (hOk) total += 1
         if (aOk) total += 1
         if (winOk) total += 2
@@ -762,9 +791,12 @@ export default function LeaderboardPage() {
                                   const aOk = has && hasResult && pk.a === res.as
 
                                   const outcome = (h,a) => h>a ? 'H' : h<a ? 'A' : 'D'
-                                  const winnerOk = has && hasResult && outcome(pk.h,pk.a) === outcome(res.hs,res.as)
-                                  const pickOutcomeLabel = !has ? null :
-                                    outcome(pk.h,pk.a) === 'H' ? home : outcome(pk.h,pk.a) === 'A' ? away : 'Empate'
+                                  const winnerOk = esFF
+                                    ? (has && rres && pk.win && rres.w && pk.win === rres.w && pk.win !== 'Sin definir')
+                                    : (has && hasResult && outcome(pk.h,pk.a) === outcome(res.hs,res.as))
+                                  const pickOutcomeLabel = esFF
+                                    ? (pk?.win && pk.win !== 'Sin definir' ? pk.win : null)
+                                    : (!has ? null : outcome(pk.h,pk.a) === 'H' ? home : outcome(pk.h,pk.a) === 'A' ? away : 'Empate')
 
                                   let matchPts = 0
                                   if (has && hasResult) {
