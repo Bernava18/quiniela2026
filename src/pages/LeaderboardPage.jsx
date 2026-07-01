@@ -345,14 +345,22 @@ export default function LeaderboardPage() {
       return { ...r, rank: currentRank, prevRank: currentRank }
     })
 
-    // Premio por fila: si hay empate en una posición premiada (1,2,3), se divide entre los empatados
+    // Premio por fila: si hay empate en una posición premiada (1,2,3), se divide entre los empatados.
+    // Además se descuenta lo ya entregado a cada puesto (1º=$150, 2º=$50, 3º=$25).
     const rankCounts = {}
     ranked.forEach(r => { rankCounts[r.rank] = (rankCounts[r.rank]||0) + 1 })
     const prizeByRank = { 1: prizePool.p1, 2: prizePool.p2, 3: prizePool.p3 }
+    const entregadoByRank = { 1: 150, 2: 50, 3: 25 }
     const rankedWithPrize = ranked.map(r => {
       const base = prizeByRank[r.rank]
-      const prize = base != null ? base / rankCounts[r.rank] : null
-      return { ...r, prize }
+      const n = rankCounts[r.rank]
+      // Premio total que le corresponde (dividido si hay empate)
+      const prizeTotal = base != null ? base / n : null
+      // Lo ya entregado a ese puesto, también dividido entre los empatados
+      const entregado = entregadoByRank[r.rank] != null ? entregadoByRank[r.rank] / n : 0
+      // Lo que falta por recibir
+      const prize = prizeTotal != null ? Math.max(0, prizeTotal - entregado) : null
+      return { ...r, prize, prizeTotal, entregado }
     })
 
     setEnriched(rankedWithPrize)
@@ -734,7 +742,7 @@ export default function LeaderboardPage() {
                     const seq = `q${String(r.quinielas?.seq_num||0).padStart(2,'0')}`
                     return name.includes(s) || username.includes(s) || seq.includes(s)
                   })
-                  if (loading) return <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Cargando...</td></tr>
+                  if (loading || !picksLoaded || !resultsLoaded) return <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>Cargando...</td></tr>
                   if (filtered.length === 0) return <tr><td colSpan={20} style={{ padding:32, textAlign:'center', color:'#aeaeb2' }}>{enriched.length === 0 ? 'Sin datos aún' : 'Sin resultados para tu búsqueda'}</td></tr>
                   return filtered.map((r, i) => {
                   const isMe = r.quinielas?.profiles?.username === profile?.username
@@ -763,8 +771,14 @@ export default function LeaderboardPage() {
                           )}
                           {isMe && <span style={{ fontSize:9, background:'rgba(0,113,227,.12)', color:'#0071e3', padding:'1px 5px', borderRadius:4, fontWeight:700 }}>TÚ</span>}
                           {r.prize != null && r.prize > 0 && (
-                            <span style={{ fontSize:9, background:'rgba(48,209,88,.15)', color:'#1a7a38', padding:'1px 6px', borderRadius:4, fontWeight:700 }}>
-                              🏆 Estás ganando ${Math.round(r.prize)}
+                            <span style={{ fontSize:9, background:'rgba(48,209,88,.15)', color:'#1a7a38', padding:'1px 6px', borderRadius:4, fontWeight:700 }}
+                              title={`Premio total: $${Math.round(r.prizeTotal)} · Ya entregado: $${Math.round(r.entregado)}`}>
+                              🏆 Falta recibir ${Math.round(r.prize)}
+                            </span>
+                          )}
+                          {r.prize != null && r.prize === 0 && r.prizeTotal > 0 && (
+                            <span style={{ fontSize:9, background:'rgba(0,0,0,.06)', color:'#8e8e93', padding:'1px 6px', borderRadius:4, fontWeight:700 }}>
+                              ✓ Premio entregado
                             </span>
                           )}
                         </div>
