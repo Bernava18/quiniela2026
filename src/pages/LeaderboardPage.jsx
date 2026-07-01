@@ -188,10 +188,14 @@ export default function LeaderboardPage() {
     checkPayment()
   }, [])
   useEffect(() => {
-    if (rows.length > 0) loadAllPicks()
-    else if (rows.length === 0) setPicksLoaded(true)
+    if (rows.length > 0) {
+      setPicksLoaded(false)   // esperar a recargar antes de reconstruir la tabla
+      loadAllPicks()
+    } else if (rows.length === 0) {
+      setPicksLoaded(true)
+    }
   }, [rows])
-  useEffect(() => { if (picksLoaded && resultsLoaded) buildEnriched() }, [rows, allPicks, results, prizePool, realResults, picksLoaded, resultsLoaded])
+  useEffect(() => { if (picksLoaded && resultsLoaded) buildEnriched() }, [allPicks, results, prizePool, realResults, picksLoaded, resultsLoaded])
 
   async function checkPayment() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -542,8 +546,8 @@ export default function LeaderboardPage() {
             </div>
             <div style={{ flex:1, minWidth:200, background:'rgba(0,0,0,.08)', borderRadius:10, padding:'12px 16px', textAlign:'center' }}>
               <div style={{ fontSize:12, fontWeight:800, color:'rgba(0,0,0,.6)', textTransform:'uppercase', letterSpacing:'.4px' }}>Falta por repartir</div>
-              <div style={{ fontSize:26, fontWeight:900, color:'#000' }}>${Math.max(0, (prizePool.total || 0) - 225)}</div>
-              <div style={{ fontSize:11, color:'rgba(0,0,0,.55)', fontWeight:600 }}>del total de ${prizePool.total}</div>
+              <div style={{ fontSize:26, fontWeight:900, color:'#000' }}>${Math.max(0, (prizePool.p1 + prizePool.p2 + prizePool.p3) - 225)}</div>
+              <div style={{ fontSize:11, color:'rgba(0,0,0,.55)', fontWeight:600 }}>de ${prizePool.p1 + prizePool.p2 + prizePool.p3} en premios (90% del pozo)</div>
             </div>
           </div>
         </div>
