@@ -1019,11 +1019,18 @@ export default function LeaderboardPage() {
                                   const mark = (ok) => !hasResult ? null :
                                     <span style={{ fontWeight:900, color: ok ? '#1a7a38' : '#c0392b' }}>{ok ? '✓' : '✗'}</span>
 
+                                  // Tachar el equipo si no coincide con el real (solo fase final con resultado)
+                                  const tachaLocal = esFF && hasResult && !localCoincide
+                                  const tachaVisit = esFF && hasResult && !visitCoincide
+                                  const stName = (tachar) => tachar
+                                    ? { textDecoration:'line-through', textDecorationThickness:'1px', color:'#c0392b', opacity:.7 }
+                                    : {}
+
                                   return (
                                     <span key={mid} style={{ fontSize:11, fontWeight:600, padding:'2px 7px', borderRadius:4,
                                       background:'#f9f9fb', color:'#1d1d1f', display:'inline-flex', alignItems:'center', gap:4 }}>
                                       <span>
-                                        {home} {has ? pk.h : '–'}{!has ? null : mark(hOk)}-{has ? pk.a : '–'}{!has ? null : mark(aOk)} {away}
+                                        <span style={stName(tachaLocal)}>{home}</span> {has ? pk.h : '–'}{!has ? null : mark(hOk)}-{has ? pk.a : '–'}{!has ? null : mark(aOk)} <span style={stName(tachaVisit)}>{away}</span>
                                       </span>
                                       {hasResult && pickOutcomeLabel && <span style={{ color: (has && winnerOk) ? '#1a7a38' : '#6e6e73', fontWeight: (has && winnerOk) ? 800 : 600, fontSize:10 }}>→ {pickOutcomeLabel}</span>}
                                       {hasResult && <span style={{ fontWeight:900, color: (has && winnerOk) ? '#1a7a38' : '#c0392b' }}>{has && winnerOk ? '✓' : '✗'}</span>}
