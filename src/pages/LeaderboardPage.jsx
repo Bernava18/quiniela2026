@@ -140,6 +140,7 @@ export default function LeaderboardPage() {
   const [resultsLoaded, setResultsLoaded] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [viewerView, setViewerView] = useState('original')  // 'original' | 'corregida'
+  const [descargando, setDescargando] = useState(false)
   const [iframeReady, setIframeReady] = useState(false)
   const [enriched, setEnriched]   = useState([])
   const [tableSearch, setTableSearch] = useState('')
@@ -505,6 +506,43 @@ export default function LeaderboardPage() {
     setIframeReady(false)
   }
 
+  async function descargarJPG() {
+    setDescargando(true)
+    try {
+      if (!window.html2canvas) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script')
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+          s.onload = res; s.onerror = rej
+          document.head.appendChild(s)
+        })
+      }
+      const iframe = document.getElementById('viewer-iframe')
+      const doc = iframe?.contentDocument
+      if (!doc) { alert('No se pudo acceder al cuadro.'); setDescargando(false); return }
+      const el = doc.querySelector('.bracket') || doc.body
+      const imgs = Array.from(doc.querySelectorAll('img'))
+      await Promise.race([
+        Promise.all(imgs.map(im => im.complete ? Promise.resolve() : new Promise(r => { im.onload = r; im.onerror = r }))),
+        new Promise(r => setTimeout(r, 2500)),
+      ])
+      const canvas = await window.html2canvas(el, {
+        scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false,
+        width: el.scrollWidth, height: el.scrollHeight, windowWidth: el.scrollWidth,
+      })
+      const url = canvas.toDataURL('image/jpeg', 0.92)
+      const a = document.createElement('a')
+      const nombre = (viewing?.quinielaName || viewing?.name || 'quiniela').replace(/[^a-z0-9]/gi, '_')
+      a.href = url
+      a.download = `FaseFinal_${nombre}.jpg`
+      a.click()
+    } catch (e) {
+      console.error(e)
+      alert('Error al generar la imagen: ' + e.message)
+    }
+    setDescargando(false)
+  }
+
   async function loadViewerPicks() {
     if (!viewing) return
     if (viewerView === 'corregida') {
@@ -600,6 +638,12 @@ export default function LeaderboardPage() {
               🏆 Fase Final
             </button>
           </div>
+          {viewerView === 'corregida' && (
+            <button onClick={descargarJPG} disabled={descargando}
+              style={{ padding:'6px 14px', border:'none', borderRadius:8, background: descargando?'#aeaeb2':'#1a7a38', color:'#fff', cursor: descargando?'default':'pointer', fontSize:12, fontWeight:700 }}>
+              {descargando ? '⏳ Generando...' : '📷 Descargar JPG'}
+            </button>
+          )}
         </div>
         {viewerView === 'corregida' && (
           <div style={{ background:'linear-gradient(90deg,#fff4e6,#ffe9f0)', color:'#b3402a', padding:'5px 20px', fontSize:12, fontWeight:600, flexShrink:0 }}>
