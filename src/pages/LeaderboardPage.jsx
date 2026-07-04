@@ -29,6 +29,11 @@ const MATCH_DATES = {
   M77:'2026-06-30', M78:'2026-06-30', M79:'2026-06-30', M80:'2026-07-01',
   M81:'2026-07-01', M82:'2026-07-01', M83:'2026-07-02', M84:'2026-07-02',
   M85:'2026-07-02', M86:'2026-07-03', M87:'2026-07-03', M88:'2026-07-03',
+  // Octavos, cuartos, semis, 3er puesto, final
+  M89:'2026-07-04', M90:'2026-07-04', M91:'2026-07-05', M92:'2026-07-05',
+  M93:'2026-07-06', M94:'2026-07-06', M95:'2026-07-07', M96:'2026-07-07',
+  M97:'2026-07-09', M98:'2026-07-10', M99:'2026-07-11', M100:'2026-07-11',
+  M101:'2026-07-14', M102:'2026-07-15', M103:'2026-07-18', M104:'2026-07-19',
 }
 
 
@@ -367,6 +372,12 @@ export default function LeaderboardPage() {
       realMap[mid] = { h: r.h, a: r.a, win: r.w }
     }
     return realMap
+  }
+  // Nombres de equipos de un partido: 16avos de TEAM_NAMES, octavos+ de la quiniela real
+  function equiposDelPartido(mid) {
+    if (R32_FF[mid]) return TEAM_NAMES[mid] || [R32_FF[mid][0], R32_FF[mid][1]]
+    const t = ffTeams(mid, normalizeRealMap())
+    return [t.h || '¿?', t.a || '¿?']
   }
   function calcElimFinal(P) {
     const realMap = normalizeRealMap()
@@ -740,11 +751,13 @@ export default function LeaderboardPage() {
                     const esFF = /^M\d+$/.test(mid)
                     // Grupos: de results (match_results). Fase final: de realResults (quiniela real)
                     const r = esFF ? realResults[mid] : results[mid]
-                    const [home, away] = TEAM_NAMES[mid] || ['?','?']
+                    const [home, away] = esFF ? equiposDelPartido(mid) : (TEAM_NAMES[mid] || ['?','?'])
                     const played = esFF ? (r && r.h != null) : (r && r.hs != null)
                     const hs = esFF ? r?.h : r?.hs
                     const as = esFF ? r?.a : r?.as
-                    const etiqueta = esFF ? '16avos' : `GR.${mid[0]}`
+                    const n = esFF ? parseInt(mid.slice(1)) : 0
+                    const etiqueta = !esFF ? `GR.${mid[0]}`
+                      : n<=88 ? '16avos' : n<=96 ? '8vos' : n<=100 ? '4tos' : n<=102 ? 'Semi' : n===103 ? '3er' : 'Final'
                     return (
                       <div key={mid} style={{ display:'flex', alignItems:'center', gap:4, fontSize:12, padding:'3px 6px', background:'#f9f9fb', borderRadius:5, lineHeight:1.4 }}>
                         <span style={{ fontSize:9, color:'#c7c7cc', fontWeight:700, minWidth:24 }}>{etiqueta}</span>
@@ -967,7 +980,7 @@ export default function LeaderboardPage() {
                                   const rres = esFF ? realResults[mid] : results[mid]
                                   const res = esFF ? (rres ? { hs: rres.h, as: rres.a } : null) : rres
                                   const has = pk && pk.h != null && pk.a != null
-                                  const [home, away] = TEAM_NAMES[mid] || ['?','?']
+                                  const [home, away] = esFF ? equiposDelPartido(mid) : (TEAM_NAMES[mid] || ['?','?'])
                                   const hasResult = res && res.hs != null
                                   const hOk = has && hasResult && pk.h === res.hs
                                   const aOk = has && hasResult && pk.a === res.as
