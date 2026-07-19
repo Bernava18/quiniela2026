@@ -152,6 +152,7 @@ export default function LeaderboardPage() {
   const [hasPaid, setHasPaid]     = useState(false)
   const [prizePool, setPrizePool] = useState({ total:0, p1:0, p2:0, p3:0, committedCount:0 })
   const [realResults, setRealResults] = useState({})  // resultados de la quiniela real {mid:{h,a,w}}
+  const [simFinal, setSimFinal] = useState({ home: '', away: '' })  // marcador simulado M104 (solo local, no toca datos)
   const tableRef = useRef(null)
 
   async function exportPDF() {
@@ -404,6 +405,48 @@ export default function LeaderboardPage() {
     if (oQ.tercero && oReal.tercero && oQ.tercero === oReal.tercero) fin += 5
     if (oQ.cuarto && oReal.cuarto && oQ.cuarto === oReal.cuarto) fin += 3
     return { elim, fin }
+  }
+
+  // ── SIMULADOR DE FINAL (solo local, no toca datos) ──
+  // Equipos de la final según la quiniela real (España vs Argentina ahora)
+  function equiposFinal() {
+    const t = ffTeams('M104', normalizeRealMap())
+    return { home: t.h, away: t.a }
+  }
+  // Calcula el orden final "fin" de una quiniela usando un realMap con M104 simulado
+  function finSimulado(P, realMapSim) {
+    const oReal = ffOrden(realMapSim)
+    const oQ = ffOrden(P)
+    let fin = 0
+    if (oQ.campeon && oReal.campeon && oQ.campeon === oReal.campeon) fin += 20
+    if (oQ.sub && oReal.sub && oQ.sub === oReal.sub) fin += 10
+    if (oQ.tercero && oReal.tercero && oQ.tercero === oReal.tercero) fin += 5
+    if (oQ.cuarto && oReal.cuarto && oQ.cuarto === oReal.cuarto) fin += 3
+    return fin
+  }
+  // Devuelve la tabla reordenada con el marcador simulado, o null si no hay simulación válida
+  function tablaSimulada() {
+    const h = parseInt(simFinal.home), a = parseInt(simFinal.away)
+    if (isNaN(h) || isNaN(a)) return null
+    const eq = equiposFinal()
+    if (!eq.home || !eq.away) return null
+    // realMap con M104 sobrescrito por el marcador simulado
+    const realMapSim = normalizeRealMap()
+    const winSim = h > a ? eq.home : (a > h ? eq.away : null)
+    realMapSim['M104'] = { h, a, win: winSim }
+    // recalcular total de cada quiniela: total actual − fin actual + fin simulado
+    const sim = enriched.map(r => {
+      const P = allPicks[r.quiniela_id] || {}
+      const nuevoFin = finSimulado(P, realMapSim)
+      const nuevoTotal = (r.total - (r.finalPts || 0)) + nuevoFin
+      return { ...r, simFin: nuevoFin, simTotal: nuevoTotal }
+    }).sort((x, y) => y.simTotal - x.simTotal)
+    // ranking dense
+    let rank = 1
+    return sim.map((r, i) => {
+      if (i > 0 && r.simTotal !== sim[i-1].simTotal) rank += 1
+      return { ...r, simRank: rank }
+    })
   }
 
   function buildEnriched() {
@@ -802,6 +845,58 @@ export default function LeaderboardPage() {
             ))}
           </div>
         </div>
+
+        {/* Simulador de final (solo local, no afecta datos) */}
+        {(() => {
+          const eq = equiposFinal()
+          if (!eq.home || !eq.away) return null
+          const finalReal = realResults['M104']
+          const yaJugada = finalReal && finalReal.h != null && finalReal.a != null
+          const simTable = tablaSimulada()
+          const top3 = simTable ? simTable.filter(r => r.simRank <= 3) : []
+          const clearSim = () => setSimFinal({ home:'', away:'' })
+          return (
+            <div style={{ background:'#fff', border:'0.5px solid rgba(0,113,227,.25)', borderRadius:12, padding:'12px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8, marginBottom:10 }}>
+                <span style={{ fontSize:11, fontWeight:800, color:'#0071e3', letterSpacing:'.3px' }}>🔮 SIMULADOR DE LA FINAL</span>
+                <span style={{ fontSize:10, color:'#aeaeb2' }}>Solo para ti · no cambia la tabla real</span>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:top3.length?12:0 }}>
+                <span style={{ fontSize:13, fontWeight:700, color:'#1d1d1f' }}>{eq.home}</span>
+                <input type="number" min="0" value={simFinal.home} onChange={e=>setSimFinal(s=>({...s,home:e.target.value}))}
+                  style={{ width:44, textAlign:'center', fontSize:15, fontWeight:800, padding:'4px', border:'1px solid #d2d2d7', borderRadius:6 }} />
+                <span style={{ fontSize:13, color:'#aeaeb2', fontWeight:700 }}>–</span>
+                <input type="number" min="0" value={simFinal.away} onChange={e=>setSimFinal(s=>({...s,away:e.target.value}))}
+                  style={{ width:44, textAlign:'center', fontSize:15, fontWeight:800, padding:'4px', border:'1px solid #d2d2d7', borderRadius:6 }} />
+                <span style={{ fontSize:13, fontWeight:700, color:'#1d1d1f' }}>{eq.away}</span>
+                {(simFinal.home!==''||simFinal.away!=='') && (
+                  <button onClick={clearSim} style={{ marginLeft:6, fontSize:11, fontWeight:600, color:'#0071e3', background:'none', border:'none', cursor:'pointer' }}>Limpiar</button>
+                )}
+              </div>
+              {top3.length > 0 && (
+                <div>
+                  <div style={{ fontSize:10, fontWeight:700, color:'#6e6e73', marginBottom:6 }}>
+                    PODIO SIMULADO {yaJugada ? '(la final real ya está cargada)' : ''}
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                    {top3.map((r,i) => {
+                      const medal = r.simRank===1?'🥇':r.simRank===2?'🥈':'🥉'
+                      const nombre = r.quinielas?.name || r.quinielas?.profiles?.username || 'Q'
+                      const qnum = r.quinielas?.seq_num ? 'Q'+String(r.quinielas.seq_num).padStart(2,'0')+' · ' : ''
+                      return (
+                        <div key={r.quiniela_id} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:'#f9f9fb', borderRadius:8 }}>
+                          <span style={{ fontSize:16, minWidth:24 }}>{medal}</span>
+                          <span style={{ flex:1, fontSize:13, fontWeight:700, color:'#1d1d1f', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{qnum}{nombre}</span>
+                          <span style={{ fontSize:14, fontWeight:900, color:'#0071e3' }}>{r.simTotal} pts</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Header */}
         <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:4 }}>
