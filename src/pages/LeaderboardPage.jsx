@@ -152,7 +152,7 @@ export default function LeaderboardPage() {
   const [hasPaid, setHasPaid]     = useState(false)
   const [prizePool, setPrizePool] = useState({ total:0, p1:0, p2:0, p3:0, committedCount:0 })
   const [realResults, setRealResults] = useState({})  // resultados de la quiniela real {mid:{h,a,w}}
-  const [simFinal, setSimFinal] = useState({ home: '', away: '' })  // marcador simulado M104 (solo local, no toca datos)
+  const [simFinal, setSimFinal] = useState({ home: '', away: '', winner: '' })  // marcador simulado M104 (solo local, no toca datos)
   const tableRef = useRef(null)
 
   async function exportPDF() {
@@ -432,7 +432,8 @@ export default function LeaderboardPage() {
     if (!eq.home || !eq.away) return null
     // realMap con M104 sobrescrito por el marcador simulado
     const realMapSim = normalizeRealMap()
-    const winSim = h > a ? eq.home : (a > h ? eq.away : null)
+    const winSim = h > a ? eq.home : (a > h ? eq.away : (simFinal.winner || null))
+    if (winSim == null) return null  // empate sin ganador elegido: no simular todavía
     realMapSim['M104'] = { h, a, win: winSim }
     // recalcular total de cada quiniela: total actual − fin actual + fin simulado
     const sim = enriched.map(r => {
@@ -854,7 +855,9 @@ export default function LeaderboardPage() {
           const yaJugada = finalReal && finalReal.h != null && finalReal.a != null
           const simTable = tablaSimulada()
           const top3 = simTable ? simTable.filter(r => r.simRank <= 3) : []
-          const clearSim = () => setSimFinal({ home:'', away:'' })
+          const clearSim = () => setSimFinal({ home:'', away:'', winner:'' })
+          const hNum = parseInt(simFinal.home), aNum = parseInt(simFinal.away)
+          const esEmpate = !isNaN(hNum) && !isNaN(aNum) && hNum === aNum
           return (
             <div style={{ background:'#fff', border:'0.5px solid rgba(0,113,227,.25)', borderRadius:12, padding:'12px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)' }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8, marginBottom:10 }}>
@@ -873,6 +876,19 @@ export default function LeaderboardPage() {
                   <button onClick={clearSim} style={{ marginLeft:6, fontSize:11, fontWeight:600, color:'#0071e3', background:'none', border:'none', cursor:'pointer' }}>Limpiar</button>
                 )}
               </div>
+              {esEmpate && (
+                <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:top3.length?12:0 }}>
+                  <span style={{ fontSize:12, fontWeight:600, color:'#6e6e73' }}>Empate → gana en penales:</span>
+                  <button onClick={()=>setSimFinal(s=>({...s,winner:eq.home}))}
+                    style={{ fontSize:12, fontWeight:700, padding:'4px 10px', borderRadius:6, cursor:'pointer',
+                      border:'1px solid '+(simFinal.winner===eq.home?'#0071e3':'#d2d2d7'),
+                      background:simFinal.winner===eq.home?'#0071e3':'#fff', color:simFinal.winner===eq.home?'#fff':'#1d1d1f' }}>{eq.home}</button>
+                  <button onClick={()=>setSimFinal(s=>({...s,winner:eq.away}))}
+                    style={{ fontSize:12, fontWeight:700, padding:'4px 10px', borderRadius:6, cursor:'pointer',
+                      border:'1px solid '+(simFinal.winner===eq.away?'#0071e3':'#d2d2d7'),
+                      background:simFinal.winner===eq.away?'#0071e3':'#fff', color:simFinal.winner===eq.away?'#fff':'#1d1d1f' }}>{eq.away}</button>
+                </div>
+              )}
               {top3.length > 0 && (
                 <div>
                   <div style={{ fontSize:10, fontWeight:700, color:'#6e6e73', marginBottom:6 }}>
