@@ -787,6 +787,22 @@ export default function LeaderboardPage() {
         })()}
 
 
+        {/* Reglamento de puntos por posición final */}
+        <div style={{ background:'#fff', border:'0.5px solid rgba(0,0,0,.08)', borderRadius:12, padding:'10px 16px', marginBottom:16, boxShadow:'0 1px 4px rgba(0,0,0,.04)' }}>
+          <div style={{ fontSize:11, fontWeight:800, color:'#6e6e73', letterSpacing:'.3px', marginBottom:8 }}>PUNTOS POR POSICIÓN FINAL</div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {[['🥇','Campeón',20],['🥈','Subcampeón',10],['🥉','3er lugar',5],['4º','4to lugar',3]].map(([m,l,p]) => (
+              <div key={l} style={{ flex:'1 1 120px', minWidth:110, display:'flex', alignItems:'center', gap:8, padding:'8px 10px', background:'#f9f9fb', borderRadius:8 }}>
+                <span style={{ fontSize:18 }}>{m}</span>
+                <div style={{ display:'flex', flexDirection:'column', lineHeight:1.2 }}>
+                  <span style={{ fontSize:12, fontWeight:600, color:'#1d1d1f' }}>{l}</span>
+                  <span style={{ fontSize:13, fontWeight:800, color:'#1a7a38' }}>{p} pts</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Header */}
         <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:4 }}>
           <h1 style={{ fontSize:22, fontWeight:800, letterSpacing:'-.4px' }}>Tabla de Posiciones</h1>
