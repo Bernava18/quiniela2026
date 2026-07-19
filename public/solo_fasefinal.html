@@ -104,6 +104,7 @@ function setScore(mid,side,val){if(isLocked(mid))return;
   if(pk.h!=null&&pk.a!=null){const t=teamsOf(mid);
     if(pk.h>pk.a)pk.w=t.h;else if(pk.a>pk.h)pk.w=t.a;
     else pk.w=pk.w&&(pk.w===t.h||pk.w===t.a)?pk.w:null;} // empate: conservar elección si válida
+  else pk.w=null; // si falta algún marcador, limpiar ganador (evita orden pegado al borrar)
   save(mid);
   // NO redibujar todo (en móvil borra lo que se escribe). Solo refrescar las
   // llaves siguientes y el contador, sin tocar los inputs que el usuario usa.
@@ -177,7 +178,15 @@ function centerCol(){
   let p1=champ,p2=null,p3=validWinner('M103'),p4=null;
   if(champ){p2=(champ===t4.h?t4.a:t4.h);}
   if(p3){p4=(p3===t3.h?t3.a:t3.h);}
-  const row=(pos,team,medal)=>`<div class="row"><span class="pos">${medal}</span>${team?fh(team,16)+' <b>'+team+'</b>':'<span class="tname tbd">—</span>'}</div>`;
+  // Orden real (para comparar y puntuar): campeón/sub de REAL M104, 3ro/4to de REAL M103
+  const rw=(mid)=>{const p=REAL[mid];if(!p||p.w==null||p.w==='Sin definir')return null;const t=realTeamsOf(mid);return(p.w===t.h||p.w===t.a)?p.w:null;};
+  const rc=rw('M104'), r3=rw('M103');
+  const rt4=realTeamsOf('M104'), rt3=realTeamsOf('M103');
+  const rCampeon=rc, rSub=rc?(rc===rt4.h?rt4.a:rt4.h):null;
+  const rTercero=r3, rCuarto=r3?(r3===rt3.h?rt3.a:rt3.h):null;
+  const ptsPos=(team,realTeam,val)=>(SHOW_PTS&&team&&realTeam&&team===realTeam)?val:(SHOW_PTS?0:null);
+  const pill=(p)=>p==null?'':`<span class="mpts ${p>0?'pos':'zero'}" style="margin-left:8px">${p} pts</span>`;
+  const row=(pos,team,medal,pv)=>`<div class="row"><span class="pos">${medal}</span>${team?fh(team,16)+' <b>'+team+'</b>':'<span class="tname tbd">—</span>'}${pill(pv)}</div>`;
   return `<div class="col center"><div class="ctitle">🏆 Final</div>
     ${matchCard('M104',true)}
     <div class="champ">${champ?'Campeón: <b>'+champ+'</b>':'El campeón se define con la final'}</div>
@@ -185,7 +194,7 @@ function centerCol(){
     ${matchCard('M103',false)}
     <div class="podium">
       <div class="ctitle" style="text-align:left;margin-bottom:6px">Posiciones finales</div>
-      ${row(1,p1,'🥇')}${row(2,p2,'🥈')}${row(3,p3,'🥉')}${row(4,p4,'4º')}
+      ${row(1,p1,'🥇',ptsPos(p1,rCampeon,20))}${row(2,p2,'🥈',ptsPos(p2,rSub,10))}${row(3,p3,'🥉',ptsPos(p3,rTercero,5))}${row(4,p4,'4º',ptsPos(p4,rCuarto,3))}
     </div></div>`;}
 
 function render(){
