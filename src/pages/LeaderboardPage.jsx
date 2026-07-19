@@ -435,12 +435,27 @@ export default function LeaderboardPage() {
     const winSim = h > a ? eq.home : (a > h ? eq.away : (simFinal.winner || null))
     if (winSim == null) return null  // empate sin ganador elegido: no simular todavía
     realMapSim['M104'] = { h, a, win: winSim }
-    // recalcular total de cada quiniela: total actual − fin actual + fin simulado
+    // realMap actual (sin simular) para saber cuántos puntos de M104 ya están contados en total
+    const realMapActual = normalizeRealMap()
+    // recalcular cada quiniela: total − (fin actual + ptsPartido M104 actual) + (fin simulado + ptsPartido M104 simulado)
     const sim = enriched.map(r => {
       const P = allPicks[r.quiniela_id] || {}
+      const pickM104 = P['M104']
+      const pickTeams104 = ffTeams('M104', P)
+      // puntos de partido M104 que ya están en total (con resultado real; 0 si aún no se ha jugado)
+      const realActual = realMapActual['M104']
+      let ptsPartidoActual = 0
+      if (realActual && realActual.h != null) {
+        const realW = { h: realActual.h, a: realActual.a, w: ffWinner('M104', realMapActual) }
+        ptsPartidoActual = ffMatchPts('M104', pickM104, realW, pickTeams104, ffTeams('M104', realMapActual), P)
+      }
+      // puntos de partido M104 simulados
+      const realWSim = { h, a, w: winSim }
+      const ptsPartidoSim = ffMatchPts('M104', pickM104, realWSim, pickTeams104, ffTeams('M104', realMapSim), P)
+      // orden final actual (r.finalPts) y simulado
       const nuevoFin = finSimulado(P, realMapSim)
-      const nuevoTotal = (r.total - (r.finalPts || 0)) + nuevoFin
-      return { ...r, simFin: nuevoFin, simTotal: nuevoTotal }
+      const nuevoTotal = r.total - (r.finalPts || 0) - ptsPartidoActual + nuevoFin + ptsPartidoSim
+      return { ...r, simFin: nuevoFin, simPartido: ptsPartidoSim, simTotal: nuevoTotal }
     }).sort((x, y) => y.simTotal - x.simTotal)
     // ranking dense
     let rank = 1
